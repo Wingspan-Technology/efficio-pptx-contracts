@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EfficioTagDefinition",
+  "description": "Reference shape for an authored Tag Entity. The authoritative validator is scripts/contractLib.ts (validateTagEntity); this schema documents the contract and is not used to validate at build time.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["string", "integer", "boolean", "object", "array"]
+    },
+    "required": { "type": "boolean" },
+    "enum": {
+      "type": "array",
+      "minItems": 1
+    },
+    "description": { "type": "string" },
+    "schema": {
+      "type": "object",
+      "description": "JSON Schema for an object/array tag's JSON-text value. Required for type object/array; forbidden for scalar types."
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "order": { "type": "number" },
+        "multiline": { "type": "boolean" }
+      }
+    },
+    "ai": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Presence marks the tag AI-visible. Absent means private/runtime/editor-only.",
+      "properties": {
+        "purpose": { "type": "string", "minLength": 1 },
+        "enum_descriptions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        }
+      },
+      "required": ["purpose"]
+    },
+    "min_length": { "type": "number" },
+    "max_length": { "type": "number" },
+    "pattern": { "type": "string" },
+    "minimum": { "type": "number" },
+    "maximum": { "type": "number" }
+  },
+  "required": ["type", "required"],
+  "allOf": [
+    {
+      "$comment": "An AI-visible enum tag must describe every enum value.",
+      "if": { "required": ["enum", "ai"] },
+      "then": { "properties": { "ai": { "required": ["purpose", "enum_descriptions"] } } }
+    },
+    {
+      "$comment": "Object/array tags carry a schema; scalar tags must not.",
+      "if": { "properties": { "type": { "enum": ["object", "array"] } }, "required": ["type"] },
+      "then": { "required": ["schema"] },
+      "else": { "not": { "required": ["schema"] } }
+    }
+  ]
+}

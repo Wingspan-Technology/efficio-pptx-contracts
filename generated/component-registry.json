@@ -1,0 +1,19 @@
+{
+  "components": {
+    "approval_block": {
+      "tags_contract": "contracts/components/approval_block/tags.contract.json",
+      "content_contract": "contracts/components/approval_block/content.contract.json",
+      "tags_defaults": "contracts/components/approval_block/tags.defaults.json"
+    },
+    "grouped_checklist_table": {
+      "tags_contract": "contracts/components/grouped_checklist_table/tags.contract.json",
+      "content_contract": "contracts/components/grouped_checklist_table/content.contract.json",
+      "tags_defaults": "contracts/components/grouped_checklist_table/tags.defaults.json"
+    },
+    "text": {
+      "tags_contract": "contracts/components/text/tags.contract.json",
+      "content_contract": "contracts/components/text/content.contract.json",
+      "tags_defaults": "contracts/components/text/tags.defaults.json"
+    }
+  }
+}

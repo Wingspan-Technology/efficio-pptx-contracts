@@ -1,0 +1,34 @@
+{
+  "generated_from": "contracts/presentation/slide/slide.contract.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SlideContract",
+  "description": "Contract describing all components on a single slide.",
+  "type": "object",
+  "properties": {
+    "slide_index": {
+      "type": "integer"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "component_id": {
+            "type": "string"
+          },
+          "component_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id",
+          "component_type"
+        ]
+      }
+    }
+  },
+  "required": [
+    "slide_index",
+    "components"
+  ]
+}

@@ -1,0 +1,218 @@
+{
+  "instruction": "Use each component's efficio_component_type to find its matching instruction below. For every component instance, generate content according to expected_content_schema and respect tag_instructions.",
+  "component_instructions": {
+    "approval_block": {
+      "component_type": "approval_block",
+      "tag_instructions": {
+        "efficio_render_behavior": {
+          "purpose": "Tells the renderer how to treat the shape.",
+          "enum_descriptions": {
+            "render_by_component_type": "Render the shape using its component type contract.",
+            "preserve": "Keep the shape exactly as authored; do not generate content for it.",
+            "remove_on_render": "Drop the shape from the rendered output (mock/preview only)."
+          }
+        },
+        "efficio_prompt_instruction": {
+          "purpose": "Free-form instruction passed to content generation for this component."
+        },
+        "efficio_default_subtype": {
+          "purpose": "The approval subtype to use unless a more appropriate one is selected.",
+          "enum_descriptions": {
+            "recommended": "A recommendation that is not yet a formal sign-off.",
+            "endorsed": "A stronger endorsement, short of final approval.",
+            "approved": "A final approval / sign-off."
+          }
+        },
+        "efficio_subtype_policy": {
+          "purpose": "Whether generation may choose the approval subtype for this block.",
+          "enum_descriptions": {
+            "ai_selectable": "Generation may choose the approval subtype from the configured subtypes."
+          }
+        },
+        "efficio_missing_content_behavior": {
+          "purpose": "What to do when no approval content is generated for this block.",
+          "enum_descriptions": {
+            "leave_as_is": "Keep an unselected/empty approval block unchanged rather than removing it."
+          }
+        },
+        "efficio_approval_block_subtypes": {
+          "purpose": "The display label to render for each approval subtype."
+        }
+      },
+      "expected_content_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "component_type": "approval_block",
+        "description": "Expected AI output for an approval block. null leaves the block unchanged; an object selects an approval subtype and fills the approver name and role.",
+        "type": [
+          "null",
+          "object"
+        ],
+        "additionalProperties": false,
+        "required": [
+          "subtype",
+          "name",
+          "role"
+        ],
+        "properties": {
+          "subtype": {
+            "type": "string",
+            "enum": [
+              "recommended",
+              "endorsed",
+              "approved"
+            ],
+            "description": "Selected approval subtype."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Approver name."
+          },
+          "role": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Approver role/title."
+          }
+        }
+      }
+    },
+    "grouped_checklist_table": {
+      "component_type": "grouped_checklist_table",
+      "tag_instructions": {
+        "efficio_render_behavior": {
+          "purpose": "Tells the renderer how to treat the shape.",
+          "enum_descriptions": {
+            "render_by_component_type": "Render the shape using its component type contract.",
+            "preserve": "Keep the shape exactly as authored; do not generate content for it.",
+            "remove_on_render": "Drop the shape from the rendered output (mock/preview only)."
+          }
+        },
+        "efficio_prompt_instruction": {
+          "purpose": "Free-form instruction passed to content generation for this component."
+        },
+        "efficio_groups": {
+          "purpose": "Defines the stable groups the table is built from. Each group's key, label, and inclusion_policy must be echoed back. suggested_items are author hints, not required output; min_items, max_items, and max_chars_per_item are optional sizing hints to aim for, not hard limits."
+        }
+      },
+      "expected_content_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "component_type": "grouped_checklist_table",
+        "description": "Expected AI output for a grouped checklist table component. Each group echoes the stable key, label, and inclusion_policy from efficio_groups and adds generated items.",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "groups"
+        ],
+        "properties": {
+          "groups": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "key",
+                "label",
+                "inclusion_policy",
+                "items"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Stable group identifier echoed from efficio_groups."
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Group heading echoed from efficio_groups."
+                },
+                "inclusion_policy": {
+                  "type": "string",
+                  "enum": [
+                    "always",
+                    "prefer_keep",
+                    "when_relevant",
+                    "prefer_drop",
+                    "never"
+                  ],
+                  "description": "Inclusion policy echoed from efficio_groups."
+                },
+                "items": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "description": "Generated checklist items for the group."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "text": {
+      "component_type": "text",
+      "tag_instructions": {
+        "efficio_render_behavior": {
+          "purpose": "Tells the renderer how to treat the shape.",
+          "enum_descriptions": {
+            "render_by_component_type": "Render the shape using its component type contract.",
+            "preserve": "Keep the shape exactly as authored; do not generate content for it.",
+            "remove_on_render": "Drop the shape from the rendered output (mock/preview only)."
+          }
+        },
+        "efficio_prompt_instruction": {
+          "purpose": "Free-form instruction passed to content generation for this component."
+        },
+        "efficio_text_format": {
+          "purpose": "Selects the structural format of generated text.",
+          "enum_descriptions": {
+            "plain": "A single run of plain text.",
+            "paragraph": "One or more prose paragraphs.",
+            "bullets": "An unordered bullet list.",
+            "numbered_list": "An ordered numbered list."
+          }
+        },
+        "efficio_sizing_mode": {
+          "purpose": "Controls whether explicit character/line limits apply.",
+          "enum_descriptions": {
+            "auto": "Use the current default sizing values. Later, auto sizing will calculate and overwrite these values.",
+            "manual": "Preserve user-provided character and line limit values."
+          }
+        },
+        "efficio_max_chars": {
+          "purpose": "Hard limit on the total number of characters the generated text may use."
+        },
+        "efficio_max_lines": {
+          "purpose": "Hard limit on the number of lines the generated text may use."
+        },
+        "efficio_max_chars_per_line": {
+          "purpose": "Hard limit on the number of characters in any single line of the generated text."
+        }
+      },
+      "expected_content_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "component_type": "text",
+        "description": "Expected AI output for a text component.",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

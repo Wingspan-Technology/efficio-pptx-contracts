@@ -1,0 +1,22 @@
+{
+  "generated_from": "contracts/presentation/template/template.contract.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TemplateContract",
+  "description": "Full contract describing all slides and components in a template.",
+  "type": "object",
+  "properties": {
+    "template_id": {
+      "type": "string"
+    },
+    "slides": {
+      "type": "array",
+      "items": {
+        "$ref": "slide-contract.json"
+      }
+    }
+  },
+  "required": [
+    "template_id",
+    "slides"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "generated_from": [
+    "contracts/components/approval_block/tags.contract.json",
+    "contracts/components/grouped_checklist_table/tags.contract.json",
+    "contracts/components/text/tags.contract.json"
+  ],
+  "component_types": [
+    "approval_block",
+    "grouped_checklist_table",
+    "text"
+  ]
+}

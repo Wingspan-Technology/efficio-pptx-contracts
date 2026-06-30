@@ -1,0 +1,19 @@
+{
+  "name": "@efficio/ppt-components",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate:contracts": "tsx scripts/validate-contracts.ts",
+    "generate:ts": "tsx scripts/generate-ts-contracts.ts",
+    "test": "vitest run",
+    "test:run": "vitest run",
+    "check": "npm run validate:contracts && npm run generate:ts && tsc --noEmit && vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "ajv": "^8.20.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.9"
+  }
+}
