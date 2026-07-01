@@ -19,7 +19,7 @@ import {
   SLIDE_PURPOSE_MAX_LENGTH,
 } from "../ts/editor";
 
-const EXPECTED_TYPES = ["approval_block", "grouped_checklist_table", "text"];
+const EXPECTED_TYPES = ["approval_block", "grouped_checklist_table", "table", "text"];
 
 describe("editor SDK component metadata", () => {
   it("lists the same component types as the generated metadata", () => {

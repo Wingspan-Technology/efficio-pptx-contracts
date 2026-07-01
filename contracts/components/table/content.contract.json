@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "component_type": "table",
+  "description": "Expected AI output for a generic table component. The response lists only cells the AI intends to fill. Table configuration, renderer behavior, row/column behavior, and PowerPoint structure are defined by efficio_table_config.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["cells"],
+  "properties": {
+    "cells": {
+      "type": "array",
+      "description": "Array of table cells to fill. Use only row and column coordinates provided in this table instance context.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["row", "col", "items"],
+        "properties": {
+          "row": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Zero-based table row index from the provided table context."
+          },
+          "col": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Zero-based table column index from the provided table context."
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Text items for this cell. Use one item for plain text cells. Use one or more items for paragraph, bullets, or numbered_list cells. Do not return schema, configuration, explanations, or static cell content.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

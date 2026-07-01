@@ -13,7 +13,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const pkgRoot = path.resolve(here, "..");
 const componentsDir = path.join(pkgRoot, "contracts", "components");
 
-const COMPONENTS = ["approval_block", "grouped_checklist_table", "text"];
+const COMPONENTS = ["approval_block", "grouped_checklist_table", "table", "text"];
 
 function readJson(filePath: string): JsonObject {
   return JSON.parse(readFileSync(filePath, "utf8")) as JsonObject;

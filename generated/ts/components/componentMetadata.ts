@@ -453,6 +453,238 @@ export const componentMetadata = {
       "efficio_component_type": "grouped_checklist_table"
     }
   },
+  "table": {
+    "component_type": "table",
+    "paths": {
+      "tags_contract": "contracts/components/table/tags.contract.json",
+      "content_contract": "contracts/components/table/content.contract.json",
+      "tags_defaults": "contracts/components/table/tags.defaults.json"
+    },
+    "tags": {
+      "efficio_render_behavior": {
+        "type": "string",
+        "required": true,
+        "enum": [
+          "render_by_component_type",
+          "preserve",
+          "remove_on_render"
+        ],
+        "description": "Controls whether a shape renders by component type, is preserved as-is, or is removed before render.",
+        "ui": {
+          "order": 10
+        }
+      },
+      "efficio_component_id": {
+        "type": "string",
+        "required": true,
+        "min_length": 1,
+        "description": "Stable, human-readable identifier for the component within a slide.",
+        "ui": {
+          "order": 20
+        }
+      },
+      "efficio_component_type": {
+        "type": "string",
+        "required": true,
+        "description": "The component type for this shape. Each component contract refines this with a single-value enum.",
+        "ui": {
+          "order": 30
+        },
+        "enum": [
+          "table"
+        ]
+      },
+      "efficio_content_role": {
+        "type": "string",
+        "required": false,
+        "description": "Optional semantic role hint describing what this component represents on the slide.",
+        "ui": {
+          "order": 40
+        }
+      },
+      "efficio_prompt_instruction": {
+        "type": "string",
+        "required": false,
+        "description": "Optional author guidance used when generating content for this component.",
+        "ui": {
+          "order": 100,
+          "multiline": true
+        }
+      },
+      "efficio_manually_reviewed": {
+        "type": "boolean",
+        "required": true,
+        "description": "Whether a human has reviewed this component's tags.",
+        "ui": {
+          "order": 120
+        }
+      },
+      "efficio_requires_manual_review": {
+        "type": "boolean",
+        "required": false,
+        "description": "Whether this component should be flagged for manual review.",
+        "ui": {
+          "order": 110
+        }
+      },
+      "efficio_table_config": {
+        "type": "object",
+        "required": true,
+        "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column policies and the required per-cell configuration (position, generation behavior, text format, and optional sizing hints).",
+        "ui": {
+          "order": 50
+        },
+        "schema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "cells"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "description": "Optional per-row policies, keyed by row index.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "row"
+                ],
+                "properties": {
+                  "row": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Zero-based row index this policy applies to."
+                  },
+                  "behavior": {
+                    "type": "string",
+                    "enum": [
+                      "static",
+                      "required",
+                      "optional"
+                    ],
+                    "default": "required",
+                    "description": "Generation policy for the row: static keeps existing content, required must be generated, optional may be generated."
+                  },
+                  "instruction": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Optional guidance for generating this row's cells."
+                  }
+                }
+              }
+            },
+            "columns": {
+              "type": "array",
+              "description": "Optional per-column policies, keyed by column index.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "col"
+                ],
+                "properties": {
+                  "col": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Zero-based column index this policy applies to."
+                  },
+                  "behavior": {
+                    "type": "string",
+                    "enum": [
+                      "static",
+                      "required",
+                      "optional"
+                    ],
+                    "default": "required",
+                    "description": "Generation policy for the column: static keeps existing content, required must be generated, optional may be generated."
+                  },
+                  "instruction": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Optional guidance for generating this column's cells."
+                  }
+                }
+              }
+            },
+            "cells": {
+              "type": "array",
+              "description": "Per-cell configuration. May be empty when no cells are configured (every cell is then left as authored / static).",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "row",
+                  "col",
+                  "behavior"
+                ],
+                "properties": {
+                  "row": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Zero-based row index of the cell."
+                  },
+                  "col": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Zero-based column index of the cell."
+                  },
+                  "behavior": {
+                    "type": "string",
+                    "enum": [
+                      "static",
+                      "required",
+                      "optional"
+                    ],
+                    "description": "Generation policy for the cell: static keeps existing content, required must be generated, optional may be generated."
+                  },
+                  "text_format": {
+                    "type": "string",
+                    "enum": [
+                      "plain",
+                      "paragraph",
+                      "bullets",
+                      "numbered_list"
+                    ],
+                    "default": "plain",
+                    "description": "How the generated cell text should be structured."
+                  },
+                  "instruction": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Optional guidance for generating this cell's content."
+                  },
+                  "max_chars_per_item": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Suggested maximum characters for each generated line/item in the cell — a sizing hint, not a hard limit."
+                  },
+                  "max_lines": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Suggested maximum number of lines for this cell — a sizing hint, not a hard limit."
+                  },
+                  "max_chars_per_line": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Suggested maximum characters per line for this cell — a sizing hint, not a hard limit."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "defaults": {
+      "efficio_render_behavior": "render_by_component_type",
+      "efficio_manually_reviewed": "false",
+      "efficio_requires_manual_review": "true",
+      "efficio_component_type": "table",
+      "efficio_table_config": "{\"cells\":[]}"
+    }
+  },
   "text": {
     "component_type": "text",
     "paths": {

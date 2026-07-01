@@ -12,7 +12,7 @@ const contractsDir = path.join(pkgRoot, "contracts");
 const componentsDir = path.join(contractsDir, "components");
 const generatedTagsDir = path.join(pkgRoot, "generated", "schemas", "components");
 
-const COMPONENTS = ["approval_block", "grouped_checklist_table", "text"];
+const COMPONENTS = ["approval_block", "grouped_checklist_table", "table", "text"];
 const COMMON_REQUIRED = [
   "efficio_render_behavior",
   "efficio_component_id",
@@ -173,6 +173,16 @@ describe("generated json_schemas for object/array tags", () => {
     const authored = readJson(path.join(componentsDir, "grouped_checklist_table", "tags.contract.json"));
     const authoredGroupsSchema = ((authored.tags as JsonObject).efficio_groups as JsonObject).schema;
     expect(jsonSchemas.efficio_groups).toEqual(authoredGroupsSchema);
+  });
+
+  it("table maps efficio_table_config (json_object) to its embedded schema", () => {
+    const schema = readJson(generatedFileFor("table"));
+    expect((schema.types as JsonObject).efficio_table_config).toBe("json_object");
+    const jsonSchemas = schema.json_schemas as JsonObject;
+    expect(jsonSchemas).toHaveProperty("efficio_table_config");
+    const authored = readJson(path.join(componentsDir, "table", "tags.contract.json"));
+    const authoredConfigSchema = ((authored.tags as JsonObject).efficio_table_config as JsonObject).schema;
+    expect(jsonSchemas.efficio_table_config).toEqual(authoredConfigSchema);
   });
 
   it("native metadata preserves the schema on the efficio_groups entity", () => {
