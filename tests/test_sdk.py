@@ -12,7 +12,7 @@ from efficio_ppt_components.errors import (
     UnknownComponentTypeError,
 )
 
-EXPECTED_TYPES = ["approval_block", "grouped_checklist_table", "text"]
+EXPECTED_TYPES = ["approval_block", "grouped_checklist_table", "table", "text"]
 
 
 def test_import_exposes_only_stable_public_names() -> None:

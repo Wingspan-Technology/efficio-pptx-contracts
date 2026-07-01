@@ -155,6 +155,70 @@ export const componentInstructions = {
         }
       }
     },
+    "table": {
+      "component_type": "table",
+      "tag_instructions": {
+        "efficio_render_behavior": {
+          "purpose": "Tells the renderer how to treat the shape.",
+          "enum_descriptions": {
+            "render_by_component_type": "Render the shape using its component type contract.",
+            "preserve": "Keep the shape exactly as authored; do not generate content for it.",
+            "remove_on_render": "Drop the shape from the rendered output (mock/preview only)."
+          }
+        },
+        "efficio_prompt_instruction": {
+          "purpose": "Free-form instruction passed to content generation for this component."
+        },
+        "efficio_table_config": {
+          "purpose": "Describes the table's cells (and optional row/column policies) so content is generated per cell. Each cell's row/col position and behavior must be respected: static cells keep their existing content, required cells must be filled, optional cells may be filled. text_format selects how a cell's text is structured; max_chars_per_item, max_lines, and max_chars_per_line are optional sizing hints to aim for, not hard limits."
+        }
+      },
+      "expected_content_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "component_type": "table",
+        "description": "Expected AI output for a generic table component. The response lists only cells the AI intends to fill. Table configuration, renderer behavior, row/column behavior, and PowerPoint structure are defined by efficio_table_config.",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cells"
+        ],
+        "properties": {
+          "cells": {
+            "type": "array",
+            "description": "Array of table cells to fill. Use only row and column coordinates provided in this table instance context.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "row",
+                "col",
+                "items"
+              ],
+              "properties": {
+                "row": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Zero-based table row index from the provided table context."
+                },
+                "col": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Zero-based table column index from the provided table context."
+                },
+                "items": {
+                  "type": "array",
+                  "minItems": 1,
+                  "description": "Text items for this cell. Use one item for plain text cells. Use one or more items for paragraph, bullets, or numbered_list cells. Do not return schema, configuration, explanations, or static cell content.",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "text": {
       "component_type": "text",
       "tag_instructions": {

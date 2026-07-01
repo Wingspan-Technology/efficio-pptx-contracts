@@ -12,6 +12,11 @@ export const componentRegistry = {
       "content_contract": "contracts/components/grouped_checklist_table/content.contract.json",
       "tags_defaults": "contracts/components/grouped_checklist_table/tags.defaults.json"
     },
+    "table": {
+      "tags_contract": "contracts/components/table/tags.contract.json",
+      "content_contract": "contracts/components/table/content.contract.json",
+      "tags_defaults": "contracts/components/table/tags.defaults.json"
+    },
     "text": {
       "tags_contract": "contracts/components/text/tags.contract.json",
       "content_contract": "contracts/components/text/content.contract.json",
