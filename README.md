@@ -161,7 +161,8 @@ Public API:
   runtime component-instruction selection. It deduplicates, sorts, and validates
   the requested types and returns
   `{ instruction, component_instructions }`. It does not assemble final prompt
-  text; runtime prompt assembly is still future work;
+  text — the orchestrator embeds the block in its generation-instructions
+  response, and assembling the prompt / calling a model is the API client's job;
 - tag validation/access: `load_component_tag_schema`,
   `load_slide_tag_contract`, `validate_component_tags`, and
   `validate_slide_tags`. These validate against generated component/presentation

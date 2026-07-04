@@ -21,13 +21,6 @@
         "numbered_list": "An ordered numbered list."
       }
     },
-    "efficio_sizing_mode": {
-      "purpose": "Controls whether explicit character/line limits apply.",
-      "enum_descriptions": {
-        "auto": "Use the current default sizing values. Later, auto sizing will calculate and overwrite these values.",
-        "manual": "Preserve user-provided character and line limit values."
-      }
-    },
     "efficio_max_chars": {
       "purpose": "Hard limit on the total number of characters the generated text may use."
     },

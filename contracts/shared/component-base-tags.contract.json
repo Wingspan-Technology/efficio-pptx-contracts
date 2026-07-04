@@ -28,18 +28,6 @@
       "ai": {
         "purpose": "Free-form instruction passed to content generation for this component."
       }
-    },
-    "efficio_manually_reviewed": {
-      "type": "boolean",
-      "required": true,
-      "description": "Whether a human has reviewed this component's tags.",
-      "ui": { "order": 120 }
-    },
-    "efficio_requires_manual_review": {
-      "type": "boolean",
-      "required": false,
-      "description": "Whether this component should be flagged for manual review.",
-      "ui": { "order": 110 }
     }
   }
 }

@@ -9,7 +9,7 @@ import {
   type JsonObject,
 } from "./contractLib.js";
 import { readJson } from "./generatorIo.js";
-import { presentationSlideDir } from "./generatorPaths.js";
+import { presentationDeckDir, presentationSlideDir } from "./generatorPaths.js";
 
 export async function loadSlideTagSchema(): Promise<JsonObject> {
   const label = "contracts/presentation/slide/tags.contract.json";
@@ -51,6 +51,27 @@ export function validateSlideDefaults(
   }
 
   return result;
+}
+
+// Deck (presentation-level) tag contract + defaults. Mirrors the slide loaders;
+// `validateSlideDefaults` is generic (validates defaults against a tag schema),
+// so it is reused for the deck defaults too.
+export async function loadDeckTagSchema(): Promise<JsonObject> {
+  const label = "contracts/presentation/deck/tags.contract.json";
+  const schema = await readJson(path.join(presentationDeckDir, "tags.contract.json"));
+
+  assertObject(schema, label);
+  assertNoDefaults(schema, label);
+  validateTagEntityContract(schema, label, { slideContractType: "deck_tags" });
+
+  return schema;
+}
+
+export async function loadDeckDefaults(deckSchema: JsonObject): Promise<Record<string, string>> {
+  const label = "contracts/presentation/deck/tags.defaults.json";
+  const defaults = await readJson(path.join(presentationDeckDir, "tags.defaults.json"));
+  assertObject(defaults, label);
+  return validateSlideDefaults(defaults, deckSchema, label);
 }
 
 export async function loadSlidesInstructions(): Promise<JsonObject> {

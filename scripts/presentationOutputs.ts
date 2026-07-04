@@ -4,6 +4,7 @@ import path from "node:path";
 import { assertObject, type JsonObject } from "./contractLib.js";
 import { buildConstSource, readJson, writeJson } from "./generatorIo.js";
 import { buildSlideTagSchemaSource } from "./slideTsOutput.js";
+import { buildDeckTagSchemaSource } from "./deckTsOutput.js";
 import {
   generatedPresentationSchemasDir,
   presentationSlideDir,
@@ -38,4 +39,14 @@ export async function buildSlideOutputs(schema: JsonObject, defaults: Record<str
   await mkdir(tsPresentationDir, { recursive: true });
   await writeFile(path.join(tsPresentationDir, "slideTagSchema.ts"), buildSlideTagSchemaSource(schema));
   await writeFile(path.join(tsPresentationDir, "slideDefaults.ts"), buildConstSource("slideDefaults", defaults));
+}
+
+export async function buildDeckOutputs(schema: JsonObject, defaults: Record<string, string>): Promise<void> {
+  const generated = { generated_from: "contracts/presentation/deck/tags.contract.json", ...schema };
+
+  await mkdir(generatedPresentationSchemasDir, { recursive: true });
+  await writeJson(path.join(generatedPresentationSchemasDir, "deck-tags.json"), generated);
+  await mkdir(tsPresentationDir, { recursive: true });
+  await writeFile(path.join(tsPresentationDir, "deckTagSchema.ts"), buildDeckTagSchemaSource(schema));
+  await writeFile(path.join(tsPresentationDir, "deckDefaults.ts"), buildConstSource("deckDefaults", defaults));
 }

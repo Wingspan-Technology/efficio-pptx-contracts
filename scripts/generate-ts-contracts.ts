@@ -13,8 +13,13 @@ import {
   buildTagSchemas,
   buildTagSchemasSource,
 } from "./componentOutputs.js";
-import { loadSlideDefaults, loadSlideTagSchema } from "./presentationSources.js";
-import { buildSlideOutputs, copyPresentationContract } from "./presentationOutputs.js";
+import {
+  loadDeckDefaults,
+  loadDeckTagSchema,
+  loadSlideDefaults,
+  loadSlideTagSchema,
+} from "./presentationSources.js";
+import { buildDeckOutputs, buildSlideOutputs, copyPresentationContract } from "./presentationOutputs.js";
 import { buildAiInstructionOutputs, buildSlideSelectionInstructionOutputs } from "./aiOutputs.js";
 import { mirrorSdkResources } from "./sdkMirror.js";
 import {
@@ -45,6 +50,8 @@ async function main(): Promise<void> {
   const tagSchemas = await buildTagSchemas(sharedTags, componentSources);
   const slideSchema = await loadSlideTagSchema();
   const slideDefaults = await loadSlideDefaults(slideSchema);
+  const deckSchema = await loadDeckTagSchema();
+  const deckDefaults = await loadDeckDefaults(deckSchema);
 
   await mkdir(generatedSchemasDir, { recursive: true });
   await writeJson(path.join(generatedSchemasDir, "component-types.json"), buildComponentTypesSchema(componentSources));
@@ -55,6 +62,7 @@ async function main(): Promise<void> {
   await writeFile(path.join(tsComponentsDir, "componentTypes.ts"), buildComponentTypesSource(componentTypes));
   await writeFile(path.join(tsComponentsDir, "tagSchemas.ts"), buildTagSchemasSource(tagSchemas));
   await buildSlideOutputs(slideSchema, slideDefaults);
+  await buildDeckOutputs(deckSchema, deckDefaults);
 
   const effectiveDefaultsByType: Record<string, Record<string, string>> = {};
   for (const { componentType } of componentSources) {

@@ -8,12 +8,16 @@ import {
   getComponentMetadata,
   getComponentTagContract,
   getComponentTagDefaults,
+  getDeckTagContract,
+  getDeckTagDefaults,
   getRenderBehaviorValues,
   getSlideTagDefaults,
   getTagEnumValues,
   hasComponentType,
   listComponentCompatibilityTagSchemas,
   listComponentTypes,
+  DECK_TEMPLATE_ID_TAG,
+  DECK_INITIALIZED_TAG,
   SLIDE_ID_TAG,
   SLIDE_PLACEMENTS,
   SLIDE_PURPOSE_MAX_LENGTH,
@@ -95,5 +99,43 @@ describe("editor SDK slide surface", () => {
   it("exposes slide defaults as a copy", () => {
     const defaults = getSlideTagDefaults();
     expect(defaults).toBeTypeOf("object");
+  });
+});
+
+describe("editor SDK deck surface", () => {
+  it("re-exports the deck tag constants", () => {
+    expect(DECK_TEMPLATE_ID_TAG).toBe("efficio_template_id");
+    expect(DECK_INITIALIZED_TAG).toBe("efficio_initialized");
+  });
+
+  it("exposes the deck tag contract with the template-id entity", () => {
+    const contract = getDeckTagContract();
+    expect(contract.contract_type).toBe("deck_tags");
+    const entity = contract.tags.efficio_template_id;
+    expect(entity.type).toBe("string");
+    expect(entity.required).toBe(true);
+    expect(entity.pattern).toBe("^[a-z0-9][a-z0-9_-]*$");
+  });
+
+  it("exposes the optional efficio_initialized enum entity", () => {
+    const entity = getDeckTagContract().tags.efficio_initialized;
+    expect(entity.type).toBe("string");
+    expect(entity.required).toBe(false);
+    expect(entity.enum).toEqual(["true"]);
+  });
+
+  it("defaults efficio_template_id to default_template but never efficio_initialized", () => {
+    const defaults = getDeckTagDefaults() as Record<string, string>;
+    expect(defaults.efficio_template_id).toBe("default_template");
+    // Only the editor's initialization step writes efficio_initialized; it is not a default.
+    expect(defaults.efficio_initialized).toBeUndefined();
+  });
+
+  it("exposes deck defaults as a defensive copy", () => {
+    const defaults = getDeckTagDefaults() as Record<string, string>;
+    defaults.efficio_template_id = "mutated";
+    expect((getDeckTagDefaults() as Record<string, string>).efficio_template_id).toBe(
+      "default_template"
+    );
   });
 });

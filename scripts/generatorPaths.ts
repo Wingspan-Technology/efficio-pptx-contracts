@@ -10,6 +10,7 @@ export const contractsDir = path.join(packageRoot, "contracts");
 export const componentsDir = path.join(contractsDir, "components");
 export const sharedDir = path.join(contractsDir, "shared");
 export const presentationSlideDir = path.join(contractsDir, "presentation", "slide");
+export const presentationDeckDir = path.join(contractsDir, "presentation", "deck");
 export const presentationTemplateDir = path.join(contractsDir, "presentation", "template");
 export const generatedDir = path.join(packageRoot, "generated");
 export const generatedSchemasDir = path.join(generatedDir, "schemas");

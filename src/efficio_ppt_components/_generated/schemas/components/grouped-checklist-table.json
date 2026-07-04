@@ -10,27 +10,17 @@
     "efficio_render_behavior",
     "efficio_component_id",
     "efficio_component_type",
-    "efficio_manually_reviewed",
     "efficio_groups"
   ],
   "optional_tags": [
     "efficio_content_role",
-    "efficio_prompt_instruction",
-    "efficio_requires_manual_review"
+    "efficio_prompt_instruction"
   ],
   "enums": {
     "efficio_render_behavior": [
       "render_by_component_type",
       "preserve",
       "remove_on_render"
-    ],
-    "efficio_manually_reviewed": [
-      "true",
-      "false"
-    ],
-    "efficio_requires_manual_review": [
-      "true",
-      "false"
     ],
     "efficio_component_type": [
       "grouped_checklist_table"
@@ -42,8 +32,6 @@
     "efficio_component_type": "enum",
     "efficio_content_role": "string",
     "efficio_prompt_instruction": "string",
-    "efficio_manually_reviewed": "enum_boolean_string",
-    "efficio_requires_manual_review": "enum_boolean_string",
     "efficio_groups": "json_object"
   },
   "json_schemas": {
@@ -128,7 +116,6 @@
     "efficio_component_type": "grouped_checklist_table",
     "efficio_content_role": "action_table",
     "efficio_groups": "{\"groups\":[{\"key\":\"now\",\"label\":\"Do now\",\"inclusion_policy\":\"always\",\"suggested_items\":[\"Confirm scope\"]},{\"key\":\"next\",\"label\":\"Do next\",\"inclusion_policy\":\"when_relevant\"}]}",
-    "efficio_prompt_instruction": "Generate grouped action items that respect each group's inclusion policy.",
-    "efficio_manually_reviewed": "false"
+    "efficio_prompt_instruction": "Generate grouped action items that respect each group's inclusion policy."
   }
 }

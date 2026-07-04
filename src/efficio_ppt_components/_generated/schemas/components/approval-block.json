@@ -10,7 +10,6 @@
     "efficio_render_behavior",
     "efficio_component_id",
     "efficio_component_type",
-    "efficio_manually_reviewed",
     "efficio_approval_block_layout",
     "efficio_label_cell",
     "efficio_name_cell",
@@ -22,22 +21,13 @@
   ],
   "optional_tags": [
     "efficio_content_role",
-    "efficio_prompt_instruction",
-    "efficio_requires_manual_review"
+    "efficio_prompt_instruction"
   ],
   "enums": {
     "efficio_render_behavior": [
       "render_by_component_type",
       "preserve",
       "remove_on_render"
-    ],
-    "efficio_manually_reviewed": [
-      "true",
-      "false"
-    ],
-    "efficio_requires_manual_review": [
-      "true",
-      "false"
     ],
     "efficio_component_type": [
       "approval_block"
@@ -63,8 +53,6 @@
     "efficio_component_type": "enum",
     "efficio_content_role": "string",
     "efficio_prompt_instruction": "string",
-    "efficio_manually_reviewed": "enum_boolean_string",
-    "efficio_requires_manual_review": "enum_boolean_string",
     "efficio_approval_block_layout": "enum",
     "efficio_label_cell": "json_object",
     "efficio_name_cell": "json_object",
@@ -208,7 +196,6 @@
     "efficio_default_subtype": "approved",
     "efficio_subtype_policy": "ai_selectable",
     "efficio_missing_content_behavior": "leave_as_is",
-    "efficio_approval_block_subtypes": "{\"recommended\":{\"label\":\"Recommended\"},\"endorsed\":{\"label\":\"Endorsed\"},\"approved\":{\"label\":\"Approved\"}}",
-    "efficio_manually_reviewed": "false"
+    "efficio_approval_block_subtypes": "{\"recommended\":{\"label\":\"Recommended\"},\"endorsed\":{\"label\":\"Endorsed\"},\"approved\":{\"label\":\"Approved\"}}"
   }
 }

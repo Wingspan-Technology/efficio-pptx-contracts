@@ -83,7 +83,6 @@
     "efficio_component_type": "grouped_checklist_table",
     "efficio_content_role": "action_table",
     "efficio_groups": "{\"groups\":[{\"key\":\"now\",\"label\":\"Do now\",\"inclusion_policy\":\"always\",\"suggested_items\":[\"Confirm scope\"]},{\"key\":\"next\",\"label\":\"Do next\",\"inclusion_policy\":\"when_relevant\"}]}",
-    "efficio_prompt_instruction": "Generate grouped action items that respect each group's inclusion policy.",
-    "efficio_manually_reviewed": "false"
+    "efficio_prompt_instruction": "Generate grouped action items that respect each group's inclusion policy."
   }
 }

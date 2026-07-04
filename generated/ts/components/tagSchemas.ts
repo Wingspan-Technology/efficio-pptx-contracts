@@ -13,7 +13,6 @@ export const tagSchemas = {
       "efficio_render_behavior",
       "efficio_component_id",
       "efficio_component_type",
-      "efficio_manually_reviewed",
       "efficio_approval_block_layout",
       "efficio_label_cell",
       "efficio_name_cell",
@@ -25,22 +24,13 @@ export const tagSchemas = {
     ],
     "optional_tags": [
       "efficio_content_role",
-      "efficio_prompt_instruction",
-      "efficio_requires_manual_review"
+      "efficio_prompt_instruction"
     ],
     "enums": {
       "efficio_render_behavior": [
         "render_by_component_type",
         "preserve",
         "remove_on_render"
-      ],
-      "efficio_manually_reviewed": [
-        "true",
-        "false"
-      ],
-      "efficio_requires_manual_review": [
-        "true",
-        "false"
       ],
       "efficio_component_type": [
         "approval_block"
@@ -66,8 +56,6 @@ export const tagSchemas = {
       "efficio_component_type": "enum",
       "efficio_content_role": "string",
       "efficio_prompt_instruction": "string",
-      "efficio_manually_reviewed": "enum_boolean_string",
-      "efficio_requires_manual_review": "enum_boolean_string",
       "efficio_approval_block_layout": "enum",
       "efficio_label_cell": "json_object",
       "efficio_name_cell": "json_object",
@@ -211,8 +199,7 @@ export const tagSchemas = {
       "efficio_default_subtype": "approved",
       "efficio_subtype_policy": "ai_selectable",
       "efficio_missing_content_behavior": "leave_as_is",
-      "efficio_approval_block_subtypes": "{\"recommended\":{\"label\":\"Recommended\"},\"endorsed\":{\"label\":\"Endorsed\"},\"approved\":{\"label\":\"Approved\"}}",
-      "efficio_manually_reviewed": "false"
+      "efficio_approval_block_subtypes": "{\"recommended\":{\"label\":\"Recommended\"},\"endorsed\":{\"label\":\"Endorsed\"},\"approved\":{\"label\":\"Approved\"}}"
     }
   },
   "grouped_checklist_table": {
@@ -227,27 +214,17 @@ export const tagSchemas = {
       "efficio_render_behavior",
       "efficio_component_id",
       "efficio_component_type",
-      "efficio_manually_reviewed",
       "efficio_groups"
     ],
     "optional_tags": [
       "efficio_content_role",
-      "efficio_prompt_instruction",
-      "efficio_requires_manual_review"
+      "efficio_prompt_instruction"
     ],
     "enums": {
       "efficio_render_behavior": [
         "render_by_component_type",
         "preserve",
         "remove_on_render"
-      ],
-      "efficio_manually_reviewed": [
-        "true",
-        "false"
-      ],
-      "efficio_requires_manual_review": [
-        "true",
-        "false"
       ],
       "efficio_component_type": [
         "grouped_checklist_table"
@@ -259,8 +236,6 @@ export const tagSchemas = {
       "efficio_component_type": "enum",
       "efficio_content_role": "string",
       "efficio_prompt_instruction": "string",
-      "efficio_manually_reviewed": "enum_boolean_string",
-      "efficio_requires_manual_review": "enum_boolean_string",
       "efficio_groups": "json_object"
     },
     "json_schemas": {
@@ -345,8 +320,7 @@ export const tagSchemas = {
       "efficio_component_type": "grouped_checklist_table",
       "efficio_content_role": "action_table",
       "efficio_groups": "{\"groups\":[{\"key\":\"now\",\"label\":\"Do now\",\"inclusion_policy\":\"always\",\"suggested_items\":[\"Confirm scope\"]},{\"key\":\"next\",\"label\":\"Do next\",\"inclusion_policy\":\"when_relevant\"}]}",
-      "efficio_prompt_instruction": "Generate grouped action items that respect each group's inclusion policy.",
-      "efficio_manually_reviewed": "false"
+      "efficio_prompt_instruction": "Generate grouped action items that respect each group's inclusion policy."
     }
   },
   "table": {
@@ -361,27 +335,17 @@ export const tagSchemas = {
       "efficio_render_behavior",
       "efficio_component_id",
       "efficio_component_type",
-      "efficio_manually_reviewed",
       "efficio_table_config"
     ],
     "optional_tags": [
       "efficio_content_role",
-      "efficio_prompt_instruction",
-      "efficio_requires_manual_review"
+      "efficio_prompt_instruction"
     ],
     "enums": {
       "efficio_render_behavior": [
         "render_by_component_type",
         "preserve",
         "remove_on_render"
-      ],
-      "efficio_manually_reviewed": [
-        "true",
-        "false"
-      ],
-      "efficio_requires_manual_review": [
-        "true",
-        "false"
       ],
       "efficio_component_type": [
         "table"
@@ -393,8 +357,6 @@ export const tagSchemas = {
       "efficio_component_type": "enum",
       "efficio_content_role": "string",
       "efficio_prompt_instruction": "string",
-      "efficio_manually_reviewed": "enum_boolean_string",
-      "efficio_requires_manual_review": "enum_boolean_string",
       "efficio_table_config": "json_object"
     },
     "json_schemas": {
@@ -421,15 +383,14 @@ export const tagSchemas = {
                   "minimum": 0,
                   "description": "Zero-based row index this policy applies to."
                 },
-                "behavior": {
+                "content_policy": {
                   "type": "string",
                   "enum": [
-                    "static",
                     "required",
                     "optional"
                   ],
                   "default": "required",
-                  "description": "Generation policy for the row: static keeps existing content, required must be generated, optional may be generated."
+                  "description": "Content policy for the row: required means its cells should be filled, optional means they may be filled. Does not control rendering."
                 },
                 "instruction": {
                   "type": "string",
@@ -454,15 +415,14 @@ export const tagSchemas = {
                   "minimum": 0,
                   "description": "Zero-based column index this policy applies to."
                 },
-                "behavior": {
+                "content_policy": {
                   "type": "string",
                   "enum": [
-                    "static",
                     "required",
                     "optional"
                   ],
                   "default": "required",
-                  "description": "Generation policy for the column: static keeps existing content, required must be generated, optional may be generated."
+                  "description": "Content policy for the column: required means its cells should be filled, optional means they may be filled. Does not control rendering."
                 },
                 "instruction": {
                   "type": "string",
@@ -474,14 +434,13 @@ export const tagSchemas = {
           },
           "cells": {
             "type": "array",
-            "description": "Per-cell configuration. May be empty when no cells are configured (every cell is then left as authored / static).",
+            "description": "Per-cell configuration. May be empty when no cells are configured (every cell is then preserved / left as authored).",
             "items": {
               "type": "object",
               "additionalProperties": false,
               "required": [
                 "row",
-                "col",
-                "behavior"
+                "col"
               ],
               "properties": {
                 "row": {
@@ -494,14 +453,14 @@ export const tagSchemas = {
                   "minimum": 0,
                   "description": "Zero-based column index of the cell."
                 },
-                "behavior": {
+                "render_action": {
                   "type": "string",
                   "enum": [
-                    "static",
-                    "required",
-                    "optional"
+                    "render",
+                    "preserve"
                   ],
-                  "description": "Generation policy for the cell: static keeps existing content, required must be generated, optional may be generated."
+                  "default": "preserve",
+                  "description": "Whether the renderer writes into this cell: render allows AI-provided content to be written, preserve keeps the cell's existing content unchanged. Optional — a missing render_action means preserve."
                 },
                 "text_format": {
                   "type": "string",
@@ -545,9 +504,8 @@ export const tagSchemas = {
       "efficio_component_id": "comparison_table",
       "efficio_component_type": "table",
       "efficio_content_role": "comparison_table",
-      "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"behavior\":\"static\"},{\"row\":1,\"col\":0,\"behavior\":\"required\",\"text_format\":\"bullets\",\"max_lines\":3}]}",
-      "efficio_prompt_instruction": "Generate table content that respects each cell's behavior.",
-      "efficio_manually_reviewed": "false"
+      "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"preserve\"},{\"row\":1,\"col\":0,\"render_action\":\"render\",\"text_format\":\"bullets\",\"max_lines\":3}]}",
+      "efficio_prompt_instruction": "Generate table content that respects each cell's render action."
     }
   },
   "text": {
@@ -562,7 +520,6 @@ export const tagSchemas = {
       "efficio_render_behavior",
       "efficio_component_id",
       "efficio_component_type",
-      "efficio_manually_reviewed",
       "efficio_text_format",
       "efficio_sizing_mode",
       "efficio_max_chars",
@@ -571,22 +528,13 @@ export const tagSchemas = {
     ],
     "optional_tags": [
       "efficio_content_role",
-      "efficio_prompt_instruction",
-      "efficio_requires_manual_review"
+      "efficio_prompt_instruction"
     ],
     "enums": {
       "efficio_render_behavior": [
         "render_by_component_type",
         "preserve",
         "remove_on_render"
-      ],
-      "efficio_manually_reviewed": [
-        "true",
-        "false"
-      ],
-      "efficio_requires_manual_review": [
-        "true",
-        "false"
       ],
       "efficio_component_type": [
         "text"
@@ -608,8 +556,6 @@ export const tagSchemas = {
       "efficio_component_type": "enum",
       "efficio_content_role": "string",
       "efficio_prompt_instruction": "string",
-      "efficio_manually_reviewed": "enum_boolean_string",
-      "efficio_requires_manual_review": "enum_boolean_string",
       "efficio_text_format": "enum",
       "efficio_sizing_mode": "enum",
       "efficio_max_chars": "positive_integer_string",
@@ -627,8 +573,7 @@ export const tagSchemas = {
       "efficio_max_chars": "30",
       "efficio_max_lines": "30",
       "efficio_max_chars_per_line": "30",
-      "efficio_prompt_instruction": "Generate a concise executive slide title.",
-      "efficio_manually_reviewed": "true"
+      "efficio_prompt_instruction": "Generate a concise executive slide title."
     }
   }
 } as const;

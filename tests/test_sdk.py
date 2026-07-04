@@ -59,10 +59,16 @@ def test_is_ai_facing_only_for_render_by_component_type() -> None:
 
 def test_ai_visible_tag_names_come_from_contract_metadata() -> None:
     names = sdk.ai_visible_tag_names("text")
-    assert {"efficio_text_format", "efficio_sizing_mode", "efficio_max_chars"} <= names
+    assert {
+        "efficio_text_format",
+        "efficio_max_chars",
+        "efficio_max_lines",
+        "efficio_max_chars_per_line",
+    } <= names
+    # sizing mode is a required editor/runtime tag but is no longer AI-visible
+    assert "efficio_sizing_mode" not in names
     # identity/runtime tags are not AI-visible
     assert "efficio_component_id" not in names
-    assert "efficio_manually_reviewed" not in names
 
 
 def test_project_component_context_is_ai_safe() -> None:
@@ -70,7 +76,6 @@ def test_project_component_context_is_ai_safe() -> None:
         "efficio_render_behavior": "render_by_component_type",
         "efficio_component_id": "title_01",
         "efficio_component_type": "text",
-        "efficio_manually_reviewed": "false",
         "efficio_prompt_instruction": "Write a title.",
         "efficio_text_format": "plain",
         "efficio_sizing_mode": "auto",
@@ -79,9 +84,9 @@ def test_project_component_context_is_ai_safe() -> None:
     context = sdk.project_component_context("text", tags)
     assert context["component_type"] == "text"
     assert context["instructions"] == "Write a title."
+    # efficio_sizing_mode is present on the shape but no longer AI-visible, so it is filtered out.
     assert context["tag_context"] == {
         "efficio_text_format": "plain",
-        "efficio_sizing_mode": "auto",
         "efficio_max_chars": "30",
     }
     # render-behavior (filtering) and prompt-instruction (surfaced) never duplicated;
@@ -90,17 +95,54 @@ def test_project_component_context_is_ai_safe() -> None:
         "efficio_render_behavior",
         "efficio_prompt_instruction",
         "efficio_component_id",
-        "efficio_manually_reviewed",
     ):
         assert excluded not in context["tag_context"]
 
 
-def test_project_component_context_defaults_instructions_to_empty() -> None:
+def test_project_component_context_omits_missing_instructions() -> None:
     context = sdk.project_component_context(
         "text", {"efficio_render_behavior": "render_by_component_type"}
     )
-    assert context["instructions"] == ""
+    assert "instructions" not in context
     assert context["tag_context"] == {}
+
+
+def test_project_component_context_omits_blank_instruction_variants() -> None:
+    for blank in ("", "   ", "\n", "\t\n "):
+        context = sdk.project_component_context(
+            "text",
+            {
+                "efficio_render_behavior": "render_by_component_type",
+                "efficio_prompt_instruction": blank,
+            },
+        )
+        assert "instructions" not in context, blank
+
+
+def test_project_component_context_trims_nonblank_instruction() -> None:
+    context = sdk.project_component_context(
+        "text",
+        {
+            "efficio_render_behavior": "render_by_component_type",
+            "efficio_prompt_instruction": "  Write a title.  ",
+        },
+    )
+    assert context["instructions"] == "Write a title."
+
+
+def test_project_component_context_omits_blank_tag_values() -> None:
+    tags = {
+        "efficio_render_behavior": "render_by_component_type",
+        "efficio_text_format": "plain",
+        "efficio_max_chars": "   ",  # blank -> omitted
+        "efficio_max_lines": "\n",  # blank -> omitted
+        "efficio_max_chars_per_line": "40",  # non-blank -> kept
+    }
+    context = sdk.project_component_context("text", tags)
+    assert context["tag_context"] == {
+        "efficio_text_format": "plain",
+        "efficio_max_chars_per_line": "40",
+    }
 
 
 def test_has_component_type() -> None:
@@ -197,7 +239,6 @@ def valid_text_tags(**overrides: str) -> dict[str, str]:
         "efficio_render_behavior": "render_by_component_type",
         "efficio_component_id": "title",
         "efficio_component_type": "text",
-        "efficio_manually_reviewed": "false",
         "efficio_text_format": "plain",
         "efficio_sizing_mode": "auto",
         "efficio_max_chars": "30",
@@ -256,7 +297,6 @@ def valid_grouped_checklist_table_tags(**overrides: str) -> dict[str, str]:
         "efficio_render_behavior": "render_by_component_type",
         "efficio_component_id": "action_groups",
         "efficio_component_type": "grouped_checklist_table",
-        "efficio_manually_reviewed": "false",
         "efficio_groups": valid_groups_json(),
     }
     tags.update(overrides)
@@ -310,7 +350,6 @@ def valid_approval_block_tags(**overrides: str) -> dict[str, str]:
         "efficio_render_behavior": "render_by_component_type",
         "efficio_component_id": "approval_1",
         "efficio_component_type": "approval_block",
-        "efficio_manually_reviewed": "false",
         "efficio_approval_block_layout": "table_2row_person_role",
         "efficio_label_cell": '{"row":0,"col":0}',
         "efficio_name_cell": '{"row":0,"col":1}',

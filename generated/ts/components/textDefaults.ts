@@ -3,8 +3,6 @@
 
 export const textDefaults = {
   "efficio_render_behavior": "render_by_component_type",
-  "efficio_manually_reviewed": "false",
-  "efficio_requires_manual_review": "true",
   "efficio_component_type": "text",
   "efficio_text_format": "plain",
   "efficio_sizing_mode": "auto",

@@ -1,0 +1,20 @@
+{
+  "contract_type": "deck_tags",
+  "description": "Presentation-level Efficio template metadata tags. Stored as PowerPoint presentation custom tags, not slide or shape/component tags.",
+  "tags": {
+    "efficio_template_id": {
+      "type": "string",
+      "required": true,
+      "min_length": 1,
+      "max_length": 120,
+      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+      "description": "Stable template identifier for this PowerPoint template."
+    },
+    "efficio_initialized": {
+      "type": "string",
+      "required": false,
+      "enum": ["true"],
+      "description": "Marks this presentation as initialized for editing with the Efficio Template Editor. Only the editor's first-run initialization writes it."
+    }
+  }
+}

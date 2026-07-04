@@ -170,13 +170,13 @@ export const componentInstructions = {
           "purpose": "Free-form instruction passed to content generation for this component."
         },
         "efficio_table_config": {
-          "purpose": "Describes the table's cells (and optional row/column policies) so content is generated per cell. Each cell's row/col position and behavior must be respected: static cells keep their existing content, required cells must be filled, optional cells may be filled. text_format selects how a cell's text is structured; max_chars_per_item, max_lines, and max_chars_per_line are optional sizing hints to aim for, not hard limits."
+          "purpose": "Describes the table's cells (and optional row/column content policies) so content is generated per cell. Each cell has an optional render_action that defaults to preserve: render cells receive generated content, preserve cells keep their existing content unchanged, and a cell with no render_action is preserved. Row/column content_policy (required or optional) guides which cells need content, not whether they render. text_format selects how a cell's text is structured; max_chars_per_item, max_lines, and max_chars_per_line are optional sizing hints to aim for, not hard limits."
         }
       },
       "expected_content_schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "component_type": "table",
-        "description": "Expected AI output for a generic table component. The response lists only cells the AI intends to fill. Table configuration, renderer behavior, row/column behavior, and PowerPoint structure are defined by efficio_table_config.",
+        "description": "Expected AI output for a generic table component. The response lists only cells the AI intends to fill. Table configuration, cell render actions, row/column content policies, and PowerPoint structure are defined by efficio_table_config.",
         "type": "object",
         "additionalProperties": false,
         "required": [
@@ -208,7 +208,7 @@ export const componentInstructions = {
                 "items": {
                   "type": "array",
                   "minItems": 1,
-                  "description": "Text items for this cell. Use one item for plain text cells. Use one or more items for paragraph, bullets, or numbered_list cells. Do not return schema, configuration, explanations, or static cell content.",
+                  "description": "Text items for this cell. Use one item for plain text cells. Use one or more items for paragraph, bullets, or numbered_list cells. Do not return schema, configuration, explanations, or preserved cell content.",
                   "items": {
                     "type": "string"
                   }
@@ -240,13 +240,6 @@ export const componentInstructions = {
             "paragraph": "One or more prose paragraphs.",
             "bullets": "An unordered bullet list.",
             "numbered_list": "An ordered numbered list."
-          }
-        },
-        "efficio_sizing_mode": {
-          "purpose": "Controls whether explicit character/line limits apply.",
-          "enum_descriptions": {
-            "auto": "Use the current default sizing values. Later, auto sizing will calculate and overwrite these values.",
-            "manual": "Preserve user-provided character and line limit values."
           }
         },
         "efficio_max_chars": {

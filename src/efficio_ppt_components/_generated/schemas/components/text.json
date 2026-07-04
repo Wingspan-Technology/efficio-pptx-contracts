@@ -10,7 +10,6 @@
     "efficio_render_behavior",
     "efficio_component_id",
     "efficio_component_type",
-    "efficio_manually_reviewed",
     "efficio_text_format",
     "efficio_sizing_mode",
     "efficio_max_chars",
@@ -19,22 +18,13 @@
   ],
   "optional_tags": [
     "efficio_content_role",
-    "efficio_prompt_instruction",
-    "efficio_requires_manual_review"
+    "efficio_prompt_instruction"
   ],
   "enums": {
     "efficio_render_behavior": [
       "render_by_component_type",
       "preserve",
       "remove_on_render"
-    ],
-    "efficio_manually_reviewed": [
-      "true",
-      "false"
-    ],
-    "efficio_requires_manual_review": [
-      "true",
-      "false"
     ],
     "efficio_component_type": [
       "text"
@@ -56,8 +46,6 @@
     "efficio_component_type": "enum",
     "efficio_content_role": "string",
     "efficio_prompt_instruction": "string",
-    "efficio_manually_reviewed": "enum_boolean_string",
-    "efficio_requires_manual_review": "enum_boolean_string",
     "efficio_text_format": "enum",
     "efficio_sizing_mode": "enum",
     "efficio_max_chars": "positive_integer_string",
@@ -75,7 +63,6 @@
     "efficio_max_chars": "30",
     "efficio_max_lines": "30",
     "efficio_max_chars_per_line": "30",
-    "efficio_prompt_instruction": "Generate a concise executive slide title.",
-    "efficio_manually_reviewed": "true"
+    "efficio_prompt_instruction": "Generate a concise executive slide title."
   }
 }

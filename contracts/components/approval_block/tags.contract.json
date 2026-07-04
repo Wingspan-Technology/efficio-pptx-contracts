@@ -152,7 +152,6 @@
     "efficio_default_subtype": "approved",
     "efficio_subtype_policy": "ai_selectable",
     "efficio_missing_content_behavior": "leave_as_is",
-    "efficio_approval_block_subtypes": "{\"recommended\":{\"label\":\"Recommended\"},\"endorsed\":{\"label\":\"Endorsed\"},\"approved\":{\"label\":\"Approved\"}}",
-    "efficio_manually_reviewed": "false"
+    "efficio_approval_block_subtypes": "{\"recommended\":{\"label\":\"Recommended\"},\"endorsed\":{\"label\":\"Endorsed\"},\"approved\":{\"label\":\"Approved\"}}"
   }
 }

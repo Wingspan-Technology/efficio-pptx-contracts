@@ -32,6 +32,7 @@ type Layout = {
   sharedDir: string;
   componentsDir: string;
   slideDir: string;
+  deckDir: string;
   templateDir: string;
 };
 
@@ -43,6 +44,7 @@ export async function validateAllContracts(
     sharedDir: path.join(root, "shared"),
     componentsDir: path.join(root, "components"),
     slideDir: path.join(root, "presentation", "slide"),
+    deckDir: path.join(root, "presentation", "deck"),
     templateDir: path.join(root, "presentation", "template"),
   };
 
@@ -170,6 +172,27 @@ export async function validateAllContracts(
       const defaults = await readJson(path.join(layout.slideDir, "tags.defaults.json"));
       assertObject(defaults, slideDefaultsLabel);
       validateSlideDefaults(defaults, slideSchema as JsonObject, slideDefaultsLabel);
+    });
+  }
+
+  // 4b. Presentation deck: tag contract + defaults (presentation-level tags).
+  const deckTagsLabel = "contracts/presentation/deck/tags.contract.json";
+  let deckSchema: JsonObject | undefined;
+  await check(deckTagsLabel, async () => {
+    const schema = await readJson(path.join(layout.deckDir, "tags.contract.json"));
+    assertObject(schema, deckTagsLabel);
+    assertNoDefaults(schema, deckTagsLabel);
+    validateTagEntityContract(schema, deckTagsLabel, { slideContractType: "deck_tags" });
+    assertEfficioTagNames(schema, deckTagsLabel);
+    deckSchema = schema;
+  });
+
+  if (deckSchema !== undefined) {
+    const deckDefaultsLabel = "contracts/presentation/deck/tags.defaults.json";
+    await check(deckDefaultsLabel, async () => {
+      const defaults = await readJson(path.join(layout.deckDir, "tags.defaults.json"));
+      assertObject(defaults, deckDefaultsLabel);
+      validateSlideDefaults(defaults, deckSchema as JsonObject, deckDefaultsLabel);
     });
   }
 

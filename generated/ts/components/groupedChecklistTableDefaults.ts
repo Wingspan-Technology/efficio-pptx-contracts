@@ -3,7 +3,5 @@
 
 export const groupedChecklistTableDefaults = {
   "efficio_render_behavior": "render_by_component_type",
-  "efficio_manually_reviewed": "false",
-  "efficio_requires_manual_review": "true",
   "efficio_component_type": "grouped_checklist_table"
 } as const;

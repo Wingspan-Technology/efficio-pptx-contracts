@@ -17,7 +17,6 @@ const COMMON_REQUIRED = [
   "efficio_render_behavior",
   "efficio_component_id",
   "efficio_component_type",
-  "efficio_manually_reviewed",
 ];
 
 function readJson(filePath: string): JsonObject {
@@ -185,6 +184,18 @@ describe("generated json_schemas for object/array tags", () => {
     expect(jsonSchemas.efficio_table_config).toEqual(authoredConfigSchema);
   });
 
+  it("table cells require only row + col; render_action is optional and defaults to preserve", () => {
+    const configSchema = (readJson(generatedFileFor("table")).json_schemas as JsonObject)
+      .efficio_table_config as JsonObject;
+    const cellItems = ((configSchema.properties as JsonObject).cells as JsonObject)
+      .items as JsonObject;
+    expect(cellItems.required).toEqual(["row", "col"]);
+    expect((cellItems.properties as JsonObject).render_action).toMatchObject({
+      default: "preserve",
+      enum: ["render", "preserve"],
+    });
+  });
+
   it("native metadata preserves the schema on the efficio_groups entity", () => {
     const metadataTs = readFileSync(
       path.join(pkgRoot, "generated", "ts", "components", "componentMetadata.ts"),
@@ -240,13 +251,16 @@ describe("generated AI component instructions", () => {
     expect(tagInstructions).toHaveProperty("efficio_prompt_instruction");
     // tags without ai must not appear
     expect(tagInstructions).not.toHaveProperty("efficio_component_id");
-    expect(tagInstructions).not.toHaveProperty("efficio_manually_reviewed");
   });
 
-  it("text includes its ai-bearing component tags", () => {
+  it("text includes its ai-bearing component tags but not sizing mode", () => {
     const tags = aggregateComponents.text.tag_instructions as JsonObject;
     expect(tags).toHaveProperty("efficio_text_format");
-    expect(tags).toHaveProperty("efficio_sizing_mode");
+    expect(tags).toHaveProperty("efficio_max_chars");
+    expect(tags).toHaveProperty("efficio_max_lines");
+    expect(tags).toHaveProperty("efficio_max_chars_per_line");
+    // sizing mode is a required editor/runtime tag but is no longer AI-visible
+    expect(tags).not.toHaveProperty("efficio_sizing_mode");
   });
 
   it("grouped_checklist_table includes its ai-bearing efficio_groups tag", () => {

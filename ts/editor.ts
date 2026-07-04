@@ -12,6 +12,12 @@ import { componentMetadata } from "../generated/ts/components/componentMetadata"
 import { componentTypes } from "../generated/ts/components/componentTypes";
 import { tagSchemas } from "../generated/ts/components/tagSchemas";
 import { slideDefaults } from "../generated/ts/presentation/slideDefaults";
+import { deckDefaults } from "../generated/ts/presentation/deckDefaults";
+import {
+  deckTagSchema,
+  DECK_TEMPLATE_ID_TAG,
+  DECK_INITIALIZED_TAG,
+} from "../generated/ts/presentation/deckTagSchema";
 import {
   slideTagSchema,
   SLIDE_ID_TAG,
@@ -251,3 +257,19 @@ export {
   type SlidePlacement,
   type SlideInclusionPolicy,
 };
+
+// ---- Deck (presentation-level) contract surface ----
+
+export type DeckTagSchema = typeof deckTagSchema;
+export type DeckDefaults = typeof deckDefaults;
+
+export function getDeckTagContract(): DeckTagSchema {
+  return deckTagSchema;
+}
+
+// Returns a defensive copy so callers cannot mutate the generated defaults.
+export function getDeckTagDefaults(): DeckDefaults {
+  return { ...deckDefaults };
+}
+
+export { DECK_TEMPLATE_ID_TAG, DECK_INITIALIZED_TAG };

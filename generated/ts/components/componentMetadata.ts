@@ -59,22 +59,6 @@ export const componentMetadata = {
           "multiline": true
         }
       },
-      "efficio_manually_reviewed": {
-        "type": "boolean",
-        "required": true,
-        "description": "Whether a human has reviewed this component's tags.",
-        "ui": {
-          "order": 120
-        }
-      },
-      "efficio_requires_manual_review": {
-        "type": "boolean",
-        "required": false,
-        "description": "Whether this component should be flagged for manual review.",
-        "ui": {
-          "order": 110
-        }
-      },
       "efficio_approval_block_layout": {
         "type": "string",
         "required": true,
@@ -276,8 +260,6 @@ export const componentMetadata = {
     },
     "defaults": {
       "efficio_render_behavior": "render_by_component_type",
-      "efficio_manually_reviewed": "false",
-      "efficio_requires_manual_review": "true",
       "efficio_component_type": "approval_block",
       "efficio_approval_block_layout": "table_2row_person_role",
       "efficio_label_cell": "{\"row\":0,\"col\":0}",
@@ -345,22 +327,6 @@ export const componentMetadata = {
         "ui": {
           "order": 100,
           "multiline": true
-        }
-      },
-      "efficio_manually_reviewed": {
-        "type": "boolean",
-        "required": true,
-        "description": "Whether a human has reviewed this component's tags.",
-        "ui": {
-          "order": 120
-        }
-      },
-      "efficio_requires_manual_review": {
-        "type": "boolean",
-        "required": false,
-        "description": "Whether this component should be flagged for manual review.",
-        "ui": {
-          "order": 110
         }
       },
       "efficio_groups": {
@@ -448,8 +414,6 @@ export const componentMetadata = {
     },
     "defaults": {
       "efficio_render_behavior": "render_by_component_type",
-      "efficio_manually_reviewed": "false",
-      "efficio_requires_manual_review": "true",
       "efficio_component_type": "grouped_checklist_table"
     }
   },
@@ -511,26 +475,10 @@ export const componentMetadata = {
           "multiline": true
         }
       },
-      "efficio_manually_reviewed": {
-        "type": "boolean",
-        "required": true,
-        "description": "Whether a human has reviewed this component's tags.",
-        "ui": {
-          "order": 120
-        }
-      },
-      "efficio_requires_manual_review": {
-        "type": "boolean",
-        "required": false,
-        "description": "Whether this component should be flagged for manual review.",
-        "ui": {
-          "order": 110
-        }
-      },
       "efficio_table_config": {
         "type": "object",
         "required": true,
-        "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column policies and the required per-cell configuration (position, generation behavior, text format, and optional sizing hints).",
+        "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration (position plus an optional render action defaulting to preserve, text format, and optional sizing hints).",
         "ui": {
           "order": 50
         },
@@ -557,15 +505,14 @@ export const componentMetadata = {
                     "minimum": 0,
                     "description": "Zero-based row index this policy applies to."
                   },
-                  "behavior": {
+                  "content_policy": {
                     "type": "string",
                     "enum": [
-                      "static",
                       "required",
                       "optional"
                     ],
                     "default": "required",
-                    "description": "Generation policy for the row: static keeps existing content, required must be generated, optional may be generated."
+                    "description": "Content policy for the row: required means its cells should be filled, optional means they may be filled. Does not control rendering."
                   },
                   "instruction": {
                     "type": "string",
@@ -590,15 +537,14 @@ export const componentMetadata = {
                     "minimum": 0,
                     "description": "Zero-based column index this policy applies to."
                   },
-                  "behavior": {
+                  "content_policy": {
                     "type": "string",
                     "enum": [
-                      "static",
                       "required",
                       "optional"
                     ],
                     "default": "required",
-                    "description": "Generation policy for the column: static keeps existing content, required must be generated, optional may be generated."
+                    "description": "Content policy for the column: required means its cells should be filled, optional means they may be filled. Does not control rendering."
                   },
                   "instruction": {
                     "type": "string",
@@ -610,14 +556,13 @@ export const componentMetadata = {
             },
             "cells": {
               "type": "array",
-              "description": "Per-cell configuration. May be empty when no cells are configured (every cell is then left as authored / static).",
+              "description": "Per-cell configuration. May be empty when no cells are configured (every cell is then preserved / left as authored).",
               "items": {
                 "type": "object",
                 "additionalProperties": false,
                 "required": [
                   "row",
-                  "col",
-                  "behavior"
+                  "col"
                 ],
                 "properties": {
                   "row": {
@@ -630,14 +575,14 @@ export const componentMetadata = {
                     "minimum": 0,
                     "description": "Zero-based column index of the cell."
                   },
-                  "behavior": {
+                  "render_action": {
                     "type": "string",
                     "enum": [
-                      "static",
-                      "required",
-                      "optional"
+                      "render",
+                      "preserve"
                     ],
-                    "description": "Generation policy for the cell: static keeps existing content, required must be generated, optional may be generated."
+                    "default": "preserve",
+                    "description": "Whether the renderer writes into this cell: render allows AI-provided content to be written, preserve keeps the cell's existing content unchanged. Optional — a missing render_action means preserve."
                   },
                   "text_format": {
                     "type": "string",
@@ -679,8 +624,6 @@ export const componentMetadata = {
     },
     "defaults": {
       "efficio_render_behavior": "render_by_component_type",
-      "efficio_manually_reviewed": "false",
-      "efficio_requires_manual_review": "true",
       "efficio_component_type": "table",
       "efficio_table_config": "{\"cells\":[]}"
     }
@@ -743,22 +686,6 @@ export const componentMetadata = {
           "multiline": true
         }
       },
-      "efficio_manually_reviewed": {
-        "type": "boolean",
-        "required": true,
-        "description": "Whether a human has reviewed this component's tags.",
-        "ui": {
-          "order": 120
-        }
-      },
-      "efficio_requires_manual_review": {
-        "type": "boolean",
-        "required": false,
-        "description": "Whether this component should be flagged for manual review.",
-        "ui": {
-          "order": 110
-        }
-      },
       "efficio_text_format": {
         "type": "string",
         "required": true,
@@ -815,8 +742,6 @@ export const componentMetadata = {
     },
     "defaults": {
       "efficio_render_behavior": "render_by_component_type",
-      "efficio_manually_reviewed": "false",
-      "efficio_requires_manual_review": "true",
       "efficio_component_type": "text",
       "efficio_text_format": "plain",
       "efficio_sizing_mode": "auto",

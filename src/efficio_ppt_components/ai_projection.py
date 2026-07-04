@@ -53,20 +53,27 @@ def ai_visible_tag_names(component_type: str) -> frozenset[str]:
 
 
 def project_component_context(component_type: str, tags: Mapping[str, str]) -> dict[str, Any]:
-    """AI-safe per-instance context: ``component_type``, ``instructions``, ``tag_context``.
+    """AI-safe per-instance context: ``component_type``, optional ``instructions``, ``tag_context``.
 
     ``tag_context`` carries only AI-visible tag values (per the component
-    contract), excluding the render-behavior and prompt-instruction tags. No
-    shape paths, raw tags, or PowerPoint internals are included.
+    contract), excluding the render-behavior and prompt-instruction tags and any
+    tag whose value is blank (empty, spaces, or only newlines). No shape paths,
+    raw tags, or PowerPoint internals are included. ``instructions`` is included
+    only when ``efficio_prompt_instruction`` has a non-blank value (trimmed);
+    a missing or blank prompt omits the field entirely.
     """
     visible = ai_visible_tag_names(component_type)
     tag_context = {
         name: value
         for name, value in tags.items()
-        if name in visible and name not in _EXCLUDED_FROM_TAG_CONTEXT
+        if name in visible
+        and name not in _EXCLUDED_FROM_TAG_CONTEXT
+        and value.strip() != ""
     }
-    return {
-        "component_type": component_type,
-        "instructions": tags.get(PROMPT_INSTRUCTION_TAG, ""),
-        "tag_context": tag_context,
-    }
+
+    context: dict[str, Any] = {"component_type": component_type}
+    prompt = tags.get(PROMPT_INSTRUCTION_TAG, "").strip()
+    if prompt != "":
+        context["instructions"] = prompt
+    context["tag_context"] = tag_context
+    return context

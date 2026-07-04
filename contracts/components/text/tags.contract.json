@@ -29,14 +29,7 @@
       "required": true,
       "enum": ["auto", "manual"],
       "description": "Whether text sizing limits are inferred automatically or set manually.",
-      "ui": { "order": 60 },
-      "ai": {
-        "purpose": "Controls whether explicit character/line limits apply.",
-        "enum_descriptions": {
-          "auto": "Use the current default sizing values. Later, auto sizing will calculate and overwrite these values.",
-          "manual": "Preserve user-provided character and line limit values."
-        }
-      }
+      "ui": { "order": 60 }
     },
     "efficio_max_chars": {
       "type": "integer",
@@ -79,7 +72,6 @@
     "efficio_max_chars": "30",
     "efficio_max_lines": "30",
     "efficio_max_chars_per_line": "30",
-    "efficio_prompt_instruction": "Generate a concise executive slide title.",
-    "efficio_manually_reviewed": "true"
+    "efficio_prompt_instruction": "Generate a concise executive slide title."
   }
 }

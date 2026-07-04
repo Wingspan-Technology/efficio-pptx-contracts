@@ -3,8 +3,6 @@
 
 export const approvalBlockDefaults = {
   "efficio_render_behavior": "render_by_component_type",
-  "efficio_manually_reviewed": "false",
-  "efficio_requires_manual_review": "true",
   "efficio_component_type": "approval_block",
   "efficio_approval_block_layout": "table_2row_person_role",
   "efficio_label_cell": "{\"row\":0,\"col\":0}",
