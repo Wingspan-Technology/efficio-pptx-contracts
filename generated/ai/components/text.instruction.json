@@ -22,13 +22,13 @@
       }
     },
     "efficio_max_chars": {
-      "purpose": "Hard limit on the total number of characters the generated text may use."
+      "purpose": "Strict limit on the total number of characters the generated text may use. The generated content must never exceed it; shorten or compact the text until it fits."
     },
     "efficio_max_lines": {
-      "purpose": "Hard limit on the number of lines the generated text may use."
+      "purpose": "Strict limit on the number of lines the generated text may use. The generated content must never exceed it; shorten or compact the text until it fits."
     },
     "efficio_max_chars_per_line": {
-      "purpose": "Hard limit on the number of characters in any single line of the generated text."
+      "purpose": "Strict limit on the number of characters in any single line of the generated text. Each line must never exceed it; shorten or compact each line until it fits."
     }
   },
   "expected_content_schema": {

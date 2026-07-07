@@ -13,7 +13,7 @@
       "purpose": "Free-form instruction passed to content generation for this component."
     },
     "efficio_table_config": {
-      "purpose": "Describes the table's cells (and optional row/column content policies) so content is generated per cell. Each cell has an optional render_action that defaults to preserve: render cells receive generated content, preserve cells keep their existing content unchanged, and a cell with no render_action is preserved. Row/column content_policy (required or optional) guides which cells need content, not whether they render. text_format selects how a cell's text is structured; max_chars_per_item, max_lines, and max_chars_per_line are optional sizing hints to aim for, not hard limits."
+      "purpose": "Describes the table's cells (and optional row/column content policies) so content is generated per cell. Each cell has an optional render_action that defaults to preserve: render cells receive generated content, preserve cells keep their existing content unchanged, and a cell with no render_action is preserved. Row/column content_policy (required or optional) guides which cells need content, not whether they render. text_format selects how a cell's text is structured; max_chars_per_item, max_lines, and max_chars_per_line are strict limits: generated cell content must never exceed them — shorten or compact the content until it fits every provided limit."
     }
   },
   "expected_content_schema": {

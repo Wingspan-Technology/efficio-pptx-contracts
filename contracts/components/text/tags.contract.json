@@ -38,7 +38,7 @@
       "description": "Maximum total characters. MVP default is 30; auto sizing will later calculate this value.",
       "ui": { "order": 70 },
       "ai": {
-        "purpose": "Hard limit on the total number of characters the generated text may use."
+        "purpose": "Strict limit on the total number of characters the generated text may use. The generated content must never exceed it; shorten or compact the text until it fits."
       }
     },
     "efficio_max_lines": {
@@ -48,7 +48,7 @@
       "description": "Maximum number of lines. MVP default is 30; auto sizing will later calculate this value.",
       "ui": { "order": 80 },
       "ai": {
-        "purpose": "Hard limit on the number of lines the generated text may use."
+        "purpose": "Strict limit on the number of lines the generated text may use. The generated content must never exceed it; shorten or compact the text until it fits."
       }
     },
     "efficio_max_chars_per_line": {
@@ -58,7 +58,7 @@
       "description": "Maximum characters per line. MVP default is 30; auto sizing will later calculate this value.",
       "ui": { "order": 90 },
       "ai": {
-        "purpose": "Hard limit on the number of characters in any single line of the generated text."
+        "purpose": "Strict limit on the number of characters in any single line of the generated text. Each line must never exceed it; shorten or compact each line until it fits."
       }
     }
   },

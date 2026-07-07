@@ -380,17 +380,17 @@ export const componentMetadata = {
                   "min_items": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Minimum number of items this group should contain when generated."
+                    "description": "Minimum number of items this group must contain when generated — a strict requirement, not a hint."
                   },
                   "max_items": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Maximum number of items this group should contain when generated."
+                    "description": "Maximum number of items this group may contain when generated — a strict limit that must never be exceeded."
                   },
                   "max_chars_per_item": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Suggested maximum characters for each generated item — a sizing hint for generation, not a hard limit."
+                    "description": "Maximum characters for each generated item — a strict limit that must never be exceeded; shorten or compact items until they fit."
                   },
                   "prompt_instruction": {
                     "type": "string",
@@ -478,7 +478,7 @@ export const componentMetadata = {
       "efficio_table_config": {
         "type": "object",
         "required": true,
-        "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration (position plus an optional render action defaulting to preserve, text format, and optional sizing hints).",
+        "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration (position plus an optional render action defaulting to preserve, text format, and optional strict sizing limits).",
         "ui": {
           "order": 50
         },
@@ -603,17 +603,17 @@ export const componentMetadata = {
                   "max_chars_per_item": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Suggested maximum characters for each generated line/item in the cell — a sizing hint, not a hard limit."
+                    "description": "Maximum characters for each generated line/item in the cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
                   },
                   "max_lines": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Suggested maximum number of lines for this cell — a sizing hint, not a hard limit."
+                    "description": "Maximum number of lines for this cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
                   },
                   "max_chars_per_line": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Suggested maximum characters per line for this cell — a sizing hint, not a hard limit."
+                    "description": "Maximum characters per line for this cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
                   }
                 }
               }

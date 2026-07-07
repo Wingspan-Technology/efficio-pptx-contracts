@@ -14,7 +14,7 @@
       "description": "Table-level group definitions, stored as JSON text in the PowerPoint custom tag. Each group carries a stable key, a display label, an inclusion policy, and optional suggested items.",
       "ui": { "order": 50 },
       "ai": {
-        "purpose": "Defines the stable groups the table is built from. Each group's key, label, and inclusion_policy must be echoed back. suggested_items are author hints, not required output; min_items, max_items, and max_chars_per_item are optional sizing hints to aim for, not hard limits."
+        "purpose": "Defines the stable groups the table is built from. Each group's key, label, and inclusion_policy must be echoed back. suggested_items are author hints, not required output; min_items, max_items, and max_chars_per_item are strict requirements, not guidance: each generated group must contain at least min_items and at most max_items items, and each item must never exceed max_chars_per_item characters — shorten or compact items until every limit is satisfied."
       },
       "schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -48,17 +48,17 @@
                 "min_items": {
                   "type": "integer",
                   "minimum": 1,
-                  "description": "Minimum number of items this group should contain when generated."
+                  "description": "Minimum number of items this group must contain when generated — a strict requirement, not a hint."
                 },
                 "max_items": {
                   "type": "integer",
                   "minimum": 1,
-                  "description": "Maximum number of items this group should contain when generated."
+                  "description": "Maximum number of items this group may contain when generated — a strict limit that must never be exceeded."
                 },
                 "max_chars_per_item": {
                   "type": "integer",
                   "minimum": 1,
-                  "description": "Suggested maximum characters for each generated item — a sizing hint for generation, not a hard limit."
+                  "description": "Maximum characters for each generated item — a strict limit that must never be exceeded; shorten or compact items until they fit."
                 },
                 "prompt_instruction": {
                   "type": "string",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -340,6 +340,61 @@ describe("generated AI component instructions", () => {
       "expected_content_schema",
       "tag_instructions",
     ]);
+  });
+});
+
+describe("strict sizing instruction wording", () => {
+  const aggregate = readJson(path.join(pkgRoot, "generated", "ai", "component-instructions.json"));
+  const aggregateComponents = aggregate.component_instructions as Record<string, JsonObject>;
+
+  // Sizing/count fields are strict requirements for the AI; hint language must
+  // never come back through authored sources.
+  const FORBIDDEN_HINT_PHRASES = [
+    "soft ai hint",
+    "optional sizing hint",
+    "sizing hint",
+    "not hard limits",
+    "not a hard limit",
+  ];
+
+  function generatedFiles(dir: string): string[] {
+    return (readdirSync(dir, { recursive: true }) as string[])
+      .map((entry) => path.join(dir, entry))
+      .filter((entry) => /\.(json|ts)$/.test(entry));
+  }
+
+  function purposeOf(component: string, tag: string): string {
+    const tags = aggregateComponents[component].tag_instructions as JsonObject;
+    return (tags[tag] as JsonObject).purpose as string;
+  }
+
+  it("no generated output carries soft-hint sizing language", () => {
+    for (const file of generatedFiles(path.join(pkgRoot, "generated"))) {
+      const content = readFileSync(file, "utf8").toLowerCase();
+      for (const phrase of FORBIDDEN_HINT_PHRASES) {
+        expect(content, `${file} contains forbidden phrase "${phrase}"`).not.toContain(phrase);
+      }
+    }
+  });
+
+  it.each([
+    ["text", "efficio_max_chars"],
+    ["text", "efficio_max_lines"],
+    ["text", "efficio_max_chars_per_line"],
+    ["grouped_checklist_table", "efficio_groups"],
+    ["table", "efficio_table_config"],
+  ])("%s %s purpose demands strict, never-exceeded sizing", (component, tag) => {
+    const purpose = purposeOf(component, tag).toLowerCase();
+    expect(purpose).toContain("strict");
+    expect(purpose).toContain("must never exceed");
+    expect(purpose).toMatch(/shorten or compact/);
+  });
+
+  it("the general instruction calls sizing/count constraints strict requirements", () => {
+    const instruction = (aggregate.instruction as string).toLowerCase();
+    expect(instruction).toContain("strict requirements, not guidance");
+    expect(instruction).toContain("must never exceed");
+    expect(instruction).toMatch(/shorten or compact/);
   });
 });
 

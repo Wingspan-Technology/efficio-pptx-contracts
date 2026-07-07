@@ -70,7 +70,8 @@ Components:
 - `text` — text frame content (plain/paragraph/bullets/numbered), editor-estimated sizing.
 - `grouped_checklist_table` — table-shape-level grouped checklist (`efficio_groups`:
   each group's `key`/`label`/`inclusion_policy`, optional `suggested_items`, and the
-  soft sizing hints `min_items`/`max_items`/`max_chars_per_item`, which are never enforced).
+  sizing limits `min_items`/`max_items`/`max_chars_per_item` — the AI is instructed
+  to treat them as strict; the runtime never enforces them).
 - `approval_block` — table-backed but semantically approval/sign-off-specific: a
   person + role pair with an approval subtype (recommended/endorsed/approved),
   with object tags mapping the semantic slots onto table cells. Its content

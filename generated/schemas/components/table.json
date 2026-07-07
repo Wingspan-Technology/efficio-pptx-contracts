@@ -156,17 +156,17 @@
               "max_chars_per_item": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "Suggested maximum characters for each generated line/item in the cell — a sizing hint, not a hard limit."
+                "description": "Maximum characters for each generated line/item in the cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
               },
               "max_lines": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "Suggested maximum number of lines for this cell — a sizing hint, not a hard limit."
+                "description": "Maximum number of lines for this cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
               },
               "max_chars_per_line": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "Suggested maximum characters per line for this cell — a sizing hint, not a hard limit."
+                "description": "Maximum characters per line for this cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
               }
             }
           }

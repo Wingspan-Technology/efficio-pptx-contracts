@@ -11,10 +11,10 @@
     "efficio_table_config": {
       "type": "object",
       "required": true,
-      "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration (position plus an optional render action defaulting to preserve, text format, and optional sizing hints).",
+      "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration (position plus an optional render action defaulting to preserve, text format, and optional strict sizing limits).",
       "ui": { "order": 50 },
       "ai": {
-        "purpose": "Describes the table's cells (and optional row/column content policies) so content is generated per cell. Each cell has an optional render_action that defaults to preserve: render cells receive generated content, preserve cells keep their existing content unchanged, and a cell with no render_action is preserved. Row/column content_policy (required or optional) guides which cells need content, not whether they render. text_format selects how a cell's text is structured; max_chars_per_item, max_lines, and max_chars_per_line are optional sizing hints to aim for, not hard limits."
+        "purpose": "Describes the table's cells (and optional row/column content policies) so content is generated per cell. Each cell has an optional render_action that defaults to preserve: render cells receive generated content, preserve cells keep their existing content unchanged, and a cell with no render_action is preserved. Row/column content_policy (required or optional) guides which cells need content, not whether they render. text_format selects how a cell's text is structured; max_chars_per_item, max_lines, and max_chars_per_line are strict limits: generated cell content must never exceed them — shorten or compact the content until it fits every provided limit."
       },
       "schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -114,17 +114,17 @@
                 "max_chars_per_item": {
                   "type": "integer",
                   "minimum": 1,
-                  "description": "Suggested maximum characters for each generated line/item in the cell — a sizing hint, not a hard limit."
+                  "description": "Maximum characters for each generated line/item in the cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
                 },
                 "max_lines": {
                   "type": "integer",
                   "minimum": 1,
-                  "description": "Suggested maximum number of lines for this cell — a sizing hint, not a hard limit."
+                  "description": "Maximum number of lines for this cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
                 },
                 "max_chars_per_line": {
                   "type": "integer",
                   "minimum": 1,
-                  "description": "Suggested maximum characters per line for this cell — a sizing hint, not a hard limit."
+                  "description": "Maximum characters per line for this cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
                 }
               }
             }
