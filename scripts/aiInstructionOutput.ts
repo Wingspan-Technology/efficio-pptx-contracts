@@ -1,4 +1,4 @@
-import { getRecord, mergeNativeTags, type JsonObject } from "./contractLib.js";
+import { getRecord, mergeNativeTags, publicTagAlias, type JsonObject } from "./contractLib.js";
 
 // AI component instruction artifacts are derived entirely from authored tag `ai`
 // metadata (shared fragments + component tags) and the authored content contract.
@@ -33,15 +33,27 @@ export function extractAiTagInstructions(tags: JsonObject): JsonObject {
   return tagInstructions;
 }
 
+// Re-keys tag instructions by their public AI alias (efficio_ prefix stripped).
+// Component AI artifacts never expose raw tag names; slide-selection artifacts
+// keep raw names because their catalog embeds raw slide tags unchanged.
+export function aliasTagInstructionKeys(tagInstructions: JsonObject): JsonObject {
+  const aliased: JsonObject = {};
+  for (const [tag, instruction] of Object.entries(tagInstructions)) {
+    aliased[publicTagAlias(tag)] = instruction;
+  }
+  return aliased;
+}
+
 // Builds the per-component instruction artifact: tag instructions for tags that
-// declare `ai`, plus the authored content contract copied directly as the
-// expected content schema (a self-describing JSON Schema document; no wrapper).
+// declare `ai` (keyed by public alias), plus the authored content contract copied
+// directly as the expected content schema (a self-describing JSON Schema
+// document; no wrapper).
 export function buildComponentInstruction(sharedSchema: JsonObject, source: AiInstructionSource): JsonObject {
   const mergedTags = mergeNativeTags(sharedSchema, source.schema, source.label);
 
   return {
     component_type: source.componentType,
-    tag_instructions: extractAiTagInstructions(mergedTags),
+    tag_instructions: aliasTagInstructionKeys(extractAiTagInstructions(mergedTags)),
     expected_content_schema: source.contentContract,
   };
 }

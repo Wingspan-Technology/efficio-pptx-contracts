@@ -57,18 +57,20 @@ def test_is_ai_facing_only_for_render_by_component_type() -> None:
     assert sdk.is_ai_facing({}) is False
 
 
-def test_ai_visible_tag_names_come_from_contract_metadata() -> None:
+def test_ai_visible_tag_names_are_public_aliases() -> None:
     names = sdk.ai_visible_tag_names("text")
     assert {
-        "efficio_text_format",
-        "efficio_max_chars",
-        "efficio_max_lines",
-        "efficio_max_chars_per_line",
+        "text_format",
+        "max_chars",
+        "max_lines",
+        "max_chars_per_line",
     } <= names
+    # raw efficio_* names never appear in the AI-facing contract
+    assert not any(name.startswith("efficio_") for name in names)
     # sizing mode is a required editor/runtime tag but is no longer AI-visible
-    assert "efficio_sizing_mode" not in names
+    assert "sizing_mode" not in names
     # identity/runtime tags are not AI-visible
-    assert "efficio_component_id" not in names
+    assert "component_id" not in names
 
 
 def test_project_component_context_is_ai_safe() -> None:
@@ -84,17 +86,21 @@ def test_project_component_context_is_ai_safe() -> None:
     context = sdk.project_component_context("text", tags)
     assert context["component_type"] == "text"
     assert context["instructions"] == "Write a title."
+    # Keys are public aliases; integer tag values become JSON numbers.
     # efficio_sizing_mode is present on the shape but no longer AI-visible, so it is filtered out.
     assert context["tag_context"] == {
-        "efficio_text_format": "plain",
-        "efficio_max_chars": "30",
+        "text_format": "plain",
+        "max_chars": 30,
     }
     # render-behavior (filtering) and prompt-instruction (surfaced) never duplicated;
-    # identity/runtime tags never leak.
+    # identity/runtime tags never leak — under neither raw nor aliased names.
     for excluded in (
         "efficio_render_behavior",
+        "render_behavior",
         "efficio_prompt_instruction",
+        "prompt_instruction",
         "efficio_component_id",
+        "component_id",
     ):
         assert excluded not in context["tag_context"]
 
@@ -140,9 +146,50 @@ def test_project_component_context_omits_blank_tag_values() -> None:
     }
     context = sdk.project_component_context("text", tags)
     assert context["tag_context"] == {
-        "efficio_text_format": "plain",
-        "efficio_max_chars_per_line": "40",
+        "text_format": "plain",
+        "max_chars_per_line": 40,
     }
+
+
+def test_project_component_context_parses_json_object_tags() -> None:
+    tags = {
+        "efficio_render_behavior": "render_by_component_type",
+        "efficio_groups": '{"groups":[{"key":"now","label":"Do now","inclusion_policy":"always"}]}',
+    }
+    context = sdk.project_component_context("grouped_checklist_table", tags)
+    assert context["tag_context"] == {
+        "groups": {
+            "groups": [{"key": "now", "label": "Do now", "inclusion_policy": "always"}]
+        }
+    }
+
+
+def test_project_component_context_rejects_non_integer_value() -> None:
+    tags = {
+        "efficio_render_behavior": "render_by_component_type",
+        "efficio_max_chars": "thirty",
+    }
+    with pytest.raises(ValueError, match="efficio_max_chars"):
+        sdk.project_component_context("text", tags)
+
+
+def test_project_component_context_rejects_invalid_json_value() -> None:
+    tags = {
+        "efficio_render_behavior": "render_by_component_type",
+        "efficio_groups": "{not valid json",
+    }
+    with pytest.raises(ValueError, match="efficio_groups"):
+        sdk.project_component_context("grouped_checklist_table", tags)
+
+
+def test_project_component_context_ignores_non_efficio_tags() -> None:
+    tags = {
+        "efficio_render_behavior": "render_by_component_type",
+        "efficio_text_format": "plain",
+        "text_format": "bullets",  # foreign non-efficio tag never leaks in
+    }
+    context = sdk.project_component_context("text", tags)
+    assert context["tag_context"] == {"text_format": "plain"}
 
 
 def test_has_component_type() -> None:

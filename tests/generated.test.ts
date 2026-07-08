@@ -3,7 +3,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { mergeTagSchema, type JsonObject } from "../scripts/contractLib";
+import { mergeTagSchema, publicTagAlias, type JsonObject } from "../scripts/contractLib";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pkgRoot = path.resolve(here, "..");
@@ -248,24 +248,32 @@ describe("generated AI component instructions", () => {
       expect((instruction as JsonObject).purpose).toBeTypeOf("string");
     }
     // shared prompt instruction appears for every component
-    expect(tagInstructions).toHaveProperty("efficio_prompt_instruction");
+    expect(tagInstructions).toHaveProperty("prompt_instruction");
     // tags without ai must not appear
-    expect(tagInstructions).not.toHaveProperty("efficio_component_id");
+    expect(tagInstructions).not.toHaveProperty("component_id");
+  });
+
+  it.each(COMPONENTS)("%s tag_instructions keys are public aliases, never raw efficio_* names", (component) => {
+    const tagInstructions = aggregateComponents[component].tag_instructions as JsonObject;
+    for (const key of Object.keys(tagInstructions)) {
+      expect(key, `${component} tag_instructions key ${key}`).not.toMatch(/^efficio_/);
+    }
   });
 
   it("text includes its ai-bearing component tags but not sizing mode", () => {
     const tags = aggregateComponents.text.tag_instructions as JsonObject;
-    expect(tags).toHaveProperty("efficio_text_format");
-    expect(tags).toHaveProperty("efficio_max_chars");
-    expect(tags).toHaveProperty("efficio_max_lines");
-    expect(tags).toHaveProperty("efficio_max_chars_per_line");
+    expect(tags).toHaveProperty("text_format");
+    expect(tags).toHaveProperty("max_chars");
+    expect(tags).toHaveProperty("max_lines");
+    expect(tags).toHaveProperty("max_chars_per_line");
     // sizing mode is a required editor/runtime tag but is no longer AI-visible
-    expect(tags).not.toHaveProperty("efficio_sizing_mode");
+    expect(tags).not.toHaveProperty("sizing_mode");
   });
 
-  it("grouped_checklist_table includes its ai-bearing efficio_groups tag", () => {
+  it("grouped_checklist_table includes its ai-bearing groups tag (efficio_groups aliased)", () => {
     const tags = aggregateComponents.grouped_checklist_table.tag_instructions as JsonObject;
-    expect(tags).toHaveProperty("efficio_groups");
+    expect(tags).toHaveProperty("groups");
+    expect(tags).not.toHaveProperty("efficio_groups");
   });
 
   it.each(COMPONENTS)("%s: every AI-visible enum tag instruction has complete enum_descriptions", (component) => {
@@ -277,9 +285,11 @@ describe("generated AI component instructions", () => {
       const ai = ent.ai as JsonObject | undefined;
       const enumValues = ent.enum;
       if (!ai || !Array.isArray(enumValues) || enumValues.length === 0) continue;
-      // An AI-visible enum tag must reach the instructions with a description per value.
-      expect(tagInstructions).toHaveProperty(tag);
-      const descriptions = (tagInstructions[tag] as JsonObject).enum_descriptions as JsonObject;
+      // An AI-visible enum tag must reach the instructions (under its public
+      // alias) with a description per value.
+      const alias = publicTagAlias(tag);
+      expect(tagInstructions).toHaveProperty(alias);
+      const descriptions = (tagInstructions[alias] as JsonObject).enum_descriptions as JsonObject;
       expect(descriptions).toBeTypeOf("object");
       expect(Object.keys(descriptions).sort()).toEqual(enumValues.map((value) => String(value)).sort());
       for (const value of Object.values(descriptions)) {
@@ -291,7 +301,7 @@ describe("generated AI component instructions", () => {
 
   it("text exposes the sizing limit tags as AI-visible instructions", () => {
     const tags = aggregateComponents.text.tag_instructions as JsonObject;
-    for (const tag of ["efficio_max_chars", "efficio_max_lines", "efficio_max_chars_per_line"]) {
+    for (const tag of ["max_chars", "max_lines", "max_chars_per_line"]) {
       expect(tags).toHaveProperty(tag);
       expect((tags[tag] as JsonObject).purpose).toBeTypeOf("string");
       // numeric limits have no enum, so no enum_descriptions
@@ -302,18 +312,18 @@ describe("generated AI component instructions", () => {
   it("approval_block excludes private table cell-mapping tags but keeps the AI-visible ones", () => {
     const tags = aggregateComponents.approval_block.tag_instructions as JsonObject;
     for (const tag of [
-      "efficio_label_cell",
-      "efficio_name_cell",
-      "efficio_role_cell",
-      "efficio_approval_block_layout",
+      "label_cell",
+      "name_cell",
+      "role_cell",
+      "approval_block_layout",
     ]) {
       expect(tags).not.toHaveProperty(tag);
     }
     for (const tag of [
-      "efficio_default_subtype",
-      "efficio_subtype_policy",
-      "efficio_missing_content_behavior",
-      "efficio_approval_block_subtypes",
+      "default_subtype",
+      "subtype_policy",
+      "missing_content_behavior",
+      "approval_block_subtypes",
     ]) {
       expect(tags).toHaveProperty(tag);
     }
@@ -378,11 +388,11 @@ describe("strict sizing instruction wording", () => {
   });
 
   it.each([
-    ["text", "efficio_max_chars"],
-    ["text", "efficio_max_lines"],
-    ["text", "efficio_max_chars_per_line"],
-    ["grouped_checklist_table", "efficio_groups"],
-    ["table", "efficio_table_config"],
+    ["text", "max_chars"],
+    ["text", "max_lines"],
+    ["text", "max_chars_per_line"],
+    ["grouped_checklist_table", "groups"],
+    ["table", "table_config"],
   ])("%s %s purpose demands strict, never-exceeded sizing", (component, tag) => {
     const purpose = purposeOf(component, tag).toLowerCase();
     expect(purpose).toContain("strict");

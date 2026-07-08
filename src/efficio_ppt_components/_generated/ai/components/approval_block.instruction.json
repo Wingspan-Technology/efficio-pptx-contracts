@@ -1,7 +1,7 @@
 {
   "component_type": "approval_block",
   "tag_instructions": {
-    "efficio_render_behavior": {
+    "render_behavior": {
       "purpose": "Tells the renderer how to treat the shape.",
       "enum_descriptions": {
         "render_by_component_type": "Render the shape using its component type contract.",
@@ -9,10 +9,10 @@
         "remove_on_render": "Drop the shape from the rendered output (mock/preview only)."
       }
     },
-    "efficio_prompt_instruction": {
+    "prompt_instruction": {
       "purpose": "Free-form instruction passed to content generation for this component."
     },
-    "efficio_default_subtype": {
+    "default_subtype": {
       "purpose": "The approval subtype to use unless a more appropriate one is selected.",
       "enum_descriptions": {
         "recommended": "A recommendation that is not yet a formal sign-off.",
@@ -20,19 +20,19 @@
         "approved": "A final approval / sign-off."
       }
     },
-    "efficio_subtype_policy": {
+    "subtype_policy": {
       "purpose": "Whether generation may choose the approval subtype for this block.",
       "enum_descriptions": {
         "ai_selectable": "Generation may choose the approval subtype from the configured subtypes."
       }
     },
-    "efficio_missing_content_behavior": {
+    "missing_content_behavior": {
       "purpose": "What to do when no approval content is generated for this block.",
       "enum_descriptions": {
         "leave_as_is": "Keep an unselected/empty approval block unchanged rather than removing it."
       }
     },
-    "efficio_approval_block_subtypes": {
+    "approval_block_subtypes": {
       "purpose": "The display label to render for each approval subtype."
     }
   },

@@ -102,6 +102,19 @@ export function isValidEfficioTagName(tag: string): boolean {
   return EFFICIO_TAG_NAME_PATTERN.test(tag);
 }
 
+const EFFICIO_TAG_PREFIX = "efficio_";
+
+// Public AI alias of an internal tag name: the name with the `efficio_` prefix
+// stripped. AI-facing component artifacts (tag_instructions keys, per-instance
+// tag_context keys) expose only aliases; internal artifacts keep raw names.
+// Aliases cannot collide because every tag name carries the prefix.
+export function publicTagAlias(tag: string): string {
+  if (!isValidEfficioTagName(tag)) {
+    throw new Error(`Cannot build a public AI alias for invalid tag name ${JSON.stringify(tag)}.`);
+  }
+  return tag.slice(EFFICIO_TAG_PREFIX.length);
+}
+
 export function assertEfficioTagNames(schema: JsonObject, label: string): void {
   const tags = getRecord(schema, "tags");
   for (const tag of Object.keys(tags)) {

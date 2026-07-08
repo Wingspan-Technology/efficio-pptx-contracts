@@ -8,6 +8,7 @@ import {
   legacyEnum,
   legacyType,
   mergeTagSchema,
+  publicTagAlias,
   validateComponentDefaults,
   validateTagEntityContract,
   type JsonObject,
@@ -496,5 +497,17 @@ describe("Efficio tag-name convention", () => {
     const bad = validComponent();
     (bad.tags as JsonObject).BadName = { type: "string", required: false };
     expect(() => assertEfficioTagNames(bad, "c")).toThrow(/BadName is not a valid Efficio tag name/);
+  });
+
+  it("publicTagAlias strips the efficio_ prefix", () => {
+    expect(publicTagAlias("efficio_text_format")).toBe("text_format");
+    expect(publicTagAlias("efficio_max_chars_per_line")).toBe("max_chars_per_line");
+    expect(publicTagAlias("efficio_groups")).toBe("groups");
+  });
+
+  it("publicTagAlias rejects names outside the tag-name convention", () => {
+    for (const name of ["text_format", "efficio_Text", "efficio__x", ""]) {
+      expect(() => publicTagAlias(name)).toThrow(/public AI alias/);
+    }
   });
 });

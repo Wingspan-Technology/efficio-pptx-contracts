@@ -1,7 +1,7 @@
 {
   "component_type": "grouped_checklist_table",
   "tag_instructions": {
-    "efficio_render_behavior": {
+    "render_behavior": {
       "purpose": "Tells the renderer how to treat the shape.",
       "enum_descriptions": {
         "render_by_component_type": "Render the shape using its component type contract.",
@@ -9,10 +9,10 @@
         "remove_on_render": "Drop the shape from the rendered output (mock/preview only)."
       }
     },
-    "efficio_prompt_instruction": {
+    "prompt_instruction": {
       "purpose": "Free-form instruction passed to content generation for this component."
     },
-    "efficio_groups": {
+    "groups": {
       "purpose": "Defines the stable groups the table is built from. Each group's key, label, and inclusion_policy must be echoed back. suggested_items are author hints, not required output; min_items, max_items, and max_chars_per_item are strict requirements, not guidance: each generated group must contain at least min_items and at most max_items items, and each item must never exceed max_chars_per_item characters — shorten or compact items until every limit is satisfied."
     }
   },
