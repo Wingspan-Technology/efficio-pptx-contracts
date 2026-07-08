@@ -71,6 +71,9 @@ def test_ai_visible_tag_names_are_public_aliases() -> None:
     assert "sizing_mode" not in names
     # identity/runtime tags are not AI-visible
     assert "component_id" not in names
+    # structural tags never appear in tag_instructions (render filter / instructions surface)
+    assert "render_behavior" not in names
+    assert "prompt_instruction" not in names
 
 
 def test_project_component_context_is_ai_safe() -> None:

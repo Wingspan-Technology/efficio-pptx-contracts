@@ -247,10 +247,18 @@ describe("generated AI component instructions", () => {
     for (const instruction of Object.values(tagInstructions)) {
       expect((instruction as JsonObject).purpose).toBeTypeOf("string");
     }
-    // shared prompt instruction appears for every component
-    expect(tagInstructions).toHaveProperty("prompt_instruction");
     // tags without ai must not appear
     expect(tagInstructions).not.toHaveProperty("component_id");
+  });
+
+  it.each(COMPONENTS)("%s tag_instructions excludes the structural tags (they never reach tag_context)", (component) => {
+    const tagInstructions = aggregateComponents[component].tag_instructions as JsonObject;
+    // render_behavior filters AI-facing components; prompt_instruction surfaces
+    // as the per-instance top-level instructions field.
+    for (const structural of ["render_behavior", "prompt_instruction"]) {
+      expect(tagInstructions).not.toHaveProperty(structural);
+      expect(tagInstructions).not.toHaveProperty(`efficio_${structural}`);
+    }
   });
 
   it.each(COMPONENTS)("%s tag_instructions keys are public aliases, never raw efficio_* names", (component) => {
@@ -258,6 +266,16 @@ describe("generated AI component instructions", () => {
     for (const key of Object.keys(tagInstructions)) {
       expect(key, `${component} tag_instructions key ${key}`).not.toMatch(/^efficio_/);
     }
+  });
+
+  it.each(COMPONENTS)("%s instruction artifact contains no efficio_ anywhere in its JSON", (component) => {
+    // The whole content-generation artifact (tag_instructions keys, purposes,
+    // enum_descriptions, expected_content_schema prose) speaks public names only.
+    expect(JSON.stringify(aggregateComponents[component])).not.toContain("efficio_");
+  });
+
+  it("the aggregate component-instructions artifact contains no efficio_ anywhere", () => {
+    expect(JSON.stringify(aggregate)).not.toContain("efficio_");
   });
 
   it("text includes its ai-bearing component tags but not sizing mode", () => {

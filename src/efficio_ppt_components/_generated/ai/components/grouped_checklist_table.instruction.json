@@ -1,17 +1,6 @@
 {
   "component_type": "grouped_checklist_table",
   "tag_instructions": {
-    "render_behavior": {
-      "purpose": "Tells the renderer how to treat the shape.",
-      "enum_descriptions": {
-        "render_by_component_type": "Render the shape using its component type contract.",
-        "preserve": "Keep the shape exactly as authored; do not generate content for it.",
-        "remove_on_render": "Drop the shape from the rendered output (mock/preview only)."
-      }
-    },
-    "prompt_instruction": {
-      "purpose": "Free-form instruction passed to content generation for this component."
-    },
     "groups": {
       "purpose": "Defines the stable groups the table is built from. Each group's key, label, and inclusion_policy must be echoed back. suggested_items are author hints, not required output; min_items, max_items, and max_chars_per_item are strict requirements, not guidance: each generated group must contain at least min_items and at most max_items items, and each item must never exceed max_chars_per_item characters — shorten or compact items until every limit is satisfied."
     }
@@ -19,7 +8,7 @@
   "expected_content_schema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "component_type": "grouped_checklist_table",
-    "description": "Expected AI output for a grouped checklist table component. Each group echoes the stable key, label, and inclusion_policy from efficio_groups and adds generated items.",
+    "description": "Expected AI output for a grouped checklist table component. Each group echoes the stable key, label, and inclusion_policy from the component's tag_context.groups and adds generated items.",
     "type": "object",
     "additionalProperties": false,
     "required": [
@@ -42,12 +31,12 @@
             "key": {
               "type": "string",
               "minLength": 1,
-              "description": "Stable group identifier echoed from efficio_groups."
+              "description": "Stable group identifier echoed from tag_context.groups."
             },
             "label": {
               "type": "string",
               "minLength": 1,
-              "description": "Group heading echoed from efficio_groups."
+              "description": "Group heading echoed from tag_context.groups."
             },
             "inclusion_policy": {
               "type": "string",
@@ -58,7 +47,7 @@
                 "prefer_drop",
                 "never"
               ],
-              "description": "Inclusion policy echoed from efficio_groups."
+              "description": "Inclusion policy echoed from tag_context.groups."
             },
             "items": {
               "type": "array",

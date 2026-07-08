@@ -24,10 +24,7 @@
       "type": "string",
       "required": false,
       "description": "Optional author guidance used when generating content for this component.",
-      "ui": { "order": 100, "multiline": true },
-      "ai": {
-        "purpose": "Free-form instruction passed to content generation for this component."
-      }
+      "ui": { "order": 100, "multiline": true }
     }
   }
 }

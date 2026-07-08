@@ -15,11 +15,12 @@ typed for AI consumption: integer tags become ``int``, object/array tags are
 parsed into real JSON values, strings/enums stay strings. Internal artifacts,
 PowerPoint tags, the editor, and validation keep raw ``efficio_*`` names.
 
-Two AI-visible tags are handled structurally and never copied into
-``tag_context``:
+Two structural tags are consumed by dedicated paths and appear in neither
+``tag_instructions`` nor ``tag_context`` (their contracts declare no ``ai``):
 
-- ``efficio_render_behavior`` — used only to decide AI-facing inclusion;
-- ``efficio_prompt_instruction`` — surfaced as the component ``instructions``.
+- ``efficio_render_behavior`` — decides AI-facing inclusion (``is_ai_facing``);
+- ``efficio_prompt_instruction`` — surfaced per instance as the top-level
+  ``instructions`` field.
 
 The projection never includes shape paths, raw tag maps, table/cell coordinates,
 PowerPoint object ids, or any tag without ``ai``.
@@ -38,7 +39,8 @@ RENDER_BEHAVIOR_TAG = "efficio_render_behavior"
 AI_FACING_RENDER_BEHAVIOR = "render_by_component_type"
 PROMPT_INSTRUCTION_TAG = "efficio_prompt_instruction"
 
-# AI-visible tags handled structurally rather than copied into tag_context.
+# Structural tags never copied into tag_context, independent of contract state —
+# a guard even if a contract were to (re)declare ai on them.
 _EXCLUDED_FROM_TAG_CONTEXT = frozenset({RENDER_BEHAVIOR_TAG, PROMPT_INSTRUCTION_TAG})
 
 _TAG_PREFIX = "efficio_"

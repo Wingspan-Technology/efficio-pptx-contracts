@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "component_type": "grouped_checklist_table",
-  "description": "Expected AI output for a grouped checklist table component. Each group echoes the stable key, label, and inclusion_policy from efficio_groups and adds generated items.",
+  "description": "Expected AI output for a grouped checklist table component. Each group echoes the stable key, label, and inclusion_policy from the component's tag_context.groups and adds generated items.",
   "type": "object",
   "additionalProperties": false,
   "required": ["groups"],
@@ -17,17 +17,17 @@
           "key": {
             "type": "string",
             "minLength": 1,
-            "description": "Stable group identifier echoed from efficio_groups."
+            "description": "Stable group identifier echoed from tag_context.groups."
           },
           "label": {
             "type": "string",
             "minLength": 1,
-            "description": "Group heading echoed from efficio_groups."
+            "description": "Group heading echoed from tag_context.groups."
           },
           "inclusion_policy": {
             "type": "string",
             "enum": ["always", "prefer_keep", "when_relevant", "prefer_drop", "never"],
-            "description": "Inclusion policy echoed from efficio_groups."
+            "description": "Inclusion policy echoed from tag_context.groups."
           },
           "items": {
             "type": "array",

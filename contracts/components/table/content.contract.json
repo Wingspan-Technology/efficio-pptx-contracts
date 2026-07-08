@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "component_type": "table",
-  "description": "Expected AI output for a generic table component. The response lists only cells the AI intends to fill. Table configuration, cell render actions, row/column content policies, and PowerPoint structure are defined by efficio_table_config.",
+  "description": "Expected AI output for a generic table component. The response lists only cells the AI intends to fill. Table configuration, cell render actions, row/column content policies, and PowerPoint structure are defined by the component's tag_context.table_config.",
   "type": "object",
   "additionalProperties": false,
   "required": ["cells"],

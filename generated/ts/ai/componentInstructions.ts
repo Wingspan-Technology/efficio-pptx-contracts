@@ -6,17 +6,6 @@ export const componentInstructions = {
     "approval_block": {
       "component_type": "approval_block",
       "tag_instructions": {
-        "render_behavior": {
-          "purpose": "Tells the renderer how to treat the shape.",
-          "enum_descriptions": {
-            "render_by_component_type": "Render the shape using its component type contract.",
-            "preserve": "Keep the shape exactly as authored; do not generate content for it.",
-            "remove_on_render": "Drop the shape from the rendered output (mock/preview only)."
-          }
-        },
-        "prompt_instruction": {
-          "purpose": "Free-form instruction passed to content generation for this component."
-        },
         "default_subtype": {
           "purpose": "The approval subtype to use unless a more appropriate one is selected.",
           "enum_descriptions": {
@@ -81,17 +70,6 @@ export const componentInstructions = {
     "grouped_checklist_table": {
       "component_type": "grouped_checklist_table",
       "tag_instructions": {
-        "render_behavior": {
-          "purpose": "Tells the renderer how to treat the shape.",
-          "enum_descriptions": {
-            "render_by_component_type": "Render the shape using its component type contract.",
-            "preserve": "Keep the shape exactly as authored; do not generate content for it.",
-            "remove_on_render": "Drop the shape from the rendered output (mock/preview only)."
-          }
-        },
-        "prompt_instruction": {
-          "purpose": "Free-form instruction passed to content generation for this component."
-        },
         "groups": {
           "purpose": "Defines the stable groups the table is built from. Each group's key, label, and inclusion_policy must be echoed back. suggested_items are author hints, not required output; min_items, max_items, and max_chars_per_item are strict requirements, not guidance: each generated group must contain at least min_items and at most max_items items, and each item must never exceed max_chars_per_item characters — shorten or compact items until every limit is satisfied."
         }
@@ -99,7 +77,7 @@ export const componentInstructions = {
       "expected_content_schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "component_type": "grouped_checklist_table",
-        "description": "Expected AI output for a grouped checklist table component. Each group echoes the stable key, label, and inclusion_policy from efficio_groups and adds generated items.",
+        "description": "Expected AI output for a grouped checklist table component. Each group echoes the stable key, label, and inclusion_policy from the component's tag_context.groups and adds generated items.",
         "type": "object",
         "additionalProperties": false,
         "required": [
@@ -122,12 +100,12 @@ export const componentInstructions = {
                 "key": {
                   "type": "string",
                   "minLength": 1,
-                  "description": "Stable group identifier echoed from efficio_groups."
+                  "description": "Stable group identifier echoed from tag_context.groups."
                 },
                 "label": {
                   "type": "string",
                   "minLength": 1,
-                  "description": "Group heading echoed from efficio_groups."
+                  "description": "Group heading echoed from tag_context.groups."
                 },
                 "inclusion_policy": {
                   "type": "string",
@@ -138,7 +116,7 @@ export const componentInstructions = {
                     "prefer_drop",
                     "never"
                   ],
-                  "description": "Inclusion policy echoed from efficio_groups."
+                  "description": "Inclusion policy echoed from tag_context.groups."
                 },
                 "items": {
                   "type": "array",
@@ -158,17 +136,6 @@ export const componentInstructions = {
     "table": {
       "component_type": "table",
       "tag_instructions": {
-        "render_behavior": {
-          "purpose": "Tells the renderer how to treat the shape.",
-          "enum_descriptions": {
-            "render_by_component_type": "Render the shape using its component type contract.",
-            "preserve": "Keep the shape exactly as authored; do not generate content for it.",
-            "remove_on_render": "Drop the shape from the rendered output (mock/preview only)."
-          }
-        },
-        "prompt_instruction": {
-          "purpose": "Free-form instruction passed to content generation for this component."
-        },
         "table_config": {
           "purpose": "Describes the table's cells (and optional row/column content policies) so content is generated per cell. Each cell has an optional render_action that defaults to preserve: render cells receive generated content, preserve cells keep their existing content unchanged, and a cell with no render_action is preserved. Row/column content_policy (required or optional) guides which cells need content, not whether they render. text_format selects how a cell's text is structured; max_chars_per_item, max_lines, and max_chars_per_line are strict limits: generated cell content must never exceed them — shorten or compact the content until it fits every provided limit."
         }
@@ -176,7 +143,7 @@ export const componentInstructions = {
       "expected_content_schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "component_type": "table",
-        "description": "Expected AI output for a generic table component. The response lists only cells the AI intends to fill. Table configuration, cell render actions, row/column content policies, and PowerPoint structure are defined by efficio_table_config.",
+        "description": "Expected AI output for a generic table component. The response lists only cells the AI intends to fill. Table configuration, cell render actions, row/column content policies, and PowerPoint structure are defined by the component's tag_context.table_config.",
         "type": "object",
         "additionalProperties": false,
         "required": [
@@ -222,17 +189,6 @@ export const componentInstructions = {
     "text": {
       "component_type": "text",
       "tag_instructions": {
-        "render_behavior": {
-          "purpose": "Tells the renderer how to treat the shape.",
-          "enum_descriptions": {
-            "render_by_component_type": "Render the shape using its component type contract.",
-            "preserve": "Keep the shape exactly as authored; do not generate content for it.",
-            "remove_on_render": "Drop the shape from the rendered output (mock/preview only)."
-          }
-        },
-        "prompt_instruction": {
-          "purpose": "Free-form instruction passed to content generation for this component."
-        },
         "text_format": {
           "purpose": "Selects the structural format of generated text.",
           "enum_descriptions": {
