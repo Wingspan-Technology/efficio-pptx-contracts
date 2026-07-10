@@ -39,6 +39,7 @@ from .tag_validation import (
     validate_component_tags,
     validate_slide_tags,
 )
+from .validation_schema import build_validation_content_schema
 
 __all__ = [
     "EfficioComponentsError",
@@ -63,4 +64,5 @@ __all__ = [
     "load_slide_tag_contract",
     "validate_component_tags",
     "validate_slide_tags",
+    "build_validation_content_schema",
 ]

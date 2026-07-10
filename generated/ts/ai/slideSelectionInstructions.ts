@@ -41,10 +41,6 @@ export const slideSelectionInstructions = {
             "slide_id": {
               "type": "string",
               "minLength": 1
-            },
-            "selection_reason": {
-              "type": "string",
-              "maxLength": 300
             }
           },
           "additionalProperties": false

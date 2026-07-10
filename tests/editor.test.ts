@@ -16,6 +16,7 @@ import {
   hasComponentType,
   listComponentCompatibilityTagSchemas,
   listComponentTypes,
+  validateTextSizingSemantics,
   DECK_TEMPLATE_ID_TAG,
   DECK_INITIALIZED_TAG,
   SLIDE_ID_TAG,
@@ -23,7 +24,7 @@ import {
   SLIDE_PURPOSE_MAX_LENGTH,
 } from "../ts/editor";
 
-const EXPECTED_TYPES = ["approval_block", "grouped_checklist_table", "table", "text"];
+const EXPECTED_TYPES = ["category_chart", "table", "text"];
 
 describe("editor SDK component metadata", () => {
   it("lists the same component types as the generated metadata", () => {
@@ -47,7 +48,8 @@ describe("editor SDK component metadata", () => {
     expect(tags.efficio_component_type.enum).toEqual(["text"]);
     const defaults = getComponentTagDefaults("text");
     expect(defaults.efficio_sizing_mode).toBe("auto");
-    expect(defaults.efficio_max_chars).toBe("30");
+    // Sizing tags carry no static default; they are filled by auto sizing or manually.
+    expect(defaults.efficio_max_chars).toBeUndefined();
   });
 
   it("returns a defensive copy of defaults", () => {
@@ -137,5 +139,78 @@ describe("editor SDK deck surface", () => {
     expect((getDeckTagDefaults() as Record<string, string>).efficio_template_id).toBe(
       "default_template"
     );
+  });
+});
+
+describe("validateTextSizingSemantics (SDK cross-field text rule)", () => {
+  const base = { efficio_component_type: "text", efficio_max_chars: "30" };
+
+  it("passes when the optional target_chars is absent", () => {
+    expect(validateTextSizingSemantics(base)).toEqual([]);
+  });
+
+  it("passes when target_chars <= max_chars", () => {
+    expect(validateTextSizingSemantics({ ...base, efficio_target_chars: "20" })).toEqual([]);
+    expect(validateTextSizingSemantics({ ...base, efficio_target_chars: "30" })).toEqual([]);
+  });
+
+  it("flags target_chars > max_chars on efficio_target_chars", () => {
+    const issues = validateTextSizingSemantics({ ...base, efficio_target_chars: "45" });
+    expect(issues).toHaveLength(1);
+    expect(issues[0].code).toBe("target_exceeds_max");
+    expect(issues[0].tag).toBe("efficio_target_chars");
+  });
+
+  it("skips the comparison when either value is not a positive integer", () => {
+    expect(
+      validateTextSizingSemantics({ efficio_max_chars: "oops", efficio_target_chars: "45" })
+    ).toEqual([]);
+    expect(
+      validateTextSizingSemantics({ efficio_max_chars: "30", efficio_target_chars: "0" })
+    ).toEqual([]);
+  });
+
+  it("flags min_items > max_items and min_chars_per_item > max_chars_per_item", () => {
+    const items = validateTextSizingSemantics({ efficio_min_items: "4", efficio_max_items: "2" });
+    expect(items).toEqual([
+      expect.objectContaining({ code: "min_exceeds_max", tag: "efficio_min_items" }),
+    ]);
+    const perItem = validateTextSizingSemantics({
+      efficio_min_chars_per_item: "40",
+      efficio_max_chars_per_item: "20",
+    });
+    expect(perItem).toEqual([
+      expect.objectContaining({ code: "min_exceeds_max", tag: "efficio_min_chars_per_item" }),
+    ]);
+  });
+
+  it("bounds target_chars_per_item within [min, max] per item", () => {
+    expect(
+      validateTextSizingSemantics({
+        efficio_max_chars_per_item: "20",
+        efficio_target_chars_per_item: "45",
+      })
+    ).toEqual([
+      expect.objectContaining({ code: "target_exceeds_max", tag: "efficio_target_chars_per_item" }),
+    ]);
+    expect(
+      validateTextSizingSemantics({
+        efficio_min_chars_per_item: "10",
+        efficio_target_chars_per_item: "5",
+      })
+    ).toEqual([
+      expect.objectContaining({ code: "target_below_min", tag: "efficio_target_chars_per_item" }),
+    ]);
+  });
+
+  it("requires plain text to be exactly one item", () => {
+    const issues = validateTextSizingSemantics({
+      efficio_text_format: "plain",
+      efficio_min_items: "1",
+      efficio_max_items: "3",
+    });
+    expect(issues).toEqual([
+      expect.objectContaining({ code: "plain_requires_single_item", tag: "efficio_max_items" }),
+    ]);
   });
 });

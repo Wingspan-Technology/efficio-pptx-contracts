@@ -18,8 +18,8 @@ under `contracts/`, separate from the Python SDK under `src/`.
 contracts/            # authored source of truth (not Python modules)
   components/
     text/
-    grouped_checklist_table/
-    approval_block/
+    table/
+    category_chart/
   presentation/
     slide/
     template/
@@ -52,13 +52,18 @@ Each component under `contracts/components/{component}/` must have:
 - `content.contract.json`;
 - `tags.defaults.json`.
 
-Text sizing fields are normal required tags. The current MVP defaults
-`efficio_max_chars`, `efficio_max_lines`, and `efficio_max_chars_per_line` to
-`"30"`; `efficio_sizing_mode = auto` uses those defaults until real sizing
-calculation is implemented.
+`efficio_max_chars` and the item-level limits `efficio_min_items` /
+`efficio_max_items` / `efficio_min_chars_per_item` / `efficio_max_chars_per_item`
+are required with **no static default** — authored, entered manually, or populated
+by the editor's auto sizing estimate. The item limits apply to every string in the
+content's `items[]` and drive `validation.json` (item count + per-item length;
+`plain` is exactly one item). `efficio_target_chars` and
+`efficio_target_chars_per_item` are **optional** AI guidance (preferred lengths, not
+maximums); when present they must fit within their strict bounds and never appear in
+`validation.json`. Per-item line limits are intentionally deferred.
 
 Tag entities are typed `string`, `integer`, `boolean`, `object`, or `array`.
-Object/array tags (e.g. `grouped_checklist_table`'s `efficio_groups`) are stored
+Object/array tags (e.g. `table`'s `efficio_table_config`) are stored
 as JSON text in the PowerPoint custom tag and must declare a `schema` (a JSON
 Schema document, AJV-validated by the generator); scalar tags must not declare a
 `schema`. The generated compatibility schema maps them to the logical types
@@ -68,15 +73,15 @@ keyed by tag name; the native metadata keeps the `schema` on the tag entity.
 Components:
 
 - `text` — text frame content (plain/paragraph/bullets/numbered), editor-estimated sizing.
-- `grouped_checklist_table` — table-shape-level grouped checklist (`efficio_groups`:
-  each group's `key`/`label`/`inclusion_policy`, optional `suggested_items`, and the
-  sizing limits `min_items`/`max_items`/`max_chars_per_item` — the AI is instructed
-  to treat them as strict; the runtime never enforces them).
-- `approval_block` — table-backed but semantically approval/sign-off-specific: a
-  person + role pair with an approval subtype (recommended/endorsed/approved),
-  with object tags mapping the semantic slots onto table cells. Its content
-  contract is **nullable** (`null` leaves the block unchanged) — the pattern for
-  optional components. Contract/editor-supported only; not rendered yet.
+- `table` — generic coordinate-anchored table (`efficio_table_config`: per-cell
+  `{row, col}` config with an optional `render_action` of render/preserve, text
+  format, and per-cell sizing limits; optional per-row/column `content_policy` —
+  the AI is instructed to treat sizing limits as strict; the runtime does not enforce them).
+- `category_chart` — chart component driven by flat tags (`efficio_chart_type`,
+  `efficio_category_mode`/`efficio_series_mode`, the fixed `efficio_categories` /
+  `efficio_series_names` arrays, count boundaries/targets, and value formatting — no
+  config object tag). Rendered by `efficio-ppt-generation` for the six 2D column/bar
+  chart types.
 
 Slide and template contracts live under `contracts/presentation/`. Shared
 reusable contract fragments live under `contracts/shared/`.
@@ -172,7 +177,20 @@ Public API:
   constraint rules. Object/array (`json_object` / `json_array`) tag values are
   parsed from JSON and validated against the generated `json_schemas` entry with
   `jsonschema` (the package's one runtime dependency), reporting readable
-  `invalid_json` and `schema_violation` issues.
+  `invalid_json` and `schema_violation` issues;
+- `validation_schema`: `build_validation_content_schema(component_type, tags)` —
+  the per-instance `content` JSON Schema the importer writes into the
+  `slide-components/{slide_id}/validation.json` content-validation artifact. It deep-copies the
+  type's authored `expected_content_schema` and applies instance limits parsed
+  from the raw `efficio_*` tags (text: item count/length caps from the sizing
+  tags; table: allowed render-cell coordinates, per-cell limits, and
+  required-cell `contains` rules from `efficio_table_config`). Every registered
+  type is supported, so a schema is always returned; an unknown type raises
+  `UnknownComponentTypeError`, and missing/invalid limit tags raise instead of
+  emitting a permissive schema.
+  Multi-item text caps per-item length and item count but not the aggregate
+  `max_chars` across items — JSON Schema cannot sum item lengths, so DMS enforces
+  the total later.
 
 There are no per-component Python builder modules or top-level Python scaffolds;
 the `efficio_ppt_components` SDK is the only supported Python API. The old

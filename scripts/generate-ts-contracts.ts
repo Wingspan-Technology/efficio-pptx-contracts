@@ -85,7 +85,6 @@ async function clearObsoleteGeneratedOutputs(): Promise<void> {
     rm(path.join(tsOutputDir, "componentMetadata.ts"), { force: true }),
     rm(path.join(tsOutputDir, "componentTypes.ts"), { force: true }),
     rm(path.join(tsOutputDir, "tagSchemas.ts"), { force: true }),
-    rm(path.join(tsOutputDir, "groupedChecklistDefaults.ts"), { force: true }),
     rm(path.join(tsOutputDir, "imageDefaults.ts"), { force: true }),
     rm(path.join(tsOutputDir, "textDefaults.ts"), { force: true }),
     rm(path.join(tsOutputDir, "slideTagSchema.ts"), { force: true }),

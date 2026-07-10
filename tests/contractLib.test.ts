@@ -252,7 +252,7 @@ describe("object/array (structured) tag entities", () => {
   const schema: JsonObject = { type: "object", properties: {} };
 
   it("accepts an object tag with a valid embedded schema", () => {
-    const ok: JsonObject = { tags: { efficio_groups: { type: "object", required: true, schema } } };
+    const ok: JsonObject = { tags: { efficio_config: { type: "object", required: true, schema } } };
     expect(() => validateTagEntityContract(ok, "c", {})).not.toThrow();
   });
 
@@ -353,11 +353,11 @@ describe("mergeTagSchema", () => {
 
     const groupsSchema: JsonObject = { type: "object", properties: { groups: { type: "array" } } };
     const withObject = validComponent();
-    (withObject.tags as JsonObject).efficio_groups = { type: "object", required: true, schema: groupsSchema };
+    (withObject.tags as JsonObject).efficio_config = { type: "object", required: true, schema: groupsSchema };
     const result = mergeTagSchema(validCommon, withObject, "contracts/components/x/tags.contract.json", COMMON_LABELS);
 
-    expect((result.types as JsonObject).efficio_groups).toBe("json_object");
-    expect(result.json_schemas).toEqual({ efficio_groups: groupsSchema });
+    expect((result.types as JsonObject).efficio_config).toBe("json_object");
+    expect(result.json_schemas).toEqual({ efficio_config: groupsSchema });
   });
 });
 
@@ -441,7 +441,7 @@ describe("validateComponentDefaults", () => {
 describe("validateComponentDefaults — object/array (structured) defaults", () => {
   function structuredTagSchema(): JsonObject {
     const component = validComponent();
-    (component.tags as JsonObject).efficio_groups = {
+    (component.tags as JsonObject).efficio_config = {
       type: "object",
       required: false,
       schema: {
@@ -457,20 +457,20 @@ describe("validateComponentDefaults — object/array (structured) defaults", () 
   const tagSchema = structuredTagSchema();
 
   it("accepts a structured default that parses and matches its embedded schema", () => {
-    expect(() => validateComponentDefaults({ efficio_groups: '{"count":2}' }, tagSchema, "d")).not.toThrow();
+    expect(() => validateComponentDefaults({ efficio_config: '{"count":2}' }, tagSchema, "d")).not.toThrow();
   });
 
   it("rejects a structured default that is not valid JSON text", () => {
-    expect(() => validateComponentDefaults({ efficio_groups: "{not json" }, tagSchema, "d")).toThrow(
+    expect(() => validateComponentDefaults({ efficio_config: "{not json" }, tagSchema, "d")).toThrow(
       /must be valid JSON text/,
     );
   });
 
   it("rejects a structured default that parses but violates the embedded schema", () => {
-    expect(() => validateComponentDefaults({ efficio_groups: '{"count":-1}' }, tagSchema, "d")).toThrow(
+    expect(() => validateComponentDefaults({ efficio_config: '{"count":-1}' }, tagSchema, "d")).toThrow(
       /does not match its tag schema/,
     );
-    expect(() => validateComponentDefaults({ efficio_groups: '{"other":1}' }, tagSchema, "d")).toThrow(
+    expect(() => validateComponentDefaults({ efficio_config: '{"other":1}' }, tagSchema, "d")).toThrow(
       /does not match its tag schema/,
     );
   });
@@ -478,7 +478,7 @@ describe("validateComponentDefaults — object/array (structured) defaults", () 
 
 describe("Efficio tag-name convention", () => {
   it("accepts efficio_ snake_case names", () => {
-    for (const name of ["efficio_text_format", "efficio_max_chars_per_line", "efficio_slide_id", "efficio_groups"]) {
+    for (const name of ["efficio_text_format", "efficio_max_chars_per_line", "efficio_slide_id", "efficio_config"]) {
       expect(isValidEfficioTagName(name)).toBe(true);
     }
   });
@@ -502,7 +502,7 @@ describe("Efficio tag-name convention", () => {
   it("publicTagAlias strips the efficio_ prefix", () => {
     expect(publicTagAlias("efficio_text_format")).toBe("text_format");
     expect(publicTagAlias("efficio_max_chars_per_line")).toBe("max_chars_per_line");
-    expect(publicTagAlias("efficio_groups")).toBe("groups");
+    expect(publicTagAlias("efficio_config")).toBe("config");
   });
 
   it("publicTagAlias rejects names outside the tag-name convention", () => {

@@ -1,6 +1,5 @@
 export const componentTypes = [
-  "approval_block",
-  "grouped_checklist_table",
+  "category_chart",
   "table",
   "text"
 ] as const;

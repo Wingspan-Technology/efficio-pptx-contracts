@@ -2,15 +2,10 @@
 
 export const componentRegistry = {
   "components": {
-    "approval_block": {
-      "tags_contract": "contracts/components/approval_block/tags.contract.json",
-      "content_contract": "contracts/components/approval_block/content.contract.json",
-      "tags_defaults": "contracts/components/approval_block/tags.defaults.json"
-    },
-    "grouped_checklist_table": {
-      "tags_contract": "contracts/components/grouped_checklist_table/tags.contract.json",
-      "content_contract": "contracts/components/grouped_checklist_table/content.contract.json",
-      "tags_defaults": "contracts/components/grouped_checklist_table/tags.defaults.json"
+    "category_chart": {
+      "tags_contract": "contracts/components/category_chart/tags.contract.json",
+      "content_contract": "contracts/components/category_chart/content.contract.json",
+      "tags_defaults": "contracts/components/category_chart/tags.defaults.json"
     },
     "table": {
       "tags_contract": "contracts/components/table/tags.contract.json",

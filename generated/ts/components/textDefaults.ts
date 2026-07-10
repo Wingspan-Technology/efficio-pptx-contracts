@@ -5,8 +5,5 @@ export const textDefaults = {
   "efficio_render_behavior": "render_by_component_type",
   "efficio_component_type": "text",
   "efficio_text_format": "plain",
-  "efficio_sizing_mode": "auto",
-  "efficio_max_chars": "30",
-  "efficio_max_lines": "30",
-  "efficio_max_chars_per_line": "30"
+  "efficio_sizing_mode": "auto"
 } as const;

@@ -3,8 +3,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { approvalBlockDefaults } from "../generated/ts/components/approvalBlockDefaults";
-import { groupedChecklistTableDefaults } from "../generated/ts/components/groupedChecklistTableDefaults";
+import { categoryChartDefaults } from "../generated/ts/components/categoryChartDefaults";
+import { tableDefaults } from "../generated/ts/components/tableDefaults";
 import { textDefaults } from "../generated/ts/components/textDefaults";
 import { slideDefaults } from "../generated/ts/presentation/slideDefaults";
 import { validateComponentDefaults, type JsonObject } from "../scripts/contractLib";
@@ -13,7 +13,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const pkgRoot = path.resolve(here, "..");
 const componentsDir = path.join(pkgRoot, "contracts", "components");
 
-const COMPONENTS = ["approval_block", "grouped_checklist_table", "table", "text"];
+const COMPONENTS = ["category_chart", "table", "text"];
 
 function readJson(filePath: string): JsonObject {
   return JSON.parse(readFileSync(filePath, "utf8")) as JsonObject;
@@ -53,43 +53,34 @@ describe.each(COMPONENTS)("tags.defaults.json for %s", (component) => {
 
 describe("generated defaults preserve effective behavior", () => {
   it("text", () => {
+    // Text sizing tags have no static defaults: they are authored, estimated by
+    // the editor, or entered manually — never defaulted to "30".
     expect(textDefaults).toEqual({
       ...commonEffective,
       efficio_component_type: "text",
       efficio_text_format: "plain",
       efficio_sizing_mode: "auto",
-      efficio_max_chars: "30",
-      efficio_max_lines: "30",
-      efficio_max_chars_per_line: "30",
     });
   });
 
-  it("grouped_checklist_table (no efficio_groups default)", () => {
-    expect(groupedChecklistTableDefaults).toEqual({
+  it("table (object-tag default is a JSON string)", () => {
+    expect(tableDefaults).toEqual({
       ...commonEffective,
-      efficio_component_type: "grouped_checklist_table",
+      efficio_component_type: "table",
+      efficio_table_config: '{"cells":[]}',
     });
-    expect(groupedChecklistTableDefaults).not.toHaveProperty("efficio_groups");
   });
 
-  it("approval_block (object-tag defaults are JSON strings)", () => {
-    expect(approvalBlockDefaults).toEqual({
+  it("category_chart (no default config; the author must supply one)", () => {
+    expect(categoryChartDefaults).toEqual({
       ...commonEffective,
-      efficio_component_type: "approval_block",
-      efficio_approval_block_layout: "table_2row_person_role",
-      efficio_label_cell: '{"row":0,"col":0}',
-      efficio_name_cell: '{"row":0,"col":1}',
-      efficio_role_cell: '{"row":1,"col":1}',
-      efficio_default_subtype: "approved",
-      efficio_missing_content_behavior: "leave_as_is",
-      efficio_subtype_policy: "ai_selectable",
-      efficio_approval_block_subtypes:
-        '{"recommended":{"label":"Recommended"},"endorsed":{"label":"Endorsed"},"approved":{"label":"Approved"}}',
+      efficio_component_type: "category_chart",
     });
+    expect(categoryChartDefaults).not.toHaveProperty("efficio_category_chart_config");
   });
 
   it("none include efficio_component_id", () => {
-    for (const defaults of [textDefaults, groupedChecklistTableDefaults, approvalBlockDefaults]) {
+    for (const defaults of [textDefaults, tableDefaults, categoryChartDefaults]) {
       expect(defaults).not.toHaveProperty("efficio_component_id");
     }
   });

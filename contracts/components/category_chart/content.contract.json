@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "component_type": "category_chart",
+  "description": "Expected AI output for a category chart component. Provide one or more data series; each series carries a numeric value per category, in category order. The chart type, category labels, series names, counts, and value formatting are defined by the component's flat tag_context (chart_type, category_mode, series_mode, categories, series_names, the count boundaries/targets, and value formatting): when category_mode or series_mode is fixed the labels or names come from that context, and when ai_generated they are generated here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["series"],
+  "properties": {
+    "categories": {
+      "type": "array",
+      "description": "Category labels, in order. Provide these only when tag_context.category_mode is ai_generated; for fixed categories the labels come from tag_context.categories and must not be repeated here.",
+      "items": { "type": "string" }
+    },
+    "series": {
+      "type": "array",
+      "description": "One or more data series to plot. Each series carries a numeric value per category, in the same order as the categories.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["values"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Series name. Provide it only when tag_context.series_mode is ai_generated; for fixed series the names come from tag_context.series_names."
+          },
+          "values": {
+            "type": "array",
+            "description": "Numeric values for this series, one per category, in category order.",
+            "items": { "type": "number" }
+          }
+        }
+      }
+    }
+  }
+}

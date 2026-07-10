@@ -47,8 +47,8 @@ describe("validateAllContracts — structured report over an injected contracts 
       (contract.tags as Record<string, unknown>).BadTagName = { type: "string", required: false };
     });
     // Rule 2: an object-tag default that parses but violates its embedded schema.
-    await mutateJson(path.join(dir, "components", "approval_block", "tags.defaults.json"), (defaults) => {
-      defaults.efficio_label_cell = '{"row":9,"col":0}';
+    await mutateJson(path.join(dir, "components", "table", "tags.defaults.json"), (defaults) => {
+      defaults.efficio_table_config = '{"cells":"not-an-array"}';
     });
 
     const report = await validateAllContracts({ contractsDir: dir });
@@ -64,7 +64,7 @@ describe("validateAllContracts — structured report over an injected contracts 
     expect(
       report.issues.some(
         (issue) =>
-          issue.contract === "contracts/components/approval_block/tags.defaults.json" &&
+          issue.contract === "contracts/components/table/tags.defaults.json" &&
           /does not match its tag schema/.test(issue.message),
       ),
     ).toBe(true);

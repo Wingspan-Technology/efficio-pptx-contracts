@@ -12,7 +12,7 @@ const contractsDir = path.join(pkgRoot, "contracts");
 const componentsDir = path.join(contractsDir, "components");
 const generatedTagsDir = path.join(pkgRoot, "generated", "schemas", "components");
 
-const COMPONENTS = ["approval_block", "grouped_checklist_table", "table", "text"];
+const COMPONENTS = ["category_chart", "table", "text"];
 const COMMON_REQUIRED = [
   "efficio_render_behavior",
   "efficio_component_id",
@@ -146,32 +146,27 @@ describe("text sizing tags", () => {
   it("generates sizing fields as normal required tags", () => {
     const schema = readJson(generatedFileFor("text"));
     expect(schema).not.toHaveProperty("conditional_required_tags");
+    // The strict sizing limits are required; the target_* guidance tags are optional.
     expect(schema.required_tags).toEqual(expect.arrayContaining([
       "efficio_max_chars",
-      "efficio_max_lines",
-      "efficio_max_chars_per_line",
+      "efficio_min_items",
+      "efficio_max_items",
+      "efficio_min_chars_per_item",
+      "efficio_max_chars_per_item",
     ]));
-    expect(schema.optional_tags).not.toEqual(expect.arrayContaining([
-      "efficio_max_chars",
-      "efficio_max_lines",
-      "efficio_max_chars_per_line",
+    expect(schema.optional_tags).toEqual(expect.arrayContaining([
+      "efficio_target_chars",
+      "efficio_target_chars_per_item",
     ]));
+    expect(schema.required_tags).not.toEqual(
+      expect.arrayContaining(["efficio_target_chars", "efficio_target_chars_per_item"])
+    );
   });
 });
 
 describe("generated json_schemas for object/array tags", () => {
   it("text has an empty json_schemas map (no structured tags)", () => {
     expect(readJson(generatedFileFor("text")).json_schemas).toEqual({});
-  });
-
-  it("grouped_checklist_table maps efficio_groups (json_object) to its embedded schema", () => {
-    const schema = readJson(generatedFileFor("grouped_checklist_table"));
-    expect((schema.types as JsonObject).efficio_groups).toBe("json_object");
-    const jsonSchemas = schema.json_schemas as JsonObject;
-    expect(jsonSchemas).toHaveProperty("efficio_groups");
-    const authored = readJson(path.join(componentsDir, "grouped_checklist_table", "tags.contract.json"));
-    const authoredGroupsSchema = ((authored.tags as JsonObject).efficio_groups as JsonObject).schema;
-    expect(jsonSchemas.efficio_groups).toEqual(authoredGroupsSchema);
   });
 
   it("table maps efficio_table_config (json_object) to its embedded schema", () => {
@@ -196,17 +191,69 @@ describe("generated json_schemas for object/array tags", () => {
     });
   });
 
-  it("native metadata preserves the schema on the efficio_groups entity", () => {
+  it("native metadata preserves the schema on the efficio_table_config entity", () => {
     const metadataTs = readFileSync(
       path.join(pkgRoot, "generated", "ts", "components", "componentMetadata.ts"),
       "utf8",
     );
     const literal = metadataTs.slice(metadataTs.indexOf("{"), metadataTs.lastIndexOf("}") + 1);
     const metadata = JSON.parse(literal) as Record<string, JsonObject>;
-    const groups = ((metadata.grouped_checklist_table.tags as JsonObject).efficio_groups as JsonObject);
-    expect(groups.type).toBe("object");
-    expect(groups).toHaveProperty("schema");
-    expect(groups).not.toHaveProperty("ai");
+    const config = ((metadata.table.tags as JsonObject).efficio_table_config as JsonObject);
+    expect(config.type).toBe("object");
+    expect(config).toHaveProperty("schema");
+  });
+});
+
+describe("generated category_chart flat tags", () => {
+  const schema = readJson(generatedFileFor("category_chart"));
+
+  it("requires the flat chart tags and maps their compatibility types", () => {
+    expect(schema.required_tags).toEqual(
+      expect.arrayContaining([
+        "efficio_chart_type",
+        "efficio_category_mode",
+        "efficio_series_mode",
+        "efficio_min_categories",
+        "efficio_value_type",
+        "efficio_allow_negative_values",
+      ]),
+    );
+    const types = schema.types as JsonObject;
+    expect(types.efficio_chart_type).toBe("enum");
+    expect(types.efficio_min_categories).toBe("positive_integer_string");
+    expect(types.efficio_allow_negative_values).toBe("enum_boolean_string");
+    // The fixed-label arrays are json_array tags carrying their embedded schema.
+    expect(types.efficio_categories).toBe("json_array");
+    expect(schema.json_schemas as JsonObject).toHaveProperty("efficio_categories");
+    // No single config object tag remains.
+    expect(schema.required_tags).not.toContain("efficio_category_chart_config");
+  });
+
+  it("fixes the chart-type/mode enums and the label-array schema from the authored contract", () => {
+    const enums = schema.enums as JsonObject;
+    expect(enums.efficio_chart_type).toEqual([
+      "CLUSTERED_COLUMN",
+      "STACKED_COLUMN",
+      "PERCENTS_STACKED_COLUMN",
+      "CLUSTERED_BAR",
+      "STACKED_BAR",
+      "PERCENTS_STACKED_BAR",
+    ]);
+    expect(enums.efficio_category_mode).toEqual(["fixed", "ai_generated"]);
+    const authored = readJson(path.join(componentsDir, "category_chart", "tags.contract.json"));
+    const authoredCategories = ((authored.tags as JsonObject).efficio_categories as JsonObject).schema;
+    expect((schema.json_schemas as JsonObject).efficio_categories).toEqual(authoredCategories);
+  });
+
+  it("exposes the flat chart tags to AI under their public aliases (no efficio_ prefix)", () => {
+    const instruction = readJson(
+      path.join(pkgRoot, "generated", "ai", "components", "category_chart.instruction.json"),
+    );
+    const tagInstructions = instruction.tag_instructions as JsonObject;
+    expect(tagInstructions).toHaveProperty("chart_type");
+    expect(tagInstructions).toHaveProperty("categories");
+    expect(tagInstructions).not.toHaveProperty("category_chart_config");
+    expect(tagInstructions).not.toHaveProperty("efficio_chart_type");
   });
 });
 
@@ -282,16 +329,12 @@ describe("generated AI component instructions", () => {
     const tags = aggregateComponents.text.tag_instructions as JsonObject;
     expect(tags).toHaveProperty("text_format");
     expect(tags).toHaveProperty("max_chars");
-    expect(tags).toHaveProperty("max_lines");
-    expect(tags).toHaveProperty("max_chars_per_line");
+    expect(tags).toHaveProperty("min_items");
+    expect(tags).toHaveProperty("max_items");
+    expect(tags).toHaveProperty("max_chars_per_item");
+    expect(tags).toHaveProperty("target_chars_per_item");
     // sizing mode is a required editor/runtime tag but is no longer AI-visible
     expect(tags).not.toHaveProperty("sizing_mode");
-  });
-
-  it("grouped_checklist_table includes its ai-bearing groups tag (efficio_groups aliased)", () => {
-    const tags = aggregateComponents.grouped_checklist_table.tag_instructions as JsonObject;
-    expect(tags).toHaveProperty("groups");
-    expect(tags).not.toHaveProperty("efficio_groups");
   });
 
   it.each(COMPONENTS)("%s: every AI-visible enum tag instruction has complete enum_descriptions", (component) => {
@@ -319,31 +362,17 @@ describe("generated AI component instructions", () => {
 
   it("text exposes the sizing limit tags as AI-visible instructions", () => {
     const tags = aggregateComponents.text.tag_instructions as JsonObject;
-    for (const tag of ["max_chars", "max_lines", "max_chars_per_line"]) {
+    for (const tag of [
+      "max_chars",
+      "min_items",
+      "max_items",
+      "min_chars_per_item",
+      "max_chars_per_item",
+    ]) {
       expect(tags).toHaveProperty(tag);
       expect((tags[tag] as JsonObject).purpose).toBeTypeOf("string");
       // numeric limits have no enum, so no enum_descriptions
       expect(tags[tag]).not.toHaveProperty("enum_descriptions");
-    }
-  });
-
-  it("approval_block excludes private table cell-mapping tags but keeps the AI-visible ones", () => {
-    const tags = aggregateComponents.approval_block.tag_instructions as JsonObject;
-    for (const tag of [
-      "label_cell",
-      "name_cell",
-      "role_cell",
-      "approval_block_layout",
-    ]) {
-      expect(tags).not.toHaveProperty(tag);
-    }
-    for (const tag of [
-      "default_subtype",
-      "subtype_policy",
-      "missing_content_behavior",
-      "approval_block_subtypes",
-    ]) {
-      expect(tags).toHaveProperty(tag);
     }
   });
 
@@ -407,9 +436,8 @@ describe("strict sizing instruction wording", () => {
 
   it.each([
     ["text", "max_chars"],
-    ["text", "max_lines"],
-    ["text", "max_chars_per_line"],
-    ["grouped_checklist_table", "groups"],
+    ["text", "max_items"],
+    ["text", "max_chars_per_item"],
     ["table", "table_config"],
   ])("%s %s purpose demands strict, never-exceeded sizing", (component, tag) => {
     const purpose = purposeOf(component, tag).toLowerCase();
@@ -462,6 +490,15 @@ describe("generated slide-selection AI instructions", () => {
   it("expected_slide_selection_schema equals the authored slide-selection schema", () => {
     const authored = readJson(path.join(slideDir, "slide-selection.schema.json"));
     expect(artifact.expected_slide_selection_schema).toEqual(authored);
+  });
+
+  it("selected-slide items carry slide_id only", () => {
+    const schema = artifact.expected_slide_selection_schema as JsonObject;
+    const selected = (schema.properties as JsonObject).selected_slides as JsonObject;
+    const item = selected.items as JsonObject;
+    expect(Object.keys(item.properties as JsonObject)).toEqual(["slide_id"]);
+    expect(item.required).toEqual(["slide_id"]);
+    expect(item.additionalProperties).toBe(false);
   });
 
   it("TS export mirrors the JSON artifact", () => {

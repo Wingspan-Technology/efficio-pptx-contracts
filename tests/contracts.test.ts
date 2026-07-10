@@ -56,7 +56,7 @@ describe("component discovery", () => {
   });
 
   it("discovers the expected components deterministically", () => {
-    expect(components).toEqual(["approval_block", "grouped_checklist_table", "table", "text"]);
+    expect(components).toEqual(["category_chart", "table", "text"]);
   });
 });
 
@@ -88,8 +88,8 @@ describe.each(components)("component %s", (component) => {
   it("content.contract.json is a self-describing schema (declares $schema and an object type)", () => {
     const schema = readJson(path.join(dir, "content.contract.json"));
     expect(schema.$schema).toBe("https://json-schema.org/draft/2020-12/schema");
-    // Optional components (e.g. approval_block) use a nullable root: type may be
-    // "object" or an array of types that includes "object".
+    // A content schema declares an object root: type may be "object" or an array
+    // of types that includes "object" (a nullable root remains permitted).
     const type = schema.type;
     const declaresObject = type === "object" || (Array.isArray(type) && type.includes("object"));
     expect(declaresObject).toBe(true);
@@ -141,7 +141,7 @@ describe("presentation contracts", () => {
     expect(existsSync(path.join(presentationDir, "slide", "tags.defaults.json"))).toBe(true);
     expect(existsSync(path.join(presentationDir, "slide", "slide.contract.json"))).toBe(true);
     expect(existsSync(path.join(presentationDir, "template", "template.contract.json"))).toBe(true);
-    expect(components).toEqual(["approval_block", "grouped_checklist_table", "table", "text"]);
+    expect(components).toEqual(["category_chart", "table", "text"]);
   });
 
   it("slide tags.contract.json uses the Tag Entity shape and validates as a slide contract", () => {

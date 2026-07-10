@@ -13,11 +13,23 @@
     "max_chars": {
       "purpose": "Strict limit on the total number of characters the generated text may use. The generated content must never exceed it; shorten or compact the text until it fits."
     },
-    "max_lines": {
-      "purpose": "Strict limit on the number of lines the generated text may use. The generated content must never exceed it; shorten or compact the text until it fits."
+    "target_chars": {
+      "purpose": "The preferred (target) total character count for the whole generated text — aim for approximately this length. Guidance only, not a hard bound: the strict limits are max_chars, the min/max item count, and the min/max characters per item. Stay near target_chars while always fitting within those limits."
     },
-    "max_chars_per_line": {
-      "purpose": "Strict limit on the number of characters in any single line of the generated text. Each line must never exceed it; shorten or compact each line until it fits."
+    "min_items": {
+      "purpose": "Strict minimum number of items (strings in items[]) the generated text must include. Produce at least this many items; never fewer."
+    },
+    "max_items": {
+      "purpose": "Strict maximum number of items (strings in items[]) the generated text may include. The content must never exceed it; shorten or compact it (use fewer items) until it fits."
+    },
+    "min_chars_per_item": {
+      "purpose": "Strict minimum number of characters for each item (each string in items[]). Every item must be at least this long."
+    },
+    "max_chars_per_item": {
+      "purpose": "Strict maximum number of characters for any single item (string in items[]). Each item must never exceed it; shorten or compact each item until it fits."
+    },
+    "target_chars_per_item": {
+      "purpose": "The preferred (target) character count for each item (string in items[]) — aim for approximately this length per item. Guidance only, not a hard bound: stay within the strict min_chars_per_item and max_chars_per_item."
     }
   },
   "expected_content_schema": {

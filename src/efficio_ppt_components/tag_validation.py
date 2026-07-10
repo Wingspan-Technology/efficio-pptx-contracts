@@ -14,7 +14,9 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
+from ._category_chart_validation import category_chart_issues
 from ._resources import load_json
+from ._text_sizing_validation import text_sizing_issues
 from .errors import UnknownComponentTypeError
 from .registry import assert_component_type
 
@@ -72,7 +74,31 @@ def validate_component_tags(component_type: str, tags: dict[str, str]) -> list[T
         issues.extend(
             _validate_component_value(tag_name, value, expected_type, enums, json_schemas)
         )
+
+    issues.extend(_component_semantic_issues(component_type, tags, issues))
     return issues
+
+
+def _component_semantic_issues(
+    component_type: str,
+    tags: dict[str, str],
+    prior_issues: list[TagValidationIssue],
+) -> list[TagValidationIssue]:
+    """Wrap a component's flat cross-field checks (the relationships JSON Schema
+    cannot express) as :class:`TagValidationIssue`, attached to the exact tag. Tags
+    that already carry a structural issue are skipped, so a malformed value is
+    reported once (structurally) with no noisy follow-on."""
+    prior_tags = {issue.tag_name for issue in prior_issues if issue.tag_name is not None}
+    if component_type == "text":
+        raw_issues = text_sizing_issues(tags, prior_tags)
+    elif component_type == "category_chart":
+        raw_issues = category_chart_issues(tags, prior_tags)
+    else:
+        return []
+    return [
+        TagValidationIssue(code=code, tag_name=tag_name, message=message)
+        for code, tag_name, message in raw_issues
+    ]
 
 
 def validate_slide_tags(tags: dict[str, str]) -> list[TagValidationIssue]:

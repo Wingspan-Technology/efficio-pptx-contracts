@@ -1,30 +1,39 @@
 import type { ComponentType } from "./componentTypes";
 
 export const tagSchemas = {
-  "approval_block": {
+  "category_chart": {
     "generated_from": [
       "contracts/shared/render-behavior-tags.contract.json",
       "contracts/shared/component-base-tags.contract.json",
-      "contracts/components/approval_block/tags.contract.json"
+      "contracts/components/category_chart/tags.contract.json"
     ],
-    "component_type": "approval_block",
-    "description": "Approval / sign-off block component. Table-backed but semantically approval-specific: a person + role pair with an approval subtype (recommended/endorsed/approved). Cell tags map the semantic slots onto an existing table shape.",
+    "component_type": "category_chart",
+    "description": "Category chart component tag contract. Flat tags define the chart to generate: its chart type, whether categories and series are fixed (labels/names supplied here) or AI-generated, count boundaries and targets, value formatting, and optional per-axis authoring guidance. There is no config object tag. Chart-shape validation, workbook data, and rendering are out of scope for this contract.",
     "required_tags": [
       "efficio_render_behavior",
       "efficio_component_id",
       "efficio_component_type",
-      "efficio_approval_block_layout",
-      "efficio_label_cell",
-      "efficio_name_cell",
-      "efficio_role_cell",
-      "efficio_default_subtype",
-      "efficio_subtype_policy",
-      "efficio_missing_content_behavior",
-      "efficio_approval_block_subtypes"
+      "efficio_chart_type",
+      "efficio_category_mode",
+      "efficio_min_categories",
+      "efficio_max_categories",
+      "efficio_target_categories",
+      "efficio_series_mode",
+      "efficio_min_series",
+      "efficio_max_series",
+      "efficio_target_series",
+      "efficio_value_type",
+      "efficio_allow_negative_values",
+      "efficio_allow_decimal_values"
     ],
     "optional_tags": [
       "efficio_content_role",
-      "efficio_prompt_instruction"
+      "efficio_prompt_instruction",
+      "efficio_categories",
+      "efficio_category_instruction",
+      "efficio_series_names",
+      "efficio_series_instruction",
+      "efficio_value_unit"
     ],
     "enums": {
       "efficio_render_behavior": [
@@ -33,21 +42,34 @@ export const tagSchemas = {
         "remove_on_render"
       ],
       "efficio_component_type": [
-        "approval_block"
+        "category_chart"
       ],
-      "efficio_approval_block_layout": [
-        "table_2row_person_role"
+      "efficio_chart_type": [
+        "CLUSTERED_COLUMN",
+        "STACKED_COLUMN",
+        "PERCENTS_STACKED_COLUMN",
+        "CLUSTERED_BAR",
+        "STACKED_BAR",
+        "PERCENTS_STACKED_BAR"
       ],
-      "efficio_default_subtype": [
-        "recommended",
-        "endorsed",
-        "approved"
+      "efficio_category_mode": [
+        "fixed",
+        "ai_generated"
       ],
-      "efficio_subtype_policy": [
-        "ai_selectable"
+      "efficio_series_mode": [
+        "fixed",
+        "ai_generated"
       ],
-      "efficio_missing_content_behavior": [
-        "leave_as_is"
+      "efficio_value_type": [
+        "number"
+      ],
+      "efficio_allow_negative_values": [
+        "true",
+        "false"
+      ],
+      "efficio_allow_decimal_values": [
+        "true",
+        "false"
       ]
     },
     "types": {
@@ -56,271 +78,63 @@ export const tagSchemas = {
       "efficio_component_type": "enum",
       "efficio_content_role": "string",
       "efficio_prompt_instruction": "string",
-      "efficio_approval_block_layout": "enum",
-      "efficio_label_cell": "json_object",
-      "efficio_name_cell": "json_object",
-      "efficio_role_cell": "json_object",
-      "efficio_default_subtype": "enum",
-      "efficio_subtype_policy": "enum",
-      "efficio_missing_content_behavior": "enum",
-      "efficio_approval_block_subtypes": "json_object"
+      "efficio_chart_type": "enum",
+      "efficio_category_mode": "enum",
+      "efficio_categories": "json_array",
+      "efficio_min_categories": "positive_integer_string",
+      "efficio_max_categories": "positive_integer_string",
+      "efficio_target_categories": "positive_integer_string",
+      "efficio_category_instruction": "string",
+      "efficio_series_mode": "enum",
+      "efficio_series_names": "json_array",
+      "efficio_min_series": "positive_integer_string",
+      "efficio_max_series": "positive_integer_string",
+      "efficio_target_series": "positive_integer_string",
+      "efficio_series_instruction": "string",
+      "efficio_value_type": "enum",
+      "efficio_value_unit": "string",
+      "efficio_allow_negative_values": "enum_boolean_string",
+      "efficio_allow_decimal_values": "enum_boolean_string"
     },
     "json_schemas": {
-      "efficio_label_cell": {
+      "efficio_categories": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "row",
-          "col"
-        ],
-        "properties": {
-          "row": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1,
-            "description": "Zero-based table row."
-          },
-          "col": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1,
-            "description": "Zero-based table column."
-          }
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "string",
+          "minLength": 1
         }
       },
-      "efficio_name_cell": {
+      "efficio_series_names": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "row",
-          "col"
-        ],
-        "properties": {
-          "row": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1,
-            "description": "Zero-based table row."
-          },
-          "col": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1,
-            "description": "Zero-based table column."
-          }
-        }
-      },
-      "efficio_role_cell": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "row",
-          "col"
-        ],
-        "properties": {
-          "row": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1,
-            "description": "Zero-based table row."
-          },
-          "col": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1,
-            "description": "Zero-based table column."
-          }
-        }
-      },
-      "efficio_approval_block_subtypes": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "recommended",
-          "endorsed",
-          "approved"
-        ],
-        "properties": {
-          "recommended": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "label"
-            ],
-            "properties": {
-              "label": {
-                "type": "string",
-                "minLength": 1
-              }
-            }
-          },
-          "endorsed": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "label"
-            ],
-            "properties": {
-              "label": {
-                "type": "string",
-                "minLength": 1
-              }
-            }
-          },
-          "approved": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "label"
-            ],
-            "properties": {
-              "label": {
-                "type": "string",
-                "minLength": 1
-              }
-            }
-          }
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "string",
+          "minLength": 1
         }
       }
     },
     "example": {
       "efficio_render_behavior": "render_by_component_type",
-      "efficio_component_id": "approval_1",
-      "efficio_component_type": "approval_block",
-      "efficio_content_role": "approval_signoff",
-      "efficio_approval_block_layout": "table_2row_person_role",
-      "efficio_label_cell": "{\"row\":0,\"col\":0}",
-      "efficio_name_cell": "{\"row\":0,\"col\":1}",
-      "efficio_role_cell": "{\"row\":1,\"col\":1}",
-      "efficio_default_subtype": "approved",
-      "efficio_subtype_policy": "ai_selectable",
-      "efficio_missing_content_behavior": "leave_as_is",
-      "efficio_approval_block_subtypes": "{\"recommended\":{\"label\":\"Recommended\"},\"endorsed\":{\"label\":\"Endorsed\"},\"approved\":{\"label\":\"Approved\"}}"
-    }
-  },
-  "grouped_checklist_table": {
-    "generated_from": [
-      "contracts/shared/render-behavior-tags.contract.json",
-      "contracts/shared/component-base-tags.contract.json",
-      "contracts/components/grouped_checklist_table/tags.contract.json"
-    ],
-    "component_type": "grouped_checklist_table",
-    "description": "Grouped checklist table component tag contract. Table-shape-level metadata only: no cell, row, or slot tags and no nested child components.",
-    "required_tags": [
-      "efficio_render_behavior",
-      "efficio_component_id",
-      "efficio_component_type",
-      "efficio_groups"
-    ],
-    "optional_tags": [
-      "efficio_content_role",
-      "efficio_prompt_instruction"
-    ],
-    "enums": {
-      "efficio_render_behavior": [
-        "render_by_component_type",
-        "preserve",
-        "remove_on_render"
-      ],
-      "efficio_component_type": [
-        "grouped_checklist_table"
-      ]
-    },
-    "types": {
-      "efficio_render_behavior": "enum",
-      "efficio_component_id": "non_empty_string",
-      "efficio_component_type": "enum",
-      "efficio_content_role": "string",
-      "efficio_prompt_instruction": "string",
-      "efficio_groups": "json_object"
-    },
-    "json_schemas": {
-      "efficio_groups": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "groups"
-        ],
-        "properties": {
-          "groups": {
-            "type": "array",
-            "minItems": 1,
-            "items": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "key",
-                "label",
-                "inclusion_policy"
-              ],
-              "properties": {
-                "key": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "Stable identifier for the group within the table."
-                },
-                "label": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "Human-readable group heading."
-                },
-                "inclusion_policy": {
-                  "type": "string",
-                  "enum": [
-                    "always",
-                    "prefer_keep",
-                    "when_relevant",
-                    "prefer_drop",
-                    "never"
-                  ],
-                  "description": "How strongly this group should be kept when generating content."
-                },
-                "min_items": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "description": "Minimum number of items this group must contain when generated — a strict requirement, not a hint."
-                },
-                "max_items": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "description": "Maximum number of items this group may contain when generated — a strict limit that must never be exceeded."
-                },
-                "max_chars_per_item": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "description": "Maximum characters for each generated item — a strict limit that must never be exceeded; shorten or compact items until they fit."
-                },
-                "prompt_instruction": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "Optional per-group guidance for generating this group's items."
-                },
-                "suggested_items": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "description": "Optional author-provided example items for the group."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "example": {
-      "efficio_render_behavior": "render_by_component_type",
-      "efficio_component_id": "action_groups",
-      "efficio_component_type": "grouped_checklist_table",
-      "efficio_content_role": "action_table",
-      "efficio_groups": "{\"groups\":[{\"key\":\"now\",\"label\":\"Do now\",\"inclusion_policy\":\"always\",\"suggested_items\":[\"Confirm scope\"]},{\"key\":\"next\",\"label\":\"Do next\",\"inclusion_policy\":\"when_relevant\"}]}",
-      "efficio_prompt_instruction": "Generate grouped action items that respect each group's inclusion policy."
+      "efficio_component_id": "revenue_chart",
+      "efficio_component_type": "category_chart",
+      "efficio_content_role": "revenue_by_quarter",
+      "efficio_chart_type": "CLUSTERED_COLUMN",
+      "efficio_category_mode": "fixed",
+      "efficio_categories": "[\"Q1\",\"Q2\",\"Q3\",\"Q4\"]",
+      "efficio_min_categories": "4",
+      "efficio_max_categories": "4",
+      "efficio_target_categories": "4",
+      "efficio_series_mode": "ai_generated",
+      "efficio_min_series": "1",
+      "efficio_max_series": "3",
+      "efficio_target_series": "2",
+      "efficio_value_type": "number",
+      "efficio_allow_negative_values": "false",
+      "efficio_allow_decimal_values": "true",
+      "efficio_prompt_instruction": "Generate quarterly revenue series for the business units."
     }
   },
   "table": {
@@ -523,12 +337,16 @@ export const tagSchemas = {
       "efficio_text_format",
       "efficio_sizing_mode",
       "efficio_max_chars",
-      "efficio_max_lines",
-      "efficio_max_chars_per_line"
+      "efficio_min_items",
+      "efficio_max_items",
+      "efficio_min_chars_per_item",
+      "efficio_max_chars_per_item"
     ],
     "optional_tags": [
       "efficio_content_role",
-      "efficio_prompt_instruction"
+      "efficio_prompt_instruction",
+      "efficio_target_chars",
+      "efficio_target_chars_per_item"
     ],
     "enums": {
       "efficio_render_behavior": [
@@ -559,8 +377,12 @@ export const tagSchemas = {
       "efficio_text_format": "enum",
       "efficio_sizing_mode": "enum",
       "efficio_max_chars": "positive_integer_string",
-      "efficio_max_lines": "positive_integer_string",
-      "efficio_max_chars_per_line": "positive_integer_string"
+      "efficio_target_chars": "positive_integer_string",
+      "efficio_min_items": "positive_integer_string",
+      "efficio_max_items": "positive_integer_string",
+      "efficio_min_chars_per_item": "positive_integer_string",
+      "efficio_max_chars_per_item": "positive_integer_string",
+      "efficio_target_chars_per_item": "positive_integer_string"
     },
     "json_schemas": {},
     "example": {
@@ -570,9 +392,13 @@ export const tagSchemas = {
       "efficio_content_role": "slide_title",
       "efficio_text_format": "plain",
       "efficio_sizing_mode": "auto",
-      "efficio_max_chars": "30",
-      "efficio_max_lines": "30",
-      "efficio_max_chars_per_line": "30",
+      "efficio_max_chars": "120",
+      "efficio_target_chars": "90",
+      "efficio_min_items": "1",
+      "efficio_max_items": "3",
+      "efficio_min_chars_per_item": "5",
+      "efficio_max_chars_per_item": "48",
+      "efficio_target_chars_per_item": "36",
       "efficio_prompt_instruction": "Generate a concise executive slide title."
     }
   }

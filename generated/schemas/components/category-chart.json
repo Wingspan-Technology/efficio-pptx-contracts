@@ -1,0 +1,136 @@
+{
+  "generated_from": [
+    "contracts/shared/render-behavior-tags.contract.json",
+    "contracts/shared/component-base-tags.contract.json",
+    "contracts/components/category_chart/tags.contract.json"
+  ],
+  "component_type": "category_chart",
+  "description": "Category chart component tag contract. Flat tags define the chart to generate: its chart type, whether categories and series are fixed (labels/names supplied here) or AI-generated, count boundaries and targets, value formatting, and optional per-axis authoring guidance. There is no config object tag. Chart-shape validation, workbook data, and rendering are out of scope for this contract.",
+  "required_tags": [
+    "efficio_render_behavior",
+    "efficio_component_id",
+    "efficio_component_type",
+    "efficio_chart_type",
+    "efficio_category_mode",
+    "efficio_min_categories",
+    "efficio_max_categories",
+    "efficio_target_categories",
+    "efficio_series_mode",
+    "efficio_min_series",
+    "efficio_max_series",
+    "efficio_target_series",
+    "efficio_value_type",
+    "efficio_allow_negative_values",
+    "efficio_allow_decimal_values"
+  ],
+  "optional_tags": [
+    "efficio_content_role",
+    "efficio_prompt_instruction",
+    "efficio_categories",
+    "efficio_category_instruction",
+    "efficio_series_names",
+    "efficio_series_instruction",
+    "efficio_value_unit"
+  ],
+  "enums": {
+    "efficio_render_behavior": [
+      "render_by_component_type",
+      "preserve",
+      "remove_on_render"
+    ],
+    "efficio_component_type": [
+      "category_chart"
+    ],
+    "efficio_chart_type": [
+      "CLUSTERED_COLUMN",
+      "STACKED_COLUMN",
+      "PERCENTS_STACKED_COLUMN",
+      "CLUSTERED_BAR",
+      "STACKED_BAR",
+      "PERCENTS_STACKED_BAR"
+    ],
+    "efficio_category_mode": [
+      "fixed",
+      "ai_generated"
+    ],
+    "efficio_series_mode": [
+      "fixed",
+      "ai_generated"
+    ],
+    "efficio_value_type": [
+      "number"
+    ],
+    "efficio_allow_negative_values": [
+      "true",
+      "false"
+    ],
+    "efficio_allow_decimal_values": [
+      "true",
+      "false"
+    ]
+  },
+  "types": {
+    "efficio_render_behavior": "enum",
+    "efficio_component_id": "non_empty_string",
+    "efficio_component_type": "enum",
+    "efficio_content_role": "string",
+    "efficio_prompt_instruction": "string",
+    "efficio_chart_type": "enum",
+    "efficio_category_mode": "enum",
+    "efficio_categories": "json_array",
+    "efficio_min_categories": "positive_integer_string",
+    "efficio_max_categories": "positive_integer_string",
+    "efficio_target_categories": "positive_integer_string",
+    "efficio_category_instruction": "string",
+    "efficio_series_mode": "enum",
+    "efficio_series_names": "json_array",
+    "efficio_min_series": "positive_integer_string",
+    "efficio_max_series": "positive_integer_string",
+    "efficio_target_series": "positive_integer_string",
+    "efficio_series_instruction": "string",
+    "efficio_value_type": "enum",
+    "efficio_value_unit": "string",
+    "efficio_allow_negative_values": "enum_boolean_string",
+    "efficio_allow_decimal_values": "enum_boolean_string"
+  },
+  "json_schemas": {
+    "efficio_categories": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "efficio_series_names": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "example": {
+    "efficio_render_behavior": "render_by_component_type",
+    "efficio_component_id": "revenue_chart",
+    "efficio_component_type": "category_chart",
+    "efficio_content_role": "revenue_by_quarter",
+    "efficio_chart_type": "CLUSTERED_COLUMN",
+    "efficio_category_mode": "fixed",
+    "efficio_categories": "[\"Q1\",\"Q2\",\"Q3\",\"Q4\"]",
+    "efficio_min_categories": "4",
+    "efficio_max_categories": "4",
+    "efficio_target_categories": "4",
+    "efficio_series_mode": "ai_generated",
+    "efficio_min_series": "1",
+    "efficio_max_series": "3",
+    "efficio_target_series": "2",
+    "efficio_value_type": "number",
+    "efficio_allow_negative_values": "false",
+    "efficio_allow_decimal_values": "true",
+    "efficio_prompt_instruction": "Generate quarterly revenue series for the business units."
+  }
+}
