@@ -566,6 +566,15 @@ export const componentMetadata = {
           "order": 80
         }
       },
+      "efficio_target_items": {
+        "type": "integer",
+        "required": false,
+        "minimum": 1,
+        "description": "Preferred (target) number of items (strings in the text's items array); optional sizing guidance, not a bound. When present it must be within efficio_min_items and efficio_max_items. Not applicable to plain text, which is always a single item.",
+        "ui": {
+          "order": 81
+        }
+      },
       "efficio_max_items": {
         "type": "integer",
         "required": true,

@@ -61,6 +61,8 @@ describe("generated defaults preserve effective behavior", () => {
       efficio_text_format: "plain",
       efficio_sizing_mode: "auto",
     });
+    // The optional preferred item count has no static default (estimated/manual only).
+    expect(textDefaults).not.toHaveProperty("efficio_target_items");
   });
 
   it("table (object-tag default is a JSON string)", () => {

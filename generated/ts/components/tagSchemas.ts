@@ -346,6 +346,7 @@ export const tagSchemas = {
       "efficio_content_role",
       "efficio_prompt_instruction",
       "efficio_target_chars",
+      "efficio_target_items",
       "efficio_target_chars_per_item"
     ],
     "enums": {
@@ -379,6 +380,7 @@ export const tagSchemas = {
       "efficio_max_chars": "positive_integer_string",
       "efficio_target_chars": "positive_integer_string",
       "efficio_min_items": "positive_integer_string",
+      "efficio_target_items": "positive_integer_string",
       "efficio_max_items": "positive_integer_string",
       "efficio_min_chars_per_item": "positive_integer_string",
       "efficio_max_chars_per_item": "positive_integer_string",
@@ -395,10 +397,10 @@ export const tagSchemas = {
       "efficio_max_chars": "120",
       "efficio_target_chars": "90",
       "efficio_min_items": "1",
-      "efficio_max_items": "3",
+      "efficio_max_items": "1",
       "efficio_min_chars_per_item": "5",
-      "efficio_max_chars_per_item": "48",
-      "efficio_target_chars_per_item": "36",
+      "efficio_max_chars_per_item": "120",
+      "efficio_target_chars_per_item": "90",
       "efficio_prompt_instruction": "Generate a concise executive slide title."
     }
   }

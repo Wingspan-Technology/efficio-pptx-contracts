@@ -61,6 +61,16 @@
         "purpose": "Strict minimum number of items (strings in items[]) the generated text must include. Produce at least this many items; never fewer."
       }
     },
+    "efficio_target_items": {
+      "type": "integer",
+      "required": false,
+      "minimum": 1,
+      "description": "Preferred (target) number of items (strings in the text's items array); optional sizing guidance, not a bound. When present it must be within efficio_min_items and efficio_max_items. Not applicable to plain text, which is always a single item.",
+      "ui": { "order": 81 },
+      "ai": {
+        "purpose": "The preferred (target) number of items (strings in items[]) — aim for approximately this many items. Guidance only, not a hard bound: the strict limits are the min/max item count and the per-item character limits. Stay near target_items while always fitting within the min and max item count. Not applicable to plain text, which is always exactly one item."
+      }
+    },
     "efficio_max_items": {
       "type": "integer",
       "required": true,
@@ -112,10 +122,10 @@
     "efficio_max_chars": "120",
     "efficio_target_chars": "90",
     "efficio_min_items": "1",
-    "efficio_max_items": "3",
+    "efficio_max_items": "1",
     "efficio_min_chars_per_item": "5",
-    "efficio_max_chars_per_item": "48",
-    "efficio_target_chars_per_item": "36",
+    "efficio_max_chars_per_item": "120",
+    "efficio_target_chars_per_item": "90",
     "efficio_prompt_instruction": "Generate a concise executive slide title."
   }
 }

@@ -195,6 +195,9 @@ export const componentInstructions = {
         "min_items": {
           "purpose": "Strict minimum number of items (strings in items[]) the generated text must include. Produce at least this many items; never fewer."
         },
+        "target_items": {
+          "purpose": "The preferred (target) number of items (strings in items[]) — aim for approximately this many items. Guidance only, not a hard bound: the strict limits are the min/max item count and the per-item character limits. Stay near target_items while always fitting within the min and max item count. Not applicable to plain text, which is always exactly one item."
+        },
         "max_items": {
           "purpose": "Strict maximum number of items (strings in items[]) the generated text may include. The content must never exceed it; shorten or compact it (use fewer items) until it fits."
         },

@@ -130,11 +130,12 @@ export function getOrderedComponentTags(componentType: string): string[] {
 }
 
 // Cross-field text sizing checks the per-tag schema cannot express. The `target_*`
-// tags are OPTIONAL AI guidance; the min/max tags are strict bounds. Returned as
-// plain issues so a consumer maps them into its own validation result. A no-op for
-// non-text shapes (the tags are absent), and each check is skipped when an operand is
-// not a positive integer (the per-tag schema owns those structural errors). Mirrors
-// the Python SDK's `_text_sizing_issues`.
+// tags (including `target_items`) are OPTIONAL AI guidance that must fit within their
+// strict min/max bounds; plain text additionally forbids `target_items` (always one
+// item). Returned as plain issues so a consumer maps them into its own validation
+// result. A no-op for non-text shapes (the tags are absent), and each check is skipped
+// when an operand is not a positive integer (the per-tag schema owns those structural
+// errors). Mirrors the Python SDK's `text_sizing_issues`.
 export type ComponentSemanticIssue = {
   code: string;
   message: string;
@@ -147,6 +148,7 @@ const TEXT_MAX_CHARS_TAG = "efficio_max_chars";
 const TEXT_TARGET_CHARS_TAG = "efficio_target_chars";
 const TEXT_MIN_ITEMS_TAG = "efficio_min_items";
 const TEXT_MAX_ITEMS_TAG = "efficio_max_items";
+const TEXT_TARGET_ITEMS_TAG = "efficio_target_items";
 const TEXT_MIN_CHARS_PER_ITEM_TAG = "efficio_min_chars_per_item";
 const TEXT_MAX_CHARS_PER_ITEM_TAG = "efficio_max_chars_per_item";
 const TEXT_TARGET_CHARS_PER_ITEM_TAG = "efficio_target_chars_per_item";
@@ -162,6 +164,7 @@ export function validateTextSizingSemantics(
   const targetChars = value(TEXT_TARGET_CHARS_TAG);
   const minItems = value(TEXT_MIN_ITEMS_TAG);
   const maxItems = value(TEXT_MAX_ITEMS_TAG);
+  const targetItems = value(TEXT_TARGET_ITEMS_TAG);
   const minPerItem = value(TEXT_MIN_CHARS_PER_ITEM_TAG);
   const maxPerItem = value(TEXT_MAX_CHARS_PER_ITEM_TAG);
   const targetPerItem = value(TEXT_TARGET_CHARS_PER_ITEM_TAG);
@@ -174,6 +177,16 @@ export function validateTextSizingSemantics(
   // Optional targets must fit within their strict bounds.
   if (targetChars !== undefined && maxChars !== undefined && targetChars > maxChars) {
     exceeds(TEXT_TARGET_CHARS_TAG, TEXT_MAX_CHARS_TAG);
+  }
+  if (targetItems !== undefined && maxItems !== undefined && targetItems > maxItems) {
+    exceeds(TEXT_TARGET_ITEMS_TAG, TEXT_MAX_ITEMS_TAG);
+  }
+  if (targetItems !== undefined && minItems !== undefined && targetItems < minItems) {
+    issues.push({
+      code: "target_below_min",
+      tag: TEXT_TARGET_ITEMS_TAG,
+      message: `"${TEXT_TARGET_ITEMS_TAG}" must be at least "${TEXT_MIN_ITEMS_TAG}".`,
+    });
   }
   if (targetPerItem !== undefined && maxPerItem !== undefined && targetPerItem > maxPerItem) {
     exceeds(TEXT_TARGET_CHARS_PER_ITEM_TAG, TEXT_MAX_CHARS_PER_ITEM_TAG);
@@ -200,10 +213,18 @@ export function validateTextSizingSemantics(
       message: `"${TEXT_MIN_CHARS_PER_ITEM_TAG}" must not exceed "${TEXT_MAX_CHARS_PER_ITEM_TAG}".`,
     });
   }
-  // plain text is exactly one item.
+  // plain text is exactly one item, so its counts are pinned to 1 and a preferred
+  // item count is meaningless.
   if (tags[TEXT_FORMAT_TAG] === PLAIN_TEXT_FORMAT) {
     if (minItems !== undefined && minItems !== 1) issues.push(plainSingleItem(TEXT_MIN_ITEMS_TAG));
     if (maxItems !== undefined && maxItems !== 1) issues.push(plainSingleItem(TEXT_MAX_ITEMS_TAG));
+    if (targetItems !== undefined) {
+      issues.push({
+        code: "plain_forbids_target_items",
+        tag: TEXT_TARGET_ITEMS_TAG,
+        message: `"${TEXT_TARGET_ITEMS_TAG}" is not valid for plain text, which is always one item.`,
+      });
+    }
   }
   return issues;
 }

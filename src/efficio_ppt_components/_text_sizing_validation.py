@@ -23,6 +23,7 @@ _MAX_CHARS_TAG = "efficio_max_chars"
 _TARGET_CHARS_TAG = "efficio_target_chars"
 _MIN_ITEMS_TAG = "efficio_min_items"
 _MAX_ITEMS_TAG = "efficio_max_items"
+_TARGET_ITEMS_TAG = "efficio_target_items"
 _MIN_CHARS_PER_ITEM_TAG = "efficio_min_chars_per_item"
 _MAX_CHARS_PER_ITEM_TAG = "efficio_max_chars_per_item"
 _TARGET_CHARS_PER_ITEM_TAG = "efficio_target_chars_per_item"
@@ -49,6 +50,7 @@ def text_sizing_issues(
     target_chars = value_of(_TARGET_CHARS_TAG)
     min_items = value_of(_MIN_ITEMS_TAG)
     max_items = value_of(_MAX_ITEMS_TAG)
+    target_items = value_of(_TARGET_ITEMS_TAG)
     min_per_item = value_of(_MIN_CHARS_PER_ITEM_TAG)
     max_per_item = value_of(_MAX_CHARS_PER_ITEM_TAG)
     target_per_item = value_of(_TARGET_CHARS_PER_ITEM_TAG)
@@ -61,6 +63,16 @@ def text_sizing_issues(
     # Optional targets must fit within their strict bounds.
     if target_chars is not None and max_chars is not None and target_chars > max_chars:
         exceeds(_TARGET_CHARS_TAG, _MAX_CHARS_TAG)
+    if target_items is not None and max_items is not None and target_items > max_items:
+        exceeds(_TARGET_ITEMS_TAG, _MAX_ITEMS_TAG)
+    if target_items is not None and min_items is not None and target_items < min_items:
+        issues.append(
+            (
+                "target_below_min",
+                _TARGET_ITEMS_TAG,
+                f"Tag {_TARGET_ITEMS_TAG} must be at least {_MIN_ITEMS_TAG}.",
+            )
+        )
     if target_per_item is not None and max_per_item is not None and target_per_item > max_per_item:
         exceeds(_TARGET_CHARS_PER_ITEM_TAG, _MAX_CHARS_PER_ITEM_TAG)
     if target_per_item is not None and min_per_item is not None and target_per_item < min_per_item:
@@ -84,11 +96,20 @@ def text_sizing_issues(
                 f"Tag {_MIN_CHARS_PER_ITEM_TAG} must not exceed {_MAX_CHARS_PER_ITEM_TAG}.",
             )
         )
-    # plain text is exactly one item.
+    # plain text is exactly one item, so its counts are pinned to 1 and a preferred
+    # item count is meaningless.
     if tags.get(_TEXT_FORMAT_TAG) == _PLAIN_TEXT_FORMAT:
         for tag, value in ((_MIN_ITEMS_TAG, min_items), (_MAX_ITEMS_TAG, max_items)):
             if value is not None and value != 1:
                 issues.append(
                     ("plain_requires_single_item", tag, f"Tag {tag} must be 1 for plain text.")
                 )
+        if target_items is not None:
+            issues.append(
+                (
+                    "plain_forbids_target_items",
+                    _TARGET_ITEMS_TAG,
+                    f"Tag {_TARGET_ITEMS_TAG} is not valid for plain text, which is always one item.",
+                )
+            )
     return issues

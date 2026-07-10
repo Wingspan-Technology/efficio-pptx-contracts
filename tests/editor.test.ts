@@ -213,4 +213,52 @@ describe("validateTextSizingSemantics (SDK cross-field text rule)", () => {
       expect.objectContaining({ code: "plain_requires_single_item", tag: "efficio_max_items" }),
     ]);
   });
+
+  it("accepts a preferred item count within [min_items, max_items] for a list format", () => {
+    expect(
+      validateTextSizingSemantics({
+        efficio_text_format: "bullets",
+        efficio_min_items: "1",
+        efficio_target_items: "3",
+        efficio_max_items: "5",
+      })
+    ).toEqual([]);
+  });
+
+  it("flags target_items outside its [min_items, max_items] bounds", () => {
+    expect(
+      validateTextSizingSemantics({
+        efficio_min_items: "1",
+        efficio_max_items: "2",
+        efficio_target_items: "5",
+      })
+    ).toEqual([
+      expect.objectContaining({ code: "target_exceeds_max", tag: "efficio_target_items" }),
+    ]);
+    expect(
+      validateTextSizingSemantics({
+        efficio_min_items: "3",
+        efficio_max_items: "5",
+        efficio_target_items: "1",
+      })
+    ).toEqual([
+      expect.objectContaining({ code: "target_below_min", tag: "efficio_target_items" }),
+    ]);
+  });
+
+  it("rejects a preferred item count for plain text (always one item)", () => {
+    expect(
+      validateTextSizingSemantics({
+        efficio_text_format: "plain",
+        efficio_min_items: "1",
+        efficio_max_items: "1",
+        efficio_target_items: "1",
+      })
+    ).toEqual([
+      expect.objectContaining({
+        code: "plain_forbids_target_items",
+        tag: "efficio_target_items",
+      }),
+    ]);
+  });
 });

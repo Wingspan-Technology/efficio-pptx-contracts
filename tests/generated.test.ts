@@ -162,6 +162,13 @@ describe("text sizing tags", () => {
       expect.arrayContaining(["efficio_target_chars", "efficio_target_chars_per_item"])
     );
   });
+
+  it("adds efficio_target_items as an optional integer sizing tag (never required)", () => {
+    const schema = readJson(generatedFileFor("text"));
+    expect(schema.optional_tags).toEqual(expect.arrayContaining(["efficio_target_items"]));
+    expect(schema.required_tags).not.toContain("efficio_target_items");
+    expect((schema.types as JsonObject).efficio_target_items).toBe("positive_integer_string");
+  });
 });
 
 describe("generated json_schemas for object/array tags", () => {
@@ -331,6 +338,7 @@ describe("generated AI component instructions", () => {
     expect(tags).toHaveProperty("max_chars");
     expect(tags).toHaveProperty("min_items");
     expect(tags).toHaveProperty("max_items");
+    expect(tags).toHaveProperty("target_items");
     expect(tags).toHaveProperty("max_chars_per_item");
     expect(tags).toHaveProperty("target_chars_per_item");
     // sizing mode is a required editor/runtime tag but is no longer AI-visible

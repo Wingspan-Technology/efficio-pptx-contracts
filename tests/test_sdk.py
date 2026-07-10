@@ -456,6 +456,48 @@ def test_validate_text_plain_requires_single_item() -> None:
     ]
 
 
+def test_validate_text_accepts_target_items_within_bounds() -> None:
+    # A preferred item count is valid guidance when it sits within [min_items, max_items].
+    tags = valid_text_tags(
+        efficio_text_format="bullets",
+        efficio_min_items="1",
+        efficio_max_items="5",
+        efficio_target_items="3",
+    )
+    assert sdk.validate_component_tags("text", tags) == []
+
+
+def test_validate_text_rejects_target_items_outside_bounds() -> None:
+    over = sdk.validate_component_tags(
+        "text",
+        valid_text_tags(
+            efficio_text_format="bullets",
+            efficio_min_items="1",
+            efficio_max_items="2",
+            efficio_target_items="5",
+        ),
+    )
+    assert ("target_exceeds_max", "efficio_target_items") in [(i.code, i.tag_name) for i in over]
+    under = sdk.validate_component_tags(
+        "text",
+        valid_text_tags(
+            efficio_text_format="bullets",
+            efficio_min_items="3",
+            efficio_max_items="5",
+            efficio_target_items="1",
+        ),
+    )
+    assert ("target_below_min", "efficio_target_items") in [(i.code, i.tag_name) for i in under]
+
+
+def test_validate_text_plain_forbids_target_items() -> None:
+    # plain text is always one item, so a preferred item count is invalid for it.
+    issues = sdk.validate_component_tags("text", valid_text_tags(efficio_target_items="1"))
+    assert ("plain_forbids_target_items", "efficio_target_items") in [
+        (i.code, i.tag_name) for i in issues
+    ]
+
+
 def valid_table_tags(**overrides: str) -> dict[str, str]:
     tags = {
         "efficio_render_behavior": "render_by_component_type",

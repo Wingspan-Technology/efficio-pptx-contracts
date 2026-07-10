@@ -4,8 +4,10 @@ Bounds the item count (``efficio_min_items`` / ``efficio_max_items``) and each
 item's length (``efficio_min_chars_per_item`` / ``efficio_max_chars_per_item``);
 every string in ``items[]`` shares the same per-item length bounds. ``plain`` is
 exactly one item (``minItems`` == ``maxItems`` == 1). Aggregate ``efficio_max_chars``
-across ``items[]`` and the ``target_*`` guidance tags are intentionally not encoded —
-JSON Schema cannot sum item lengths, and the targets are guidance, not bounds.
+across ``items[]`` and the ``target_*`` guidance tags (``efficio_target_chars``,
+``efficio_target_items``, ``efficio_target_chars_per_item``) are intentionally not
+encoded — JSON Schema cannot sum item lengths, and the targets are guidance, not
+bounds; ``efficio_target_items`` in particular never appears in runtime validation.
 """
 
 from __future__ import annotations
