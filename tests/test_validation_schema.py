@@ -167,49 +167,48 @@ def test_table_includes_only_render_cells() -> None:
         ]
     }
     schema = build_validation_content_schema("table", _table_tags(config))
-    cell_schemas = schema["properties"]["cells"]["items"]["oneOf"]
-    coords = [(c["properties"]["row"]["const"], c["properties"]["col"]["const"]) for c in cell_schemas]
-    assert coords == [(1, 0), (1, 1)]
+    cells = schema["properties"]["cells"]
+    assert cells["type"] == "object"
+    assert cells["additionalProperties"] is False
+    assert list(cells["properties"]) == ["1,0", "1,1"]
     # Preserve/default-preserve coordinates are not allowed in content.
-    assert not _is_valid(schema, {"cells": [{"row": 0, "col": 0, "items": ["x"]}]})
+    assert not _is_valid(schema, {"cells": {"0,0": {"items": ["x"]}}})
 
 
 def test_table_all_preserve_cells_allows_no_content_cells() -> None:
     config = {"cells": [{"row": 0, "col": 0}, {"row": 0, "col": 1, "render_action": "preserve"}]}
     schema = build_validation_content_schema("table", _table_tags(config))
-    assert schema["properties"]["cells"]["maxItems"] == 0
-    assert _is_valid(schema, {"cells": []})
-    assert not _is_valid(schema, {"cells": [{"row": 0, "col": 0, "items": ["x"]}]})
+    cells = schema["properties"]["cells"]
+    assert cells["type"] == "object"
+    assert cells["properties"] == {}
+    assert cells["additionalProperties"] is False
+    assert _is_valid(schema, {"cells": {}})
+    assert not _is_valid(schema, {"cells": {"0,0": {"items": ["x"]}}})
 
 
-def test_table_emits_coordinate_oneof_with_const_row_col() -> None:
+def test_table_emits_keyed_render_cells() -> None:
     schema = build_validation_content_schema(
         "table", _table_tags({"cells": [_render_cell(2, 3, text_format="plain")]})
     )
-    (cell_schema,) = schema["properties"]["cells"]["items"]["oneOf"]
-    assert cell_schema["properties"]["row"] == {"const": 2}
-    assert cell_schema["properties"]["col"] == {"const": 3}
-    assert cell_schema["required"] == ["row", "col", "items"]
+    cells = schema["properties"]["cells"]
+    assert set(cells["properties"]) == {"2,3"}
+    cell_schema = cells["properties"]["2,3"]
+    assert cell_schema["required"] == ["items"]
     assert cell_schema["additionalProperties"] is False
-    # A coordinate outside the allowed set fails.
-    assert not _is_valid(schema, {"cells": [{"row": 9, "col": 9, "items": ["x"]}]})
+    assert set(cell_schema["properties"]) == {"items"}
+    # A coordinate outside the allowed set is rejected by name (additionalProperties).
+    assert not _is_valid(schema, {"cells": {"9,9": {"items": ["x"]}}})
 
 
-def test_table_required_render_cell_gets_exact_contains() -> None:
+def test_table_required_render_cell_is_required_key() -> None:
     schema = build_validation_content_schema(
         "table", _table_tags({"cells": [_render_cell(0, 1)]})
     )
-    (entry,) = schema["properties"]["cells"]["allOf"]
-    assert entry["minContains"] == 1
-    assert entry["maxContains"] == 1
-    assert entry["contains"]["properties"] == {"row": {"const": 0}, "col": {"const": 1}}
-    # Required cell must appear exactly once.
-    assert not _is_valid(schema, {"cells": []})
-    assert _is_valid(schema, {"cells": [{"row": 0, "col": 1, "items": ["x"]}]})
-    assert not _is_valid(
-        schema,
-        {"cells": [{"row": 0, "col": 1, "items": ["x"]}, {"row": 0, "col": 1, "items": ["y"]}]},
-    )
+    cells = schema["properties"]["cells"]
+    assert cells["required"] == ["0,1"]
+    # Required cell must be present; a duplicate coordinate is unrepresentable as a key.
+    assert not _is_valid(schema, {"cells": {}})
+    assert _is_valid(schema, {"cells": {"0,1": {"items": ["x"]}}})
 
 
 def test_table_optional_row_or_column_policy_relaxes_requiredness() -> None:
@@ -219,24 +218,14 @@ def test_table_optional_row_or_column_policy_relaxes_requiredness() -> None:
         "cells": [_render_cell(0, 0), _render_cell(1, 2), _render_cell(1, 0)],
     }
     schema = build_validation_content_schema("table", _table_tags(config))
-    by_coord = {
-        (e["contains"]["properties"]["row"]["const"], e["contains"]["properties"]["col"]["const"]): e
-        for e in schema["properties"]["cells"]["allOf"]
-    }
-    assert by_coord[(0, 0)]["minContains"] == 0  # optional row
-    assert by_coord[(1, 2)]["minContains"] == 0  # optional column
-    assert by_coord[(1, 0)]["minContains"] == 1  # required row + column
-    # Optional cells may be omitted but never duplicated.
-    only_required = {"cells": [{"row": 1, "col": 0, "items": ["x"]}]}
-    assert _is_valid(schema, only_required)
-    duplicated_optional = {
-        "cells": [
-            {"row": 1, "col": 0, "items": ["x"]},
-            {"row": 0, "col": 0, "items": ["y"]},
-            {"row": 0, "col": 0, "items": ["z"]},
-        ]
-    }
-    assert not _is_valid(schema, duplicated_optional)
+    cells = schema["properties"]["cells"]
+    assert set(cells["properties"]) == {"0,0", "1,2", "1,0"}
+    # Only the fully-required cell (required row + required column) is required.
+    assert cells["required"] == ["1,0"]
+    # Optional cells may be omitted.
+    assert _is_valid(schema, {"cells": {"1,0": {"items": ["x"]}}})
+    # A preserve/unknown coordinate is still rejected by name.
+    assert not _is_valid(schema, {"cells": {"1,0": {"items": ["x"]}, "5,5": {"items": ["y"]}}})
 
 
 def test_table_cell_item_limits() -> None:
@@ -249,13 +238,33 @@ def test_table_cell_item_limits() -> None:
         ]
     }
     schema = build_validation_content_schema("table", _table_tags(config))
-    cells = schema["properties"]["cells"]["items"]["oneOf"]
-    plain, bullets, limited, unlimited = cells
-    assert plain["properties"]["items"]["maxItems"] == 1  # plain wins over max_lines
-    assert bullets["properties"]["items"]["maxItems"] == 4
-    assert limited["properties"]["items"]["items"]["maxLength"] == 30  # stricter limit
-    assert "maxItems" not in unlimited["properties"]["items"]
-    assert "maxLength" not in unlimited["properties"]["items"]["items"]
+    props = schema["properties"]["cells"]["properties"]
+    plain = props["0,0"]["properties"]["items"]
+    bullets = props["0,1"]["properties"]["items"]
+    limited = props["0,2"]["properties"]["items"]
+    unlimited = props["0,3"]["properties"]["items"]
+    assert plain["maxItems"] == 1  # plain wins over max_lines
+    assert bullets["maxItems"] == 4
+    assert limited["items"]["maxLength"] == 30  # stricter limit
+    assert "maxItems" not in unlimited
+    assert "maxLength" not in unlimited["items"]
+
+
+def test_table_cell_violation_reports_exact_cell_and_item_path() -> None:
+    # A too-long item in a render cell fails at its own precise path — the point of
+    # the keyed shape (vs the old oneOf collapsing to a misleading row/col const error).
+    schema = build_validation_content_schema(
+        "table",
+        _table_tags({"cells": [_render_cell(3, 1, text_format="bullets", max_chars_per_item=4)]}),
+    )
+    errors = sorted(
+        Draft202012Validator(schema).iter_errors({"cells": {"3,1": {"items": ["xxxxx"]}}}),
+        key=lambda e: list(e.absolute_path),
+    )
+    assert errors, "expected a validation error"
+    first = errors[0]
+    assert list(first.absolute_path) == ["cells", "3,1", "items", 0]
+    assert first.validator == "maxLength"
 
 
 def test_table_duplicate_config_coordinates_fail_clearly() -> None:

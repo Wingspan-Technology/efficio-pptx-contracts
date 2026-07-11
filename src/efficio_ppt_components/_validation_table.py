@@ -1,10 +1,14 @@
 """Table component per-instance validation schema.
 
-Emits a ``oneOf`` of allowed ``{row, col}`` coordinates (the ``render`` cells),
-each with its own item-count/length limits, plus a ``contains`` entry per cell so
-required cells must appear exactly once and optional cells at most once. Preserve
-and default-preserve cells are dropped; when every cell is preserved the content
-may fill nothing (``maxItems: 0``).
+Emits ``cells`` as an object keyed by ``"row,col"`` — one property per allowed
+(``render``) cell, each carrying its own item-count/length limits. Required cells
+go in ``required``; optional cells are properties but not required; the object's
+``additionalProperties`` is ``false`` so any cell not configured for render is
+rejected by name (``/cells/9,9``). A content violation reports the exact cell and
+item (``/cells/3,1/items/0``). Preserve and default-preserve cells are dropped;
+when every cell is preserved ``cells`` is an empty object (``properties: {}``,
+``additionalProperties: false``). Object keys make duplicate coordinates
+unrepresentable, so no explicit ``contains``/uniqueness rule is needed.
 """
 
 from __future__ import annotations
@@ -39,24 +43,29 @@ def _table_validation_schema(tags: Mapping[str, str]) -> dict[str, Any]:
     render_cells, required_coords = _parse_table_config(_required_tag(tags, _TABLE_CONFIG_TAG, "table"))
 
     schema = _base_content_schema("table")
-    cells_schema: dict[str, Any] = {"type": "array"}
-    if not render_cells:
-        # Every configured cell is preserved: content may not fill anything.
-        cells_schema["maxItems"] = 0
-    else:
-        cells_schema["items"] = {"oneOf": [_cell_schema(cell) for cell in render_cells]}
-        # One contains entry per render cell: required cells must appear exactly
-        # once; optional cells at most once (maxContains blocks duplicates).
-        cells_schema["allOf"] = [
-            _cell_contains(cell, required=(cell.row, cell.col) in required_coords)
-            for cell in render_cells
-        ]
+    # cells is an object keyed by "row,col": one property per render cell. Object
+    # keys give allowed-coordinate + no-duplicate enforcement for free; a cell not
+    # configured for render is rejected by name via additionalProperties: false.
+    # No render cells (every cell preserved) -> an empty object; only {} validates.
+    cells_schema: dict[str, Any] = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {_coord_key(cell): _cell_value_schema(cell) for cell in render_cells},
+    }
+    required = [_coord_key(cell) for cell in render_cells if (cell.row, cell.col) in required_coords]
+    if required:
+        cells_schema["required"] = required
     schema["properties"]["cells"] = cells_schema
     return schema
 
 
-def _cell_schema(cell: _TableCell) -> dict[str, Any]:
-    """The schema one content cell must match for this allowed coordinate."""
+def _coord_key(cell: _TableCell) -> str:
+    """The ``"row,col"`` object key for a render cell."""
+    return f"{cell.row},{cell.col}"
+
+
+def _cell_value_schema(cell: _TableCell) -> dict[str, Any]:
+    """The schema the content value for one allowed coordinate must match."""
     items: dict[str, Any] = {"type": "array", "minItems": 1}
     if cell.text_format == _PLAIN_FORMAT:
         items["maxItems"] = 1
@@ -70,24 +79,8 @@ def _cell_schema(cell: _TableCell) -> dict[str, Any]:
     return {
         "type": "object",
         "additionalProperties": False,
-        "required": ["row", "col", "items"],
-        "properties": {
-            "row": {"const": cell.row},
-            "col": {"const": cell.col},
-            "items": items,
-        },
-    }
-
-
-def _cell_contains(cell: _TableCell, *, required: bool) -> dict[str, Any]:
-    return {
-        "contains": {
-            "type": "object",
-            "required": ["row", "col"],
-            "properties": {"row": {"const": cell.row}, "col": {"const": cell.col}},
-        },
-        "minContains": 1 if required else 0,
-        "maxContains": 1,
+        "required": ["items"],
+        "properties": {"items": items},
     }
 
 

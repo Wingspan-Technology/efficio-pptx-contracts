@@ -139,27 +139,19 @@ export const componentInstructions = {
         ],
         "properties": {
           "cells": {
-            "type": "array",
-            "description": "Array of table cells to fill. Use only row and column coordinates provided in this table instance context.",
-            "items": {
+            "type": "object",
+            "description": "The table cells to fill, keyed by \"row,col\" (zero-based, e.g. \"0,1\"). Use only the row/column coordinates provided in this table instance's tag_context.table_config, one key per cell. Each value is an object with only an items array.",
+            "propertyNames": {
+              "pattern": "^[0-9]+,[0-9]+$",
+              "description": "A cell coordinate key \"row,col\" (zero-based integers), matching a render cell from this table instance context."
+            },
+            "additionalProperties": {
               "type": "object",
               "additionalProperties": false,
               "required": [
-                "row",
-                "col",
                 "items"
               ],
               "properties": {
-                "row": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Zero-based table row index from the provided table context."
-                },
-                "col": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Zero-based table column index from the provided table context."
-                },
                 "items": {
                   "type": "array",
                   "minItems": 1,
