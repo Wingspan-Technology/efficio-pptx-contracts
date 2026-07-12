@@ -462,6 +462,72 @@ describe("strict sizing instruction wording", () => {
   });
 });
 
+describe("table content generation instructions", () => {
+  const aggregate = readJson(path.join(pkgRoot, "generated", "ai", "component-instructions.json"));
+  const aggregateComponents = aggregate.component_instructions as Record<string, JsonObject>;
+  const tableInstruction = aggregateComponents.table;
+  const tablePurpose = (
+    (tableInstruction.tag_instructions as JsonObject).table_config as JsonObject
+  ).purpose as string;
+
+  it("output is keyed by \"row,col\" and returns generated content only", () => {
+    expect(tablePurpose).toContain('cells["1,2"]');
+    expect(tablePurpose).toContain('Return only generated cell content keyed by "row,col"');
+    expect(tablePurpose).toContain("never return table config");
+  });
+
+  it("row instructions apply to every generated cell in that row", () => {
+    expect(tablePurpose).toContain("rows[] contains row-level guidance");
+    expect(tablePurpose).toContain(
+      "a row instruction applies to every generated cell whose row matches that row index",
+    );
+  });
+
+  it("column instructions apply to every generated cell in that column", () => {
+    expect(tablePurpose).toContain("columns[] contains column-level guidance");
+    expect(tablePurpose).toContain(
+      "a column instruction applies to every generated cell whose col matches that column index",
+    );
+  });
+
+  it("component, row, column, and cell instructions are combined per cell", () => {
+    expect(tablePurpose).toContain(
+      "combine the component-level instruction, matching row instruction, matching column instruction, and that cell's instruction",
+    );
+    // cell instruction is most specific, but row/column still apply
+    expect(tablePurpose).toContain("The cell instruction is the most specific");
+    expect(tablePurpose).toContain("row and column instructions must still be followed");
+  });
+
+  it("cell limits are strict and must never be exceeded", () => {
+    expect(tablePurpose).toContain("Cell limits are strict");
+    expect(tablePurpose).toContain("must never exceed");
+  });
+
+  it("only render cells receive content; preserve or missing render_action is not returned", () => {
+    expect(tablePurpose).toContain(
+      'only cells with render_action "render" can receive generated content',
+    );
+    expect(tablePurpose).toContain(
+      "preserve or missing render_action means keep authored content and do not return that cell",
+    );
+    // content_policy is about expected/optional, not renderability
+    expect(tablePurpose).toContain("it does not make a preserved cell renderable");
+  });
+
+  it("expected content schema describes generated content keyed to configured render cells", () => {
+    const schema = tableInstruction.expected_content_schema as JsonObject;
+    expect(schema.description as string).toContain(
+      "generated cell content only, never table configuration",
+    );
+    const cells = (schema.properties as JsonObject).cells as JsonObject;
+    expect(cells.description as string).toContain("must match a render cell configured");
+    const items = ((cells.additionalProperties as JsonObject).properties as JsonObject)
+      .items as JsonObject;
+    expect(items.description as string).toContain("never exceed the cell's strict limits");
+  });
+});
+
 describe("generated slide-selection AI instructions", () => {
   const slideDir = path.join(contractsDir, "presentation", "slide");
   const artifact = readJson(path.join(pkgRoot, "generated", "ai", "slide-selection.instruction.json"));

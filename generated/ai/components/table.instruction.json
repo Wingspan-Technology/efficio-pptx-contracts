@@ -2,13 +2,13 @@
   "component_type": "table",
   "tag_instructions": {
     "table_config": {
-      "purpose": "Describes the table's cells (and optional row/column content policies) so content is generated per cell. Each cell has an optional render_action that defaults to preserve: render cells receive generated content, preserve cells keep their existing content unchanged, and a cell with no render_action is preserved. Row/column content_policy (required or optional) guides which cells need content, not whether they render. text_format selects how a cell's text is structured; max_chars_per_item, max_lines, and max_chars_per_line are strict limits: generated cell content must never exceed them — shorten or compact the content until it fits every provided limit."
+      "purpose": "Describes how to generate content for a table. Coordinates are zero-based: row 1 and col 2 is returned as cells[\"1,2\"]. The component-level instructions apply to the whole table. rows[] contains row-level guidance; a row instruction applies to every generated cell whose row matches that row index. columns[] contains column-level guidance; a column instruction applies to every generated cell whose col matches that column index. rows[] and columns[] do not create output cells by themselves; cells[] defines the configured cell coordinates. For each generated cell, combine the component-level instruction, matching row instruction, matching column instruction, and that cell's instruction. The cell instruction is the most specific, but row and column instructions must still be followed when they apply. Cell limits are strict: generated content must never exceed that cell's max_chars_per_item, max_lines, or max_chars_per_line; shorten or compact content until it fits. render_action controls output: only cells with render_action \"render\" can receive generated content; preserve or missing render_action means keep authored content and do not return that cell. content_policy only describes whether matching render cells are expected or optional; it does not make a preserved cell renderable. text_format controls item structure: plain uses one item; paragraph, bullets, and numbered_list may use multiple items, bounded by cell limits. Return only generated cell content keyed by \"row,col\"; never return table config, row/col fields inside cell values, schemas, explanations, or preserved cell content."
     }
   },
   "expected_content_schema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "component_type": "table",
-    "description": "Expected AI output for a generic table component. The response lists only cells the AI intends to fill. Table configuration, cell render actions, row/column content policies, and PowerPoint structure are defined by the component's tag_context.table_config.",
+    "description": "Expected AI output for a generic table component: generated cell content only, never table configuration. The response lists only the cells the AI fills, keyed by \"row,col\". Cell render actions, row/column content policies, sizing limits, and PowerPoint structure are defined by the component's tag_context.table_config.",
     "type": "object",
     "additionalProperties": false,
     "required": [
@@ -17,7 +17,7 @@
     "properties": {
       "cells": {
         "type": "object",
-        "description": "The table cells to fill, keyed by \"row,col\" (zero-based, e.g. \"0,1\"). Use only the row/column coordinates provided in this table instance's tag_context.table_config, one key per cell. Each value is an object with only an items array.",
+        "description": "The table cells to fill, keyed by \"row,col\" (zero-based, e.g. \"0,1\"). Each key must match a render cell configured in this table instance's tag_context.table_config; do not return preserved or unconfigured cells. One key per cell; each value is an object with only an items array.",
         "propertyNames": {
           "pattern": "^[0-9]+,[0-9]+$",
           "description": "A cell coordinate key \"row,col\" (zero-based integers), matching a render cell from this table instance context."
@@ -32,7 +32,7 @@
             "items": {
               "type": "array",
               "minItems": 1,
-              "description": "Text items for this cell. Use one item for plain text cells. Use one or more items for paragraph, bullets, or numbered_list cells. Do not return schema, configuration, explanations, or preserved cell content.",
+              "description": "Text items for this cell, obeying the matching cell's tag_context.table_config: use one item for plain text cells, one or more for paragraph, bullets, or numbered_list cells, and never exceed the cell's strict limits (max_chars_per_item, max_lines, max_chars_per_line). Do not return schema, configuration, explanations, or preserved cell content.",
               "items": {
                 "type": "string"
               }
