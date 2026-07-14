@@ -21,7 +21,7 @@
           "items": {
             "type": "array",
             "minItems": 1,
-            "description": "Text items for this cell, obeying the matching cell's tag_context.table_config: use one item for plain text cells, one or more for paragraph, bullets, or numbered_list cells, and never exceed the cell's strict limits (max_chars_per_item, max_lines, max_chars_per_line). Do not return schema, configuration, explanations, or preserved cell content.",
+            "description": "Text items for this cell, obeying the matching cell's tag_context.table_config: use one item for plain text cells, one or more for paragraph, bullets, or numbered_list cells, and never exceed the cell's strict limits (the min/max item count and the min/max characters per item). Do not return schema, configuration, explanations, or preserved cell content.",
             "items": {
               "type": "string"
             }

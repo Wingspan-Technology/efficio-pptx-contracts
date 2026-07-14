@@ -499,9 +499,19 @@ describe("table content generation instructions", () => {
     expect(tablePurpose).toContain("row and column instructions must still be followed");
   });
 
-  it("cell limits are strict and must never be exceeded", () => {
-    expect(tablePurpose).toContain("Cell limits are strict");
+  it("cell sizing is item-based, strict where present, with target guidance", () => {
+    expect(tablePurpose).toContain("Cell sizing fields are optional");
+    // strict item vocabulary shared with the text component, not lines
+    expect(tablePurpose).toContain("min_items and max_items");
+    expect(tablePurpose).toContain("min_chars_per_item and max_chars_per_item");
     expect(tablePurpose).toContain("must never exceed");
+    expect(tablePurpose).toMatch(/shorten or compact/);
+    // max_chars is the aggregate budget; target_* are guidance only
+    expect(tablePurpose).toContain("max_chars is the strict total character budget");
+    expect(tablePurpose).toContain("guidance only, not limits");
+    // the removed line-based vocabulary must be gone
+    expect(tablePurpose).not.toContain("max_lines");
+    expect(tablePurpose).not.toContain("max_chars_per_line");
   });
 
   it("only render cells receive content; preserve or missing render_action is not returned", () => {

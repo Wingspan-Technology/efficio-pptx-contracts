@@ -536,6 +536,105 @@ def test_validate_table_reports_missing_config_tag() -> None:
     ]
 
 
+def _table_cfg(**cell: object) -> str:
+    """A one-render-cell efficio_table_config with the given sizing/format overrides."""
+    return json.dumps({"cells": [{"row": 0, "col": 0, "render_action": "render", **cell}]})
+
+
+def test_validate_table_rejects_min_items_over_max_items() -> None:
+    # A list format so item counts are not forced to 1; min_items > max_items fails.
+    issues = sdk.validate_component_tags(
+        "table",
+        valid_table_tags(efficio_table_config=_table_cfg(text_format="bullets", min_items=4, max_items=2)),
+    )
+    assert ("min_exceeds_max", "efficio_table_config") in [(i.code, i.tag_name) for i in issues]
+
+
+def test_validate_table_rejects_min_chars_per_item_over_max() -> None:
+    issues = sdk.validate_component_tags(
+        "table",
+        valid_table_tags(efficio_table_config=_table_cfg(min_chars_per_item=40, max_chars_per_item=20)),
+    )
+    assert ("min_exceeds_max", "efficio_table_config") in [(i.code, i.tag_name) for i in issues]
+
+
+def test_validate_table_rejects_target_items_outside_bounds() -> None:
+    over = sdk.validate_component_tags(
+        "table",
+        valid_table_tags(
+            efficio_table_config=_table_cfg(text_format="bullets", min_items=1, max_items=2, target_items=5)
+        ),
+    )
+    assert ("target_exceeds_max", "efficio_table_config") in [(i.code, i.tag_name) for i in over]
+    under = sdk.validate_component_tags(
+        "table",
+        valid_table_tags(
+            efficio_table_config=_table_cfg(text_format="bullets", min_items=3, max_items=5, target_items=1)
+        ),
+    )
+    assert ("target_below_min", "efficio_table_config") in [(i.code, i.tag_name) for i in under]
+
+
+def test_validate_table_plain_cell_requires_single_item() -> None:
+    # A plain cell is exactly one item, whether text_format is explicit or defaulted.
+    explicit = sdk.validate_component_tags(
+        "table", valid_table_tags(efficio_table_config=_table_cfg(text_format="plain", max_items=3))
+    )
+    assert ("plain_requires_single_item", "efficio_table_config") in [
+        (i.code, i.tag_name) for i in explicit
+    ]
+    defaulted = sdk.validate_component_tags(
+        "table", valid_table_tags(efficio_table_config=_table_cfg(min_items=2, max_items=3))
+    )
+    assert ("plain_requires_single_item", "efficio_table_config") in [
+        (i.code, i.tag_name) for i in defaulted
+    ]
+
+
+def test_validate_table_plain_cell_forbids_target_items() -> None:
+    issues = sdk.validate_component_tags(
+        "table", valid_table_tags(efficio_table_config=_table_cfg(text_format="plain", target_items=1))
+    )
+    assert ("plain_forbids_target_items", "efficio_table_config") in [
+        (i.code, i.tag_name) for i in issues
+    ]
+
+
+def test_validate_table_accepts_valid_sizing() -> None:
+    # A consistent bullets cell with strict bounds and in-range guidance is clean.
+    tags = valid_table_tags(
+        efficio_table_config=_table_cfg(
+            text_format="bullets",
+            min_items=1,
+            max_items=3,
+            target_items=2,
+            min_chars_per_item=5,
+            max_chars_per_item=40,
+            target_chars_per_item=20,
+            max_chars=120,
+            target_chars=90,
+        )
+    )
+    assert sdk.validate_component_tags("table", tags) == []
+
+
+def test_validate_table_skips_semantics_when_structurally_broken() -> None:
+    # min_chars_per_item=0 is a structural violation (below the schema minimum), so the
+    # tag is skipped for cross-field checks: the otherwise-present min_items>max_items is
+    # not double-reported.
+    issues = sdk.validate_component_tags(
+        "table",
+        valid_table_tags(
+            efficio_table_config=_table_cfg(
+                text_format="bullets", min_items=5, max_items=2, min_chars_per_item=0
+            )
+        ),
+    )
+    codes = [(i.code, i.tag_name) for i in issues]
+    assert ("schema_violation", "efficio_table_config") in codes
+    assert all(code != "min_exceeds_max" for code, _ in codes)
+
+
 def _category_chart_config(**overrides: object) -> dict:
     config = {
         "chart_type": "CLUSTERED_COLUMN",

@@ -16,6 +16,7 @@ from jsonschema import Draft202012Validator
 
 from ._category_chart_validation import category_chart_issues
 from ._resources import load_json
+from ._table_config_validation import table_config_issues
 from ._text_sizing_validation import text_sizing_issues
 from .errors import UnknownComponentTypeError
 from .registry import assert_component_type
@@ -91,6 +92,8 @@ def _component_semantic_issues(
     prior_tags = {issue.tag_name for issue in prior_issues if issue.tag_name is not None}
     if component_type == "text":
         raw_issues = text_sizing_issues(tags, prior_tags)
+    elif component_type == "table":
+        raw_issues = table_config_issues(tags, prior_tags)
     elif component_type == "category_chart":
         raw_issues = category_chart_issues(tags, prior_tags)
     else:

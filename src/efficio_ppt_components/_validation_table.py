@@ -34,9 +34,10 @@ class _TableCell:
     col: int
     render_action: str
     text_format: str
+    min_items: int | None
+    max_items: int | None
+    min_chars_per_item: int | None
     max_chars_per_item: int | None
-    max_lines: int | None
-    max_chars_per_line: int | None
 
 
 def _table_validation_schema(tags: Mapping[str, str]) -> dict[str, Any]:
@@ -65,16 +66,27 @@ def _coord_key(cell: _TableCell) -> str:
 
 
 def _cell_value_schema(cell: _TableCell) -> dict[str, Any]:
-    """The schema the content value for one allowed coordinate must match."""
+    """The schema the content value for one allowed coordinate must match.
+
+    Mirrors the text builder's item bounds, but per cell and all-optional: a render
+    cell always holds at least one item (base ``minItems`` 1); ``plain`` pins it to
+    exactly one; otherwise ``min_items`` / ``max_items`` bound the item count and
+    ``min_chars_per_item`` / ``max_chars_per_item`` bound each item's length when
+    present. The aggregate ``max_chars`` and the ``target_*`` guidance never appear.
+    """
     items: dict[str, Any] = {"type": "array", "minItems": 1}
     if cell.text_format == _PLAIN_FORMAT:
         items["maxItems"] = 1
-    elif cell.max_lines is not None:
-        items["maxItems"] = cell.max_lines
+    else:
+        if cell.min_items is not None:
+            items["minItems"] = cell.min_items
+        if cell.max_items is not None:
+            items["maxItems"] = cell.max_items
     item: dict[str, Any] = {"type": "string"}
-    limits = [n for n in (cell.max_chars_per_item, cell.max_chars_per_line) if n is not None]
-    if limits:
-        item["maxLength"] = min(limits)
+    if cell.min_chars_per_item is not None:
+        item["minLength"] = cell.min_chars_per_item
+    if cell.max_chars_per_item is not None:
+        item["maxLength"] = cell.max_chars_per_item
     items["items"] = item
     return {
         "type": "object",
@@ -135,9 +147,10 @@ def _parse_table_config(raw: str) -> tuple[list[_TableCell], set[tuple[int, int]
                 col=col,
                 render_action=render_action,
                 text_format=text_format,
+                min_items=_optional_limit(entry.get("min_items"), row, col),
+                max_items=_optional_limit(entry.get("max_items"), row, col),
+                min_chars_per_item=_optional_limit(entry.get("min_chars_per_item"), row, col),
                 max_chars_per_item=_optional_limit(entry.get("max_chars_per_item"), row, col),
-                max_lines=_optional_limit(entry.get("max_lines"), row, col),
-                max_chars_per_line=_optional_limit(entry.get("max_chars_per_line"), row, col),
             )
         )
         if row not in optional_rows and col not in optional_cols:

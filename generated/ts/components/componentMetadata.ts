@@ -305,7 +305,7 @@ export const componentMetadata = {
       "efficio_table_config": {
         "type": "object",
         "required": true,
-        "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration (position plus an optional render action defaulting to preserve, text format, and optional strict sizing limits).",
+        "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration (position plus an optional render action defaulting to preserve, text format, and optional item-based sizing limits — strict min/max item and per-item character bounds plus optional preferred-size guidance).",
         "ui": {
           "order": 50
         },
@@ -427,20 +427,45 @@ export const componentMetadata = {
                     "default": "",
                     "description": "Optional guidance for generating this cell's content."
                   },
+                  "max_chars": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum total characters for this cell's generated content across all items — a strict budget. Optional. Not encoded as an aggregate schema rule (JSON Schema cannot sum item lengths); keep the combined item length within it while generating."
+                  },
+                  "target_chars": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Preferred (target) total characters for this cell; optional sizing guidance, not a maximum. When present it must not exceed max_chars."
+                  },
+                  "min_items": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Minimum number of items (strings in the cell's items array) — a strict lower bound. Optional. Not applicable to plain cells, which are always a single item."
+                  },
+                  "target_items": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Preferred (target) number of items for this cell; optional sizing guidance, not a bound. When present it must be within min_items and max_items. Not applicable to plain cells, which are always a single item."
+                  },
+                  "max_items": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum number of items (strings in the cell's items array) — a strict limit that must never be exceeded; shorten or compact content (use fewer items) until it fits. Optional. Not applicable to plain cells, which are always a single item."
+                  },
+                  "min_chars_per_item": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Minimum characters for each generated item in this cell — a strict lower bound. Optional."
+                  },
                   "max_chars_per_item": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Maximum characters for each generated line/item in the cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
+                    "description": "Maximum characters for each generated item in this cell — a strict limit that must never be exceeded; shorten or compact each item until it fits. Optional."
                   },
-                  "max_lines": {
+                  "target_chars_per_item": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Maximum number of lines for this cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
-                  },
-                  "max_chars_per_line": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "Maximum characters per line for this cell — a strict limit that must never be exceeded; shorten or compact content until it fits."
+                    "description": "Preferred (target) characters per item for this cell; optional sizing guidance, not a maximum. When present it must be within min_chars_per_item and max_chars_per_item."
                   }
                 }
               }

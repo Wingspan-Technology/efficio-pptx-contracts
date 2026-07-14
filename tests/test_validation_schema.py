@@ -231,23 +231,57 @@ def test_table_optional_row_or_column_policy_relaxes_requiredness() -> None:
 def test_table_cell_item_limits() -> None:
     config = {
         "cells": [
-            _render_cell(0, 0, text_format="plain", max_lines=5),
-            _render_cell(0, 1, text_format="bullets", max_lines=4),
-            _render_cell(0, 2, text_format="bullets", max_chars_per_item=50, max_chars_per_line=30),
+            _render_cell(0, 0, text_format="plain", max_items=5),
+            _render_cell(0, 1, text_format="bullets", min_items=2, max_items=4),
+            _render_cell(0, 2, text_format="bullets", min_chars_per_item=10, max_chars_per_item=30),
             _render_cell(0, 3, text_format="bullets"),
         ]
     }
     schema = build_validation_content_schema("table", _table_tags(config))
     props = schema["properties"]["cells"]["properties"]
     plain = props["0,0"]["properties"]["items"]
-    bullets = props["0,1"]["properties"]["items"]
-    limited = props["0,2"]["properties"]["items"]
+    counted = props["0,1"]["properties"]["items"]
+    per_item = props["0,2"]["properties"]["items"]
     unlimited = props["0,3"]["properties"]["items"]
-    assert plain["maxItems"] == 1  # plain wins over max_lines
-    assert bullets["maxItems"] == 4
-    assert limited["items"]["maxLength"] == 30  # stricter limit
+    assert plain["minItems"] == 1 and plain["maxItems"] == 1  # plain pins to one item over max_items
+    assert counted["minItems"] == 2 and counted["maxItems"] == 4
+    assert per_item["items"]["minLength"] == 10
+    assert per_item["items"]["maxLength"] == 30
+    # A render cell always holds at least one item; no upper/length bound when absent.
+    assert unlimited["minItems"] == 1
     assert "maxItems" not in unlimited
+    assert "minLength" not in unlimited["items"]
     assert "maxLength" not in unlimited["items"]
+
+
+def test_table_schema_ignores_target_and_aggregate_fields() -> None:
+    # target_chars / target_items / target_chars_per_item and the aggregate max_chars
+    # are AI sizing guidance, never content bounds: they must not appear in or change
+    # the validation.json schema (matching text).
+    strict = dict(
+        text_format="bullets", min_items=1, max_items=3, min_chars_per_item=5, max_chars_per_item=40
+    )
+    base = build_validation_content_schema("table", _table_tags({"cells": [_render_cell(0, 0, **strict)]}))
+    with_guidance = build_validation_content_schema(
+        "table",
+        _table_tags(
+            {
+                "cells": [
+                    _render_cell(
+                        0,
+                        0,
+                        **strict,
+                        max_chars=120,
+                        target_chars=90,
+                        target_items=2,
+                        target_chars_per_item=20,
+                    )
+                ]
+            }
+        ),
+    )
+    assert with_guidance == base
+    assert "target" not in json.dumps(with_guidance)
 
 
 def test_table_cell_violation_reports_exact_cell_and_item_path() -> None:
@@ -622,7 +656,7 @@ def test_emitted_schemas_are_valid_json_schema() -> None:
         "rows": [{"row": 0, "content_policy": "optional"}],
         "cells": [
             _render_cell(0, 0),
-            _render_cell(1, 1, text_format="bullets", max_lines=3, max_chars_per_line=20),
+            _render_cell(1, 1, text_format="bullets", min_items=1, max_items=3, min_chars_per_item=2, max_chars_per_item=20),
             {"row": 2, "col": 2, "render_action": "preserve"},
         ],
     }
