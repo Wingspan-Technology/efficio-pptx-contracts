@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping
-from typing import Any
+from typing import Any, TypeGuard
 
 _TABLE_CONFIG_TAG = "efficio_table_config"
 _PLAIN_TEXT_FORMAT = "plain"
@@ -54,6 +54,54 @@ def table_config_issues(
     for entry in parsed["cells"]:
         if isinstance(entry, dict):
             issues.extend(_cell_issues(entry))
+    issues.extend(_duplicate_coordinate_issues(parsed["cells"]))
+    issues.extend(_duplicate_axis_issues(parsed.get("rows"), "row", "Row"))
+    issues.extend(_duplicate_axis_issues(parsed.get("columns"), "col", "Column"))
+    return issues
+
+
+def _duplicate_coordinate_issues(cells: list[Any]) -> list[tuple[str, str, str]]:
+    """A cell coordinate may be configured at most once; report each repeated (row, col)."""
+    seen: set[tuple[int, int]] = set()
+    reported: set[tuple[int, int]] = set()
+    issues: list[tuple[str, str, str]] = []
+    for entry in cells:
+        if not isinstance(entry, dict):
+            continue
+        row = entry.get("row")
+        col = entry.get("col")
+        if not (_is_index(row) and _is_index(col)):
+            continue
+        key = (row, col)
+        if key in seen and key not in reported:
+            issues.append(
+                ("duplicate_cell", _TABLE_CONFIG_TAG, f"Cell {key} is configured more than once.")
+            )
+            reported.add(key)
+        seen.add(key)
+    return issues
+
+
+def _duplicate_axis_issues(value: Any, key: str, label: str) -> list[tuple[str, str, str]]:
+    """A row/column index may be configured at most once; report each repeated index."""
+    if not isinstance(value, list):
+        return []
+    code = "duplicate_row" if key == "row" else "duplicate_column"
+    seen: set[int] = set()
+    reported: set[int] = set()
+    issues: list[tuple[str, str, str]] = []
+    for entry in value:
+        if not isinstance(entry, dict):
+            continue
+        index = entry.get(key)
+        if not _is_index(index):
+            continue
+        if index in seen and index not in reported:
+            issues.append(
+                (code, _TABLE_CONFIG_TAG, f"{label} {index} is configured more than once.")
+            )
+            reported.add(index)
+        seen.add(index)
     return issues
 
 
@@ -145,5 +193,5 @@ def _cell_label(entry: Mapping[str, Any]) -> str:
     return "Cell:"
 
 
-def _is_index(value: Any) -> bool:
+def _is_index(value: Any) -> TypeGuard[int]:
     return isinstance(value, int) and not isinstance(value, bool) and value >= 0

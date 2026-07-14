@@ -16,6 +16,7 @@ import {
   hasComponentType,
   listComponentCompatibilityTagSchemas,
   listComponentTypes,
+  validateTableConfigSemantics,
   validateTextSizingSemantics,
   DECK_TEMPLATE_ID_TAG,
   DECK_INITIALIZED_TAG,
@@ -139,6 +140,73 @@ describe("editor SDK deck surface", () => {
     expect((getDeckTagDefaults() as Record<string, string>).efficio_template_id).toBe(
       "default_template"
     );
+  });
+});
+
+describe("validateTableConfigSemantics (SDK table cross-field rule)", () => {
+  const cfg = (cells: unknown[], extra: Record<string, unknown> = {}): Record<string, string> => ({
+    efficio_table_config: JSON.stringify({ cells, ...extra }),
+  });
+
+  it("passes a clean config and is a no-op without the tag", () => {
+    expect(validateTableConfigSemantics({})).toEqual([]);
+    expect(
+      validateTableConfigSemantics(
+        cfg([
+          { row: 0, col: 0, text_format: "bullets", min_items: 1, max_items: 3, target_items: 2 },
+        ])
+      )
+    ).toEqual([]);
+  });
+
+  it("flags min>max, target out of bounds, and plain single-item violations", () => {
+    expect(
+      validateTableConfigSemantics(
+        cfg([{ row: 0, col: 0, text_format: "bullets", min_items: 4, max_items: 2 }])
+      ).some((i) => i.code === "min_exceeds_max")
+    ).toBe(true);
+    expect(
+      validateTableConfigSemantics(
+        cfg([{ row: 0, col: 0, text_format: "bullets", max_items: 2, target_items: 5 }])
+      ).some((i) => i.code === "target_exceeds_max")
+    ).toBe(true);
+    expect(
+      validateTableConfigSemantics(
+        cfg([{ row: 0, col: 0, text_format: "plain", max_items: 3 }])
+      ).some((i) => i.code === "plain_requires_single_item")
+    ).toBe(true);
+    // A cell with no text_format defaults to plain, so target_items is invalid.
+    expect(
+      validateTableConfigSemantics(cfg([{ row: 0, col: 0, target_items: 2 }])).some(
+        (i) => i.code === "plain_forbids_target_items"
+      )
+    ).toBe(true);
+  });
+
+  it("flags duplicate cell / row / column coordinates once each", () => {
+    expect(
+      validateTableConfigSemantics(
+        cfg([
+          { row: 0, col: 0 },
+          { row: 0, col: 0 },
+        ])
+      ).filter((i) => i.code === "duplicate_cell")
+    ).toHaveLength(1);
+    expect(
+      validateTableConfigSemantics(cfg([], { rows: [{ row: 1 }, { row: 1 }] })).some(
+        (i) => i.code === "duplicate_row"
+      )
+    ).toBe(true);
+    expect(
+      validateTableConfigSemantics(cfg([], { columns: [{ col: 2 }, { col: 2 }] })).some(
+        (i) => i.code === "duplicate_column"
+      )
+    ).toBe(true);
+  });
+
+  it("skips semantics on invalid/non-object JSON (structural layer owns it)", () => {
+    expect(validateTableConfigSemantics({ efficio_table_config: "{not json" })).toEqual([]);
+    expect(validateTableConfigSemantics({ efficio_table_config: "[]" })).toEqual([]);
   });
 });
 

@@ -591,6 +591,34 @@ def test_validate_table_plain_cell_requires_single_item() -> None:
     ]
 
 
+def test_validate_table_rejects_duplicate_cell_coordinate() -> None:
+    issues = sdk.validate_component_tags(
+        "table",
+        valid_table_tags(
+            efficio_table_config=(
+                '{"cells":[{"row":0,"col":0,"render_action":"render"},'
+                '{"row":0,"col":0,"render_action":"preserve"}]}'
+            )
+        ),
+    )
+    assert ("duplicate_cell", "efficio_table_config") in [(i.code, i.tag_name) for i in issues]
+
+
+def test_validate_table_rejects_duplicate_row_and_column() -> None:
+    issues = sdk.validate_component_tags(
+        "table",
+        valid_table_tags(
+            efficio_table_config=(
+                '{"cells":[{"row":0,"col":0,"render_action":"render"}],'
+                '"rows":[{"row":1},{"row":1}],"columns":[{"col":2},{"col":2}]}'
+            )
+        ),
+    )
+    codes = [(i.code, i.tag_name) for i in issues]
+    assert ("duplicate_row", "efficio_table_config") in codes
+    assert ("duplicate_column", "efficio_table_config") in codes
+
+
 def test_validate_table_plain_cell_forbids_target_items() -> None:
     issues = sdk.validate_component_tags(
         "table", valid_table_tags(efficio_table_config=_table_cfg(text_format="plain", target_items=1))
