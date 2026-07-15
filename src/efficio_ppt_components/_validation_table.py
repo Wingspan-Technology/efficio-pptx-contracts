@@ -41,6 +41,7 @@ class _TableCell:
 
 
 def _table_validation_schema(tags: Mapping[str, str]) -> dict[str, Any]:
+    _reject_semantic_invalid_config(tags)
     render_cells, required_coords = _parse_table_config(_required_tag(tags, _TABLE_CONFIG_TAG, "table"))
 
     schema = _base_content_schema("table")
@@ -58,6 +59,29 @@ def _table_validation_schema(tags: Mapping[str, str]) -> dict[str, Any]:
         cells_schema["required"] = required
     schema["properties"]["cells"] = cells_schema
     return schema
+
+
+def _reject_semantic_invalid_config(tags: Mapping[str, str]) -> None:
+    """Fail fast when ``efficio_table_config`` is semantically invalid.
+
+    ``_parse_table_config`` only enforces structure (coordinates, enums, positive-integer
+    sizing). The cross-field relationships — ``min`` <= ``max``, a ``target`` within its
+    bounds, a ``plain`` render cell being a single item — are checked by the tag validator.
+    Without this gate a render cell with ``min_items`` 4 / ``max_items`` 2 would emit an
+    impossible content schema (``minItems: 4, maxItems: 2``) that nothing can satisfy. Only
+    issues on the ``efficio_table_config`` tag gate generation; unrelated tag issues do not.
+    """
+    # Imported inside the function: the tag validator sits above these per-type schema
+    # builders, so a module-level import would couple the two layers.
+    from .tag_validation import validate_component_tags
+
+    invalid = [
+        issue.message
+        for issue in validate_component_tags("table", dict(tags))
+        if issue.tag_name == _TABLE_CONFIG_TAG
+    ]
+    if invalid:
+        raise ValueError(f"invalid {_TABLE_CONFIG_TAG!r}: {'; '.join(invalid)}")
 
 
 def _coord_key(cell: _TableCell) -> str:

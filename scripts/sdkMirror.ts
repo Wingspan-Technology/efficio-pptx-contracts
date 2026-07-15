@@ -49,4 +49,8 @@ export async function mirrorSdkResources(componentTypes: string[]): Promise<void
     path.join(generatedPresentationSchemasDir, "slide-tags.json"),
     path.join(sdkGeneratedDir, "schemas", "presentation", "slide-tags.json"),
   );
+  await copyFile(
+    path.join(generatedPresentationSchemasDir, "deck-tags.json"),
+    path.join(sdkGeneratedDir, "schemas", "presentation", "deck-tags.json"),
+  );
 }

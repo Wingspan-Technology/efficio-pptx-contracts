@@ -41,6 +41,14 @@ def load_slide_tag_contract() -> dict:
     return load_json("schemas", "presentation", "slide-tags.json")
 
 
+def load_deck_tag_contract() -> dict:
+    """Load the generated presentation/deck tag contract.
+
+    Deck tags are presentation-level Efficio metadata stored on the PowerPoint
+    presentation itself (not on slides or shapes)."""
+    return load_json("schemas", "presentation", "deck-tags.json")
+
+
 def validate_component_tags(component_type: str, tags: dict[str, str]) -> list[TagValidationIssue]:
     """Validate component tags against the generated component tag schema."""
     try:
@@ -106,7 +114,24 @@ def _component_semantic_issues(
 
 def validate_slide_tags(tags: dict[str, str]) -> list[TagValidationIssue]:
     """Validate slide tags against the generated slide tag contract."""
-    contract = load_slide_tag_contract()
+    return _validate_presentation_tags(load_slide_tag_contract(), tags, "slide")
+
+
+def validate_deck_tags(tags: dict[str, str]) -> list[TagValidationIssue]:
+    """Validate presentation/deck tags against the generated deck tag contract.
+
+    Optional tags that are absent or blank are skipped; present values are checked
+    against the contract's type, enum, and length/pattern constraints — the same
+    generic rules as slide tags. ``efficio_template_instruction`` is optional and
+    only length-bounded, so a template with no deck instruction validates cleanly.
+    """
+    return _validate_presentation_tags(load_deck_tag_contract(), tags, "deck")
+
+
+def _validate_presentation_tags(
+    contract: dict, tags: dict[str, str], kind: str
+) -> list[TagValidationIssue]:
+    """Validate ``tags`` against a slide/deck tag contract (shared generic rules)."""
     issues: list[TagValidationIssue] = []
     for tag_name, definition in contract.get("tags", {}).items():
         if not isinstance(definition, dict):
@@ -117,13 +142,13 @@ def validate_slide_tags(tags: dict[str, str]) -> list[TagValidationIssue]:
                 TagValidationIssue(
                     code="missing_required_tag",
                     tag_name=tag_name,
-                    message=f"Missing required slide tag {tag_name}.",
+                    message=f"Missing required {kind} tag {tag_name}.",
                 )
             )
             continue
         if _is_missing(value):
             continue
-        issues.extend(_validate_slide_value(tag_name, value, definition))
+        issues.extend(_validate_tag_value(tag_name, value, definition))
     return issues
 
 
@@ -222,7 +247,7 @@ def _validate_structured_value(
     return issues
 
 
-def _validate_slide_value(
+def _validate_tag_value(
     tag_name: str,
     value: Any,
     definition: dict[str, Any],

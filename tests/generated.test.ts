@@ -140,6 +140,43 @@ describe("Python SDK generated resource mirror", () => {
       readJson(path.join(pkgRoot, "generated", relativePath)),
     );
   });
+
+  it("mirrors deck tag schema for Python SDK validation", () => {
+    const relativePath = path.join("schemas", "presentation", "deck-tags.json");
+    expect(readJson(path.join(sdkGeneratedDir, relativePath))).toEqual(
+      readJson(path.join(pkgRoot, "generated", relativePath)),
+    );
+  });
+});
+
+describe("deck template instruction tag", () => {
+  const deckSchema = readJson(
+    path.join(pkgRoot, "generated", "schemas", "presentation", "deck-tags.json"),
+  );
+
+  it("generates the optional efficio_template_instruction deck tag", () => {
+    const tags = deckSchema.tags as JsonObject;
+    const tag = tags.efficio_template_instruction as JsonObject;
+    expect(tag).toBeDefined();
+    expect(tag.type).toBe("string");
+    expect(tag.required).toBe(false);
+    expect(tag.max_length).toBe(2000);
+    expect((tag.ui as JsonObject).multiline).toBe(true);
+    expect(typeof (tag.ai as JsonObject).purpose).toBe("string");
+  });
+
+  it("assigns the deck instruction no default value", () => {
+    const deckDefaults = readFileSync(
+      path.join(pkgRoot, "generated", "ts", "presentation", "deckDefaults.ts"),
+      "utf8",
+    );
+    expect(deckDefaults).not.toContain("efficio_template_instruction");
+    // The authored defaults likewise omit it (absence/blank = no instruction).
+    const authored = readJson(
+      path.join(contractsDir, "presentation", "deck", "tags.defaults.json"),
+    );
+    expect(authored).not.toHaveProperty("efficio_template_instruction");
+  });
 });
 
 describe("text sizing tags", () => {

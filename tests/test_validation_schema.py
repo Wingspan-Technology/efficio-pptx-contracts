@@ -231,7 +231,7 @@ def test_table_optional_row_or_column_policy_relaxes_requiredness() -> None:
 def test_table_cell_item_limits() -> None:
     config = {
         "cells": [
-            _render_cell(0, 0, text_format="plain", max_items=5),
+            _render_cell(0, 0, text_format="plain"),
             _render_cell(0, 1, text_format="bullets", min_items=2, max_items=4),
             _render_cell(0, 2, text_format="bullets", min_chars_per_item=10, max_chars_per_item=30),
             _render_cell(0, 3, text_format="bullets"),
@@ -243,7 +243,7 @@ def test_table_cell_item_limits() -> None:
     counted = props["0,1"]["properties"]["items"]
     per_item = props["0,2"]["properties"]["items"]
     unlimited = props["0,3"]["properties"]["items"]
-    assert plain["minItems"] == 1 and plain["maxItems"] == 1  # plain pins to one item over max_items
+    assert plain["minItems"] == 1 and plain["maxItems"] == 1  # plain pins to exactly one item
     assert counted["minItems"] == 2 and counted["maxItems"] == 4
     assert per_item["items"]["minLength"] == 10
     assert per_item["items"]["maxLength"] == 30
@@ -302,8 +302,10 @@ def test_table_cell_violation_reports_exact_cell_and_item_path() -> None:
 
 
 def test_table_duplicate_config_coordinates_fail_clearly() -> None:
+    # A duplicate coordinate is a semantic-invalid config: the fail-fast guard rejects
+    # it (via the tag validator's duplicate-cell detection) before a schema is built.
     config = {"cells": [_render_cell(0, 0), _render_cell(0, 0)]}
-    with pytest.raises(ValueError, match="duplicate cell"):
+    with pytest.raises(ValueError, match="configured more than once"):
         build_validation_content_schema("table", _table_tags(config))
 
 
@@ -316,6 +318,48 @@ def test_table_invalid_config_fails_clearly() -> None:
         build_validation_content_schema("table", _table_tags({}))
     with pytest.raises(ValueError, match="efficio_table_config"):
         build_validation_content_schema("table", {"efficio_component_type": "table"})
+
+
+def test_table_semantic_invalid_render_config_fails_fast() -> None:
+    # A render cell whose min_items exceeds max_items can never be satisfied; the builder
+    # must reject it rather than emit an impossible minItems > maxItems schema.
+    with pytest.raises(ValueError, match="efficio_table_config"):
+        build_validation_content_schema(
+            "table",
+            _table_tags({"cells": [_render_cell(0, 0, text_format="bullets", min_items=4, max_items=2)]}),
+        )
+    # A plain render cell asking for more than one item is likewise inconsistent.
+    with pytest.raises(ValueError, match="efficio_table_config"):
+        build_validation_content_schema(
+            "table", _table_tags({"cells": [_render_cell(0, 0, text_format="plain", max_items=3)]})
+        )
+
+
+def test_table_obsolete_line_sizing_fields_fail_fast() -> None:
+    # The removed max_lines / max_chars_per_line keys are additionalProperties on a cell,
+    # so the structural schema layer rejects the config through the same fail-fast gate.
+    for obsolete in ({"max_lines": 5}, {"max_chars_per_line": 30}):
+        with pytest.raises(ValueError, match="efficio_table_config"):
+            build_validation_content_schema(
+                "table",
+                _table_tags({"cells": [_render_cell(0, 0, text_format="bullets", **obsolete)]}),
+            )
+
+
+def test_table_preserve_cell_with_irrelevant_sizing_builds_and_is_omitted() -> None:
+    # Sizing relationships apply to render cells only, so a preserve cell may carry sizing
+    # that would be inconsistent for a render cell (min_items > max_items, a plain-style
+    # count, a target): it is ignored, the schema builds, and the preserve cell never
+    # appears in the keyed cells object.
+    config = {
+        "cells": [
+            {"row": 0, "col": 0, "render_action": "preserve", "min_items": 4, "max_items": 2},
+            {"row": 0, "col": 1, "min_items": 5, "target_items": 9},  # default-preserve
+            _render_cell(1, 0, text_format="bullets", min_items=1, max_items=3),
+        ]
+    }
+    schema = build_validation_content_schema("table", _table_tags(config))
+    assert list(schema["properties"]["cells"]["properties"]) == ["1,0"]
 
 
 # ── category_chart ─────────────────────────────────────────────────────────

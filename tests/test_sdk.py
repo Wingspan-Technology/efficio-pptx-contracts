@@ -34,15 +34,19 @@ def test_import_exposes_only_stable_public_names() -> None:
             "TagValidationIssue",
             "load_component_tag_schema",
             "load_slide_tag_contract",
+            "load_deck_tag_contract",
             "validate_component_tags",
             "validate_slide_tags",
+            "validate_deck_tags",
             "is_ai_facing",
             "ai_visible_tag_names",
             "project_component_context",
+            "project_deck_context",
             "build_validation_content_schema",
             "RENDER_BEHAVIOR_TAG",
             "AI_FACING_RENDER_BEHAVIOR",
             "PROMPT_INSTRUCTION_TAG",
+            "TEMPLATE_INSTRUCTION_TAG",
         ]
     )
     for name in sdk.__all__:
@@ -663,6 +667,41 @@ def test_validate_table_skips_semantics_when_structurally_broken() -> None:
     assert all(code != "min_exceeds_max" for code, _ in codes)
 
 
+def test_validate_table_rejects_target_chars_over_max_chars() -> None:
+    issues = sdk.validate_component_tags(
+        "table",
+        valid_table_tags(
+            efficio_table_config=_table_cfg(text_format="bullets", max_chars=100, target_chars=150)
+        ),
+    )
+    assert ("target_exceeds_max", "efficio_table_config") in [(i.code, i.tag_name) for i in issues]
+
+
+def test_validate_table_ignores_sizing_on_preserve_cells() -> None:
+    # Sizing relationships are render-cell rules: a preserve cell keeps its authored content,
+    # so its sizing fields are never cross-field-checked. An explicit-preserve plain cell with
+    # max_items=3 and a default-preserve cell with min_items>max_items plus a target_items are
+    # both clean — the same fields would fail on a render cell (see the tests above).
+    explicit_preserve = json.dumps(
+        {
+            "cells": [
+                {"row": 0, "col": 0, "render_action": "preserve", "text_format": "plain", "max_items": 3}
+            ]
+        }
+    )
+    assert (
+        sdk.validate_component_tags("table", valid_table_tags(efficio_table_config=explicit_preserve))
+        == []
+    )
+    default_preserve = json.dumps(
+        {"cells": [{"row": 0, "col": 0, "min_items": 5, "max_items": 2, "target_items": 9}]}
+    )
+    assert (
+        sdk.validate_component_tags("table", valid_table_tags(efficio_table_config=default_preserve))
+        == []
+    )
+
+
 def _category_chart_config(**overrides: object) -> dict:
     config = {
         "chart_type": "CLUSTERED_COLUMN",
@@ -789,6 +828,68 @@ def test_validate_slide_tags_reports_contract_errors() -> None:
     assert ("pattern_mismatch", "efficio_slide_id") in codes
     assert ("invalid_enum", "efficio_slide_placement") in codes
     assert ("below_minimum", "efficio_slide_group_order") in codes
+
+
+def valid_deck_tags(**overrides: str) -> dict[str, str]:
+    tags = {"efficio_template_id": "acme_quarterly"}
+    tags.update(overrides)
+    return tags
+
+
+def test_load_deck_tag_contract() -> None:
+    contract = sdk.load_deck_tag_contract()
+    assert contract["contract_type"] == "deck_tags"
+    instruction = contract["tags"]["efficio_template_instruction"]
+    assert instruction["type"] == "string"
+    assert instruction["required"] is False
+
+
+def test_validate_deck_tags_accepts_missing_or_blank_template_instruction() -> None:
+    # The optional instruction may be absent, or blank/whitespace (treated as absent).
+    assert sdk.validate_deck_tags(valid_deck_tags()) == []
+    assert sdk.validate_deck_tags(valid_deck_tags(efficio_template_instruction="   ")) == []
+
+
+def test_validate_deck_tags_accepts_a_normal_template_instruction() -> None:
+    assert (
+        sdk.validate_deck_tags(
+            valid_deck_tags(efficio_template_instruction="Use concise executive language.")
+        )
+        == []
+    )
+
+
+def test_validate_deck_tags_rejects_too_long_template_instruction() -> None:
+    issues = sdk.validate_deck_tags(valid_deck_tags(efficio_template_instruction="x" * 2001))
+    assert ("exceeds_max_length", "efficio_template_instruction") in [
+        (issue.code, issue.tag_name) for issue in issues
+    ]
+
+
+def test_validate_deck_tags_reports_required_and_pattern_errors() -> None:
+    missing = sdk.validate_deck_tags({"efficio_template_instruction": "hi"})
+    assert ("missing_required_tag", "efficio_template_id") in [
+        (issue.code, issue.tag_name) for issue in missing
+    ]
+    bad = sdk.validate_deck_tags(valid_deck_tags(efficio_template_id="Bad Id"))
+    assert ("pattern_mismatch", "efficio_template_id") in [
+        (issue.code, issue.tag_name) for issue in bad
+    ]
+
+
+def test_project_deck_context_omits_blank_or_missing_instruction() -> None:
+    assert sdk.project_deck_context(valid_deck_tags()) == {}
+    for blank in ("", "   ", "\n\t"):
+        assert sdk.project_deck_context(valid_deck_tags(efficio_template_instruction=blank)) == {}
+
+
+def test_project_deck_context_trims_and_aliases_instruction() -> None:
+    context = sdk.project_deck_context(
+        valid_deck_tags(efficio_template_instruction="  Board-level tone.  ")
+    )
+    assert context == {"instructions": "Board-level tone."}
+    # The raw efficio_ tag name never leaks into the AI-facing projection.
+    assert "efficio_template_instruction" not in json.dumps(context)
 
 
 def test_missing_resource_raises_missing_resource_error() -> None:

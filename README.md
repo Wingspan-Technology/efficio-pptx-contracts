@@ -183,13 +183,17 @@ Public API:
   `slide-components/{slide_id}/validation.json` content-validation artifact. It deep-copies the
   type's authored `expected_content_schema` and applies instance limits parsed
   from the raw `efficio_*` tags (text: item count/length caps from the sizing
-  tags; table: allowed render-cell coordinates, per-cell limits, and
-  required-cell `contains` rules from `efficio_table_config`). Every registered
-  type is supported, so a schema is always returned; an unknown type raises
-  `UnknownComponentTypeError`, and missing/invalid limit tags raise instead of
-  emitting a permissive schema.
-  Multi-item text caps per-item length and item count but not the aggregate
-  `max_chars` across items — JSON Schema cannot sum item lengths, so DMS enforces
+  tags; table: a `cells` object keyed by `"row,col"` — one property per render
+  cell carrying that cell's item count and per-item length limits, the required
+  cells listed in `required`, `additionalProperties: false`, and preserve cells
+  dropped — from `efficio_table_config`). Every registered type is supported, so a
+  schema is always returned; an unknown type raises `UnknownComponentTypeError`,
+  and missing or invalid limit tags — including a semantically inconsistent
+  `efficio_table_config` (e.g. `min_items` > `max_items`, or a `plain` render cell
+  asking for more than one item) — raise instead of emitting a permissive schema.
+  Multi-item text and each render table cell cap per-item length and item count but
+  not the aggregate `max_chars` — JSON Schema cannot sum item lengths, so only the
+  item count and per-item length are encoded in `validation.json` and DMS enforces
   the total later.
 
 There are no per-component Python builder modules or top-level Python scaffolds;

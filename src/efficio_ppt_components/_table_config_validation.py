@@ -3,9 +3,11 @@
 Pure logic: given a component's raw tag map and the set of tags that already carry a
 structural issue, return ``(code, tag_name, message)`` tuples for the per-cell sizing
 relationships JSON Schema cannot express — the same checks the text component applies,
-but per cell over the ``efficio_table_config`` JSON. Every issue attaches to the
-``efficio_table_config`` tag; its message names the offending cell. The ``target_*``
-fields are optional guidance; the min/max fields are strict bounds:
+but per cell over the ``efficio_table_config`` JSON. Only ``render`` cells are checked:
+a preserve cell (explicit, or defaulted via a missing ``render_action``) keeps its
+authored content untouched, so its sizing fields are irrelevant and never reported.
+Every issue attaches to the ``efficio_table_config`` tag; its message names the offending
+cell. The ``target_*`` fields are optional guidance; the min/max fields are strict bounds:
 
 - optional ``target_chars`` <= ``max_chars``;
 - optional ``target_items`` within [``min_items``, ``max_items``];
@@ -35,8 +37,9 @@ def table_config_issues(
     """Return ``(code, tag_name, message)`` for each cross-field table cell sizing violation.
 
     Skipped entirely when ``efficio_table_config`` is missing/blank or already carries a
-    structural issue; each cell's checks run only over its known-good positive-integer
-    sizing fields (any malformed value is left to the structural layer).
+    structural issue. Only ``render`` cells are checked (a preserve cell keeps its authored
+    content); each cell's checks run only over its known-good positive-integer sizing fields
+    (any malformed value is left to the structural layer).
     """
     if _TABLE_CONFIG_TAG in set(prior_issue_tags):
         return []
@@ -52,7 +55,10 @@ def table_config_issues(
 
     issues: list[tuple[str, str, str]] = []
     for entry in parsed["cells"]:
-        if isinstance(entry, dict):
+        # Sizing relationships constrain content the generator writes, so they apply to
+        # render cells only. A preserve cell (explicit, or defaulted via a missing
+        # render_action) keeps its authored content, so its sizing fields are ignored.
+        if isinstance(entry, dict) and entry.get("render_action") == "render":
             issues.extend(_cell_issues(entry))
     issues.extend(_duplicate_coordinate_issues(parsed["cells"]))
     issues.extend(_duplicate_axis_issues(parsed.get("rows"), "row", "Row"))

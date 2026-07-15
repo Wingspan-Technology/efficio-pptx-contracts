@@ -38,6 +38,7 @@ from .tag_validation import load_component_tag_schema
 RENDER_BEHAVIOR_TAG = "efficio_render_behavior"
 AI_FACING_RENDER_BEHAVIOR = "render_by_component_type"
 PROMPT_INSTRUCTION_TAG = "efficio_prompt_instruction"
+TEMPLATE_INSTRUCTION_TAG = "efficio_template_instruction"
 
 # Structural tags never copied into tag_context, independent of contract state —
 # a guard even if a contract were to (re)declare ai on them.
@@ -117,6 +118,23 @@ def project_component_context(component_type: str, tags: Mapping[str, str]) -> d
         context["instructions"] = prompt
     context["tag_context"] = tag_context
     return context
+
+
+def project_deck_context(tags: Mapping[str, str]) -> dict[str, Any]:
+    """AI-safe deck-level context derived from the presentation/deck tag map.
+
+    Returns ``{"instructions": <trimmed value>}`` only when
+    ``efficio_template_instruction`` is present and non-blank; a missing or blank
+    value yields ``{}`` (no template instruction). The raw ``efficio_*`` tag name
+    never appears — only the aliased ``instructions`` field, matching the
+    per-instance ``instructions`` field on component context. This is deck-wide AI
+    guidance, less specific than any slide/component instruction and never a
+    validation or schema constraint.
+    """
+    instruction = tags.get(TEMPLATE_INSTRUCTION_TAG, "").strip()
+    if instruction == "":
+        return {}
+    return {"instructions": instruction}
 
 
 def _typed_tag_value(tag_name: str, value: str, tag_type: str | None) -> Any:

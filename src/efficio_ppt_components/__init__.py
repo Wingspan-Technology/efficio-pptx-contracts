@@ -16,9 +16,11 @@ from .ai_projection import (
     AI_FACING_RENDER_BEHAVIOR,
     PROMPT_INSTRUCTION_TAG,
     RENDER_BEHAVIOR_TAG,
+    TEMPLATE_INSTRUCTION_TAG,
     ai_visible_tag_names,
     is_ai_facing,
     project_component_context,
+    project_deck_context,
 )
 from .instructions import (
     build_component_instruction_block,
@@ -35,8 +37,10 @@ from .registry import (
 from .tag_validation import (
     TagValidationIssue,
     load_component_tag_schema,
+    load_deck_tag_contract,
     load_slide_tag_contract,
     validate_component_tags,
+    validate_deck_tags,
     validate_slide_tags,
 )
 from .validation_schema import build_validation_content_schema
@@ -56,13 +60,17 @@ __all__ = [
     "is_ai_facing",
     "ai_visible_tag_names",
     "project_component_context",
+    "project_deck_context",
     "RENDER_BEHAVIOR_TAG",
     "AI_FACING_RENDER_BEHAVIOR",
     "PROMPT_INSTRUCTION_TAG",
+    "TEMPLATE_INSTRUCTION_TAG",
     "TagValidationIssue",
     "load_component_tag_schema",
     "load_slide_tag_contract",
+    "load_deck_tag_contract",
     "validate_component_tags",
     "validate_slide_tags",
+    "validate_deck_tags",
     "build_validation_content_schema",
 ]

@@ -21,6 +21,18 @@ export const deckTagSchema = {
         "true"
       ],
       "description": "Marks this presentation as initialized for editing with the Efficio Template Editor. Only the editor's first-run initialization writes it."
+    },
+    "efficio_template_instruction": {
+      "type": "string",
+      "required": false,
+      "max_length": 2000,
+      "ui": {
+        "multiline": true
+      },
+      "ai": {
+        "purpose": "Global deck-level guidance applied consistently across every selected slide and component: tone, audience, terminology, narrative direction, and content style. It is the least specific instruction — slide, component, table, and chart instructions, and all hard schema/content limits, override it. Never echo it back as generated content."
+      },
+      "description": "Optional deck-wide AI guidance for the whole generated presentation. Absent or blank means no template instruction."
     }
   }
 } as const;
@@ -29,8 +41,10 @@ export type DeckTagSchema = typeof deckTagSchema;
 
 export const deckTagKeys = [
   "efficio_template_id",
-  "efficio_initialized"
+  "efficio_initialized",
+  "efficio_template_instruction"
 ] as const;
 
 export const DECK_TEMPLATE_ID_TAG = "efficio_template_id";
 export const DECK_INITIALIZED_TAG = "efficio_initialized";
+export const DECK_TEMPLATE_INSTRUCTION_TAG = "efficio_template_instruction";
