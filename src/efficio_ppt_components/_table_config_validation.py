@@ -16,8 +16,10 @@ cell. The ``target_*`` fields are optional guidance; the min/max fields are stri
 - a ``plain`` cell is exactly one item (``min_items`` == ``max_items`` == 1; no ``target_items``).
   A cell with no ``text_format`` defaults to plain, so the single-item rule applies to it too.
 
-None of these bounds is encoded in ``validation.json`` (targets never appear there). When
-the tag is missing, unparseable, or already carries a structural issue, no cross-field
+The optional ``target_*`` guidance and the aggregate ``max_chars`` are never encoded in
+``validation.json``; the strict item-count (``min_items`` / ``max_items``) and per-item
+character (``min_chars_per_item`` / ``max_chars_per_item``) bounds are, per render cell.
+When the tag is missing, unparseable, or already carries a structural issue, no cross-field
 issue is added — the structural layer already reported it.
 """
 
