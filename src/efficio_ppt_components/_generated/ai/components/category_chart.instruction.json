@@ -1,0 +1,118 @@
+{
+  "component_type": "category_chart",
+  "tag_instructions": {
+    "chart_type": {
+      "purpose": "The category chart type to render (a 2D column/bar family type).",
+      "enum_descriptions": {
+        "CLUSTERED_COLUMN": "Vertical columns grouped side by side per category.",
+        "STACKED_COLUMN": "Vertical columns stacked to show cumulative totals per category.",
+        "PERCENTS_STACKED_COLUMN": "Vertical columns stacked to 100% to show each series' share per category.",
+        "CLUSTERED_BAR": "Horizontal bars grouped side by side per category.",
+        "STACKED_BAR": "Horizontal bars stacked to show cumulative totals per category.",
+        "PERCENTS_STACKED_BAR": "Horizontal bars stacked to 100% to show each series' share per category."
+      }
+    },
+    "category_mode": {
+      "purpose": "Whether the category labels are fixed (reuse the provided categories exactly) or must be generated.",
+      "enum_descriptions": {
+        "fixed": "Category labels are provided in this context and must be reused exactly, in order.",
+        "ai_generated": "Category labels are generated within the category count boundaries."
+      }
+    },
+    "categories": {
+      "purpose": "When category_mode is fixed, the exact category labels to reuse, in order."
+    },
+    "min_categories": {
+      "purpose": "Lower boundary on the number of categories the chart may have."
+    },
+    "max_categories": {
+      "purpose": "Upper boundary on the number of categories the chart may have."
+    },
+    "target_categories": {
+      "purpose": "Intended number of categories to aim for, within the min/max boundaries."
+    },
+    "category_instruction": {
+      "purpose": "Optional guidance for generating the category labels."
+    },
+    "series_mode": {
+      "purpose": "Whether the series names are fixed (reuse the provided names exactly) or must be generated.",
+      "enum_descriptions": {
+        "fixed": "Series names are provided in this context and must be reused exactly, in order.",
+        "ai_generated": "Series names are generated within the series count boundaries."
+      }
+    },
+    "series_names": {
+      "purpose": "When series_mode is fixed, the exact series names to reuse, in order."
+    },
+    "min_series": {
+      "purpose": "Lower boundary on the number of data series."
+    },
+    "max_series": {
+      "purpose": "Upper boundary on the number of data series."
+    },
+    "target_series": {
+      "purpose": "Intended number of data series to aim for, within the min/max boundaries."
+    },
+    "series_instruction": {
+      "purpose": "Optional guidance for generating the series names."
+    },
+    "value_type": {
+      "purpose": "Data type of the series values; only numeric values are supported.",
+      "enum_descriptions": {
+        "number": "Numeric series values."
+      }
+    },
+    "value_unit": {
+      "purpose": "Optional unit describing the series values (for example \"%\" or \"USD\")."
+    },
+    "allow_negative_values": {
+      "purpose": "Whether the generated series values may be negative."
+    },
+    "allow_decimal_values": {
+      "purpose": "Whether the generated series values may be non-integer (decimal)."
+    }
+  },
+  "expected_content_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "component_type": "category_chart",
+    "description": "Expected AI output for a category chart component. Provide one or more data series; each series carries a numeric value per category, in category order. The chart type, category labels, series names, counts, and value formatting are defined by the component's flat tag_context (chart_type, category_mode, series_mode, categories, series_names, the count boundaries/targets, and value formatting): when category_mode or series_mode is fixed the labels or names come from that context, and when ai_generated they are generated here.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "series"
+    ],
+    "properties": {
+      "categories": {
+        "type": "array",
+        "description": "Category labels, in order. Provide these only when tag_context.category_mode is ai_generated; for fixed categories the labels come from tag_context.categories and must not be repeated here.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "series": {
+        "type": "array",
+        "description": "One or more data series to plot. Each series carries a numeric value per category, in the same order as the categories.",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "values"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Series name. Provide it only when tag_context.series_mode is ai_generated; for fixed series the names come from tag_context.series_names."
+            },
+            "values": {
+              "type": "array",
+              "description": "Numeric values for this series, one per category, in category order.",
+              "items": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

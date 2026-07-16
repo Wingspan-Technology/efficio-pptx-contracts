@@ -1,0 +1,226 @@
+{
+  "instruction": "Use each component's component_type to find its matching instruction below. For every component instance, generate content according to expected_content_schema and respect tag_instructions. Sizing and count constraints in tag_context (such as max_chars, min/max items, and min/max chars per item) are strict requirements, not guidance: item-level limits apply to every string in items[]. Generated content must never exceed the maximums and must meet the minimums; shorten or compact it (or add content to reach a minimum) until every provided limit is satisfied. Any target value (such as target_chars or target_chars_per_item) is preferred-size guidance only, never a limit.",
+  "component_instructions": {
+    "category_chart": {
+      "component_type": "category_chart",
+      "tag_instructions": {
+        "chart_type": {
+          "purpose": "The category chart type to render (a 2D column/bar family type).",
+          "enum_descriptions": {
+            "CLUSTERED_COLUMN": "Vertical columns grouped side by side per category.",
+            "STACKED_COLUMN": "Vertical columns stacked to show cumulative totals per category.",
+            "PERCENTS_STACKED_COLUMN": "Vertical columns stacked to 100% to show each series' share per category.",
+            "CLUSTERED_BAR": "Horizontal bars grouped side by side per category.",
+            "STACKED_BAR": "Horizontal bars stacked to show cumulative totals per category.",
+            "PERCENTS_STACKED_BAR": "Horizontal bars stacked to 100% to show each series' share per category."
+          }
+        },
+        "category_mode": {
+          "purpose": "Whether the category labels are fixed (reuse the provided categories exactly) or must be generated.",
+          "enum_descriptions": {
+            "fixed": "Category labels are provided in this context and must be reused exactly, in order.",
+            "ai_generated": "Category labels are generated within the category count boundaries."
+          }
+        },
+        "categories": {
+          "purpose": "When category_mode is fixed, the exact category labels to reuse, in order."
+        },
+        "min_categories": {
+          "purpose": "Lower boundary on the number of categories the chart may have."
+        },
+        "max_categories": {
+          "purpose": "Upper boundary on the number of categories the chart may have."
+        },
+        "target_categories": {
+          "purpose": "Intended number of categories to aim for, within the min/max boundaries."
+        },
+        "category_instruction": {
+          "purpose": "Optional guidance for generating the category labels."
+        },
+        "series_mode": {
+          "purpose": "Whether the series names are fixed (reuse the provided names exactly) or must be generated.",
+          "enum_descriptions": {
+            "fixed": "Series names are provided in this context and must be reused exactly, in order.",
+            "ai_generated": "Series names are generated within the series count boundaries."
+          }
+        },
+        "series_names": {
+          "purpose": "When series_mode is fixed, the exact series names to reuse, in order."
+        },
+        "min_series": {
+          "purpose": "Lower boundary on the number of data series."
+        },
+        "max_series": {
+          "purpose": "Upper boundary on the number of data series."
+        },
+        "target_series": {
+          "purpose": "Intended number of data series to aim for, within the min/max boundaries."
+        },
+        "series_instruction": {
+          "purpose": "Optional guidance for generating the series names."
+        },
+        "value_type": {
+          "purpose": "Data type of the series values; only numeric values are supported.",
+          "enum_descriptions": {
+            "number": "Numeric series values."
+          }
+        },
+        "value_unit": {
+          "purpose": "Optional unit describing the series values (for example \"%\" or \"USD\")."
+        },
+        "allow_negative_values": {
+          "purpose": "Whether the generated series values may be negative."
+        },
+        "allow_decimal_values": {
+          "purpose": "Whether the generated series values may be non-integer (decimal)."
+        }
+      },
+      "expected_content_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "component_type": "category_chart",
+        "description": "Expected AI output for a category chart component. Provide one or more data series; each series carries a numeric value per category, in category order. The chart type, category labels, series names, counts, and value formatting are defined by the component's flat tag_context (chart_type, category_mode, series_mode, categories, series_names, the count boundaries/targets, and value formatting): when category_mode or series_mode is fixed the labels or names come from that context, and when ai_generated they are generated here.",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "series"
+        ],
+        "properties": {
+          "categories": {
+            "type": "array",
+            "description": "Category labels, in order. Provide these only when tag_context.category_mode is ai_generated; for fixed categories the labels come from tag_context.categories and must not be repeated here.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "series": {
+            "type": "array",
+            "description": "One or more data series to plot. Each series carries a numeric value per category, in the same order as the categories.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "values"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Series name. Provide it only when tag_context.series_mode is ai_generated; for fixed series the names come from tag_context.series_names."
+                },
+                "values": {
+                  "type": "array",
+                  "description": "Numeric values for this series, one per category, in category order.",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "table": {
+      "component_type": "table",
+      "tag_instructions": {
+        "table_config": {
+          "purpose": "Describes how to generate content for a table. Coordinates are zero-based: row 1 and col 2 is returned as cells[\"1,2\"]. The component-level instructions apply to the whole table. rows[] contains row-level guidance; a row instruction applies to every generated cell whose row matches that row index. columns[] contains column-level guidance; a column instruction applies to every generated cell whose col matches that column index. rows[] and columns[] do not create output cells by themselves; cells[] defines the configured cell coordinates. For each generated cell, combine the component-level instruction, matching row instruction, matching column instruction, and that cell's instruction. The cell instruction is the most specific, but row and column instructions must still be followed when they apply. Cell sizing fields are optional and use the same item-based vocabulary as text components. The strict limits are min_items and max_items (the number of items in items[]) and min_chars_per_item and max_chars_per_item (the length of each item): generated content must never exceed max_items or max_chars_per_item, and must satisfy min_items and min_chars_per_item, so shorten or compact content until it fits. max_chars is the strict total character budget for the whole cell — keep the combined length of all its items within it. target_chars, target_items, and target_chars_per_item are preferred sizes: guidance only, not limits — stay near them while always fitting within the strict limits. render_action controls output: only cells with render_action \"render\" can receive generated content; preserve or missing render_action means keep authored content and do not return that cell. content_policy only describes whether matching render cells are expected or optional; it does not make a preserved cell renderable. text_format controls item structure: plain uses exactly one item; paragraph, bullets, and numbered_list may use multiple items, bounded by the cell's item limits. Return only generated cell content keyed by \"row,col\"; never return table config, row/col fields inside cell values, schemas, explanations, or preserved cell content."
+        }
+      },
+      "expected_content_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "component_type": "table",
+        "description": "Expected AI output for a generic table component: generated cell content only, never table configuration. The response lists only the cells the AI fills, keyed by \"row,col\". Cell render actions, row/column content policies, sizing limits, and PowerPoint structure are defined by the component's tag_context.table_config.",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cells"
+        ],
+        "properties": {
+          "cells": {
+            "type": "object",
+            "description": "The table cells to fill, keyed by \"row,col\" (zero-based, e.g. \"0,1\"). Each key must match a render cell configured in this table instance's tag_context.table_config; do not return preserved or unconfigured cells. One key per cell; each value is an object with only an items array.",
+            "propertyNames": {
+              "pattern": "^[0-9]+,[0-9]+$",
+              "description": "A cell coordinate key \"row,col\" (zero-based integers), matching a render cell from this table instance context."
+            },
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "items"
+              ],
+              "properties": {
+                "items": {
+                  "type": "array",
+                  "minItems": 1,
+                  "description": "Text items for this cell, obeying the matching cell's tag_context.table_config: use one item for plain text cells, one or more for paragraph, bullets, or numbered_list cells, and never exceed the cell's strict limits (the min/max item count and the min/max characters per item). Do not return schema, configuration, explanations, or preserved cell content.",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "text": {
+      "component_type": "text",
+      "tag_instructions": {
+        "text_format": {
+          "purpose": "Selects the structural format of generated text.",
+          "enum_descriptions": {
+            "plain": "A single run of plain text.",
+            "paragraph": "One or more prose paragraphs.",
+            "bullets": "An unordered bullet list.",
+            "numbered_list": "An ordered numbered list."
+          }
+        },
+        "max_chars": {
+          "purpose": "Strict limit on the total number of characters the generated text may use. The generated content must never exceed it; shorten or compact the text until it fits."
+        },
+        "target_chars": {
+          "purpose": "The preferred (target) total character count for the whole generated text — aim for approximately this length. Guidance only, not a hard bound: the strict limits are max_chars, the min/max item count, and the min/max characters per item. Stay near target_chars while always fitting within those limits."
+        },
+        "min_items": {
+          "purpose": "Strict minimum number of items (strings in items[]) the generated text must include. Produce at least this many items; never fewer."
+        },
+        "target_items": {
+          "purpose": "The preferred (target) number of items (strings in items[]) — aim for approximately this many items. Guidance only, not a hard bound: the strict limits are the min/max item count and the per-item character limits. Stay near target_items while always fitting within the min and max item count. Not applicable to plain text, which is always exactly one item."
+        },
+        "max_items": {
+          "purpose": "Strict maximum number of items (strings in items[]) the generated text may include. The content must never exceed it; shorten or compact it (use fewer items) until it fits."
+        },
+        "min_chars_per_item": {
+          "purpose": "Strict minimum number of characters for each item (each string in items[]). Every item must be at least this long."
+        },
+        "max_chars_per_item": {
+          "purpose": "Strict maximum number of characters for any single item (string in items[]). Each item must never exceed it; shorten or compact each item until it fits."
+        },
+        "target_chars_per_item": {
+          "purpose": "The preferred (target) character count for each item (string in items[]) — aim for approximately this length per item. Guidance only, not a hard bound: stay within the strict min_chars_per_item and max_chars_per_item."
+        }
+      },
+      "expected_content_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "component_type": "text",
+        "description": "Expected AI output for a text component.",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

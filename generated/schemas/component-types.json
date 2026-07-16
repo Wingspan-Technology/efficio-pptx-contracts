@@ -1,0 +1,12 @@
+{
+  "generated_from": [
+    "contracts/components/category_chart/tags.contract.json",
+    "contracts/components/table/tags.contract.json",
+    "contracts/components/text/tags.contract.json"
+  ],
+  "component_types": [
+    "category_chart",
+    "table",
+    "text"
+  ]
+}

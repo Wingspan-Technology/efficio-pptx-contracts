@@ -1,0 +1,30 @@
+{
+  "description": "Shared base tag contract fields for all Efficio components.",
+  "tags": {
+    "efficio_component_id": {
+      "type": "string",
+      "required": true,
+      "min_length": 1,
+      "description": "Stable, human-readable identifier for the component within a slide.",
+      "ui": { "order": 20 }
+    },
+    "efficio_component_type": {
+      "type": "string",
+      "required": true,
+      "description": "The component type for this shape. Each component contract refines this with a single-value enum.",
+      "ui": { "order": 30 }
+    },
+    "efficio_content_role": {
+      "type": "string",
+      "required": false,
+      "description": "Optional semantic role hint describing what this component represents on the slide.",
+      "ui": { "order": 40 }
+    },
+    "efficio_prompt_instruction": {
+      "type": "string",
+      "required": false,
+      "description": "Optional author guidance used when generating content for this component.",
+      "ui": { "order": 100, "multiline": true }
+    }
+  }
+}

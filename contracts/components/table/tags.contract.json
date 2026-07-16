@@ -1,0 +1,169 @@
+{
+  "component_type": "table",
+  "description": "Generic table component tag contract. Table-shape-level metadata only: a single object tag describing the table's cells and optional row/column policies. No nested child components.",
+  "tags": {
+    "efficio_component_type": {
+      "type": "string",
+      "required": true,
+      "enum": ["table"],
+      "description": "Identifies this shape as a table component."
+    },
+    "efficio_table_config": {
+      "type": "object",
+      "required": true,
+      "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration (position plus an optional render action defaulting to preserve, text format, and optional item-based sizing limits — strict min/max item and per-item character bounds plus optional preferred-size guidance).",
+      "ui": { "order": 50 },
+      "ai": {
+        "purpose": "Describes how to generate content for a table. Coordinates are zero-based: row 1 and col 2 is returned as cells[\"1,2\"]. The component-level instructions apply to the whole table. rows[] contains row-level guidance; a row instruction applies to every generated cell whose row matches that row index. columns[] contains column-level guidance; a column instruction applies to every generated cell whose col matches that column index. rows[] and columns[] do not create output cells by themselves; cells[] defines the configured cell coordinates. For each generated cell, combine the component-level instruction, matching row instruction, matching column instruction, and that cell's instruction. The cell instruction is the most specific, but row and column instructions must still be followed when they apply. Cell sizing fields are optional and use the same item-based vocabulary as text components. The strict limits are min_items and max_items (the number of items in items[]) and min_chars_per_item and max_chars_per_item (the length of each item): generated content must never exceed max_items or max_chars_per_item, and must satisfy min_items and min_chars_per_item, so shorten or compact content until it fits. max_chars is the strict total character budget for the whole cell — keep the combined length of all its items within it. target_chars, target_items, and target_chars_per_item are preferred sizes: guidance only, not limits — stay near them while always fitting within the strict limits. render_action controls output: only cells with render_action \"render\" can receive generated content; preserve or missing render_action means keep authored content and do not return that cell. content_policy only describes whether matching render cells are expected or optional; it does not make a preserved cell renderable. text_format controls item structure: plain uses exactly one item; paragraph, bullets, and numbered_list may use multiple items, bounded by the cell's item limits. Return only generated cell content keyed by \"row,col\"; never return table config, row/col fields inside cell values, schemas, explanations, or preserved cell content."
+      },
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cells"],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "description": "Optional per-row policies, keyed by row index.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["row"],
+              "properties": {
+                "row": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Zero-based row index this policy applies to."
+                },
+                "content_policy": {
+                  "type": "string",
+                  "enum": ["required", "optional"],
+                  "default": "required",
+                  "description": "Content policy for the row: required means its cells should be filled, optional means they may be filled. Does not control rendering."
+                },
+                "instruction": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Optional guidance for generating this row's cells."
+                }
+              }
+            }
+          },
+          "columns": {
+            "type": "array",
+            "description": "Optional per-column policies, keyed by column index.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["col"],
+              "properties": {
+                "col": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Zero-based column index this policy applies to."
+                },
+                "content_policy": {
+                  "type": "string",
+                  "enum": ["required", "optional"],
+                  "default": "required",
+                  "description": "Content policy for the column: required means its cells should be filled, optional means they may be filled. Does not control rendering."
+                },
+                "instruction": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Optional guidance for generating this column's cells."
+                }
+              }
+            }
+          },
+          "cells": {
+            "type": "array",
+            "description": "Per-cell configuration. May be empty when no cells are configured (every cell is then preserved / left as authored).",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["row", "col"],
+              "properties": {
+                "row": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Zero-based row index of the cell."
+                },
+                "col": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Zero-based column index of the cell."
+                },
+                "render_action": {
+                  "type": "string",
+                  "enum": ["render", "preserve"],
+                  "default": "preserve",
+                  "description": "Whether the renderer writes into this cell: render allows AI-provided content to be written, preserve keeps the cell's existing content unchanged. Optional — a missing render_action means preserve."
+                },
+                "text_format": {
+                  "type": "string",
+                  "enum": ["plain", "paragraph", "bullets", "numbered_list"],
+                  "default": "plain",
+                  "description": "How the generated cell text should be structured."
+                },
+                "instruction": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Optional guidance for generating this cell's content."
+                },
+                "max_chars": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Maximum total characters for this cell's generated content across all items — a strict budget. Optional. Not encoded as an aggregate schema rule (JSON Schema cannot sum item lengths); keep the combined item length within it while generating."
+                },
+                "target_chars": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Preferred (target) total characters for this cell; optional sizing guidance, not a maximum. When present it must not exceed max_chars."
+                },
+                "min_items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Minimum number of items (strings in the cell's items array) — a strict lower bound. Optional. Not applicable to plain cells, which are always a single item."
+                },
+                "target_items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Preferred (target) number of items for this cell; optional sizing guidance, not a bound. When present it must be within min_items and max_items. Not applicable to plain cells, which are always a single item."
+                },
+                "max_items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Maximum number of items (strings in the cell's items array) — a strict limit that must never be exceeded; shorten or compact content (use fewer items) until it fits. Optional. Not applicable to plain cells, which are always a single item."
+                },
+                "min_chars_per_item": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Minimum characters for each generated item in this cell — a strict lower bound. Optional."
+                },
+                "max_chars_per_item": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Maximum characters for each generated item in this cell — a strict limit that must never be exceeded; shorten or compact each item until it fits. Optional."
+                },
+                "target_chars_per_item": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Preferred (target) characters per item for this cell; optional sizing guidance, not a maximum. When present it must be within min_chars_per_item and max_chars_per_item."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "example": {
+    "efficio_render_behavior": "render_by_component_type",
+    "efficio_component_id": "comparison_table",
+    "efficio_component_type": "table",
+    "efficio_content_role": "comparison_table",
+    "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"preserve\"},{\"row\":1,\"col\":0,\"render_action\":\"render\",\"text_format\":\"bullets\",\"min_items\":1,\"max_items\":3,\"max_chars_per_item\":40}]}",
+    "efficio_prompt_instruction": "Generate table content that respects each cell's render action."
+  }
+}

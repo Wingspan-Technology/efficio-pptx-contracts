@@ -1,0 +1,82 @@
+{
+  "generated_from": [
+    "contracts/shared/render-behavior-tags.contract.json",
+    "contracts/shared/component-base-tags.contract.json",
+    "contracts/components/text/tags.contract.json"
+  ],
+  "component_type": "text",
+  "description": "Text component tag contract.",
+  "required_tags": [
+    "efficio_render_behavior",
+    "efficio_component_id",
+    "efficio_component_type",
+    "efficio_text_format",
+    "efficio_sizing_mode",
+    "efficio_max_chars",
+    "efficio_min_items",
+    "efficio_max_items",
+    "efficio_min_chars_per_item",
+    "efficio_max_chars_per_item"
+  ],
+  "optional_tags": [
+    "efficio_content_role",
+    "efficio_prompt_instruction",
+    "efficio_target_chars",
+    "efficio_target_items",
+    "efficio_target_chars_per_item"
+  ],
+  "enums": {
+    "efficio_render_behavior": [
+      "render_by_component_type",
+      "preserve",
+      "remove_on_render"
+    ],
+    "efficio_component_type": [
+      "text"
+    ],
+    "efficio_text_format": [
+      "plain",
+      "paragraph",
+      "bullets",
+      "numbered_list"
+    ],
+    "efficio_sizing_mode": [
+      "auto",
+      "manual"
+    ]
+  },
+  "types": {
+    "efficio_render_behavior": "enum",
+    "efficio_component_id": "non_empty_string",
+    "efficio_component_type": "enum",
+    "efficio_content_role": "string",
+    "efficio_prompt_instruction": "string",
+    "efficio_text_format": "enum",
+    "efficio_sizing_mode": "enum",
+    "efficio_max_chars": "positive_integer_string",
+    "efficio_target_chars": "positive_integer_string",
+    "efficio_min_items": "positive_integer_string",
+    "efficio_target_items": "positive_integer_string",
+    "efficio_max_items": "positive_integer_string",
+    "efficio_min_chars_per_item": "positive_integer_string",
+    "efficio_max_chars_per_item": "positive_integer_string",
+    "efficio_target_chars_per_item": "positive_integer_string"
+  },
+  "json_schemas": {},
+  "example": {
+    "efficio_render_behavior": "render_by_component_type",
+    "efficio_component_id": "title",
+    "efficio_component_type": "text",
+    "efficio_content_role": "slide_title",
+    "efficio_text_format": "plain",
+    "efficio_sizing_mode": "auto",
+    "efficio_max_chars": "120",
+    "efficio_target_chars": "90",
+    "efficio_min_items": "1",
+    "efficio_max_items": "1",
+    "efficio_min_chars_per_item": "5",
+    "efficio_max_chars_per_item": "120",
+    "efficio_target_chars_per_item": "90",
+    "efficio_prompt_instruction": "Generate a concise executive slide title."
+  }
+}

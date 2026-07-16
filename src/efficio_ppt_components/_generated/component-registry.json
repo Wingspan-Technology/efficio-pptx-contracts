@@ -1,0 +1,19 @@
+{
+  "components": {
+    "category_chart": {
+      "tags_contract": "contracts/components/category_chart/tags.contract.json",
+      "content_contract": "contracts/components/category_chart/content.contract.json",
+      "tags_defaults": "contracts/components/category_chart/tags.defaults.json"
+    },
+    "table": {
+      "tags_contract": "contracts/components/table/tags.contract.json",
+      "content_contract": "contracts/components/table/content.contract.json",
+      "tags_defaults": "contracts/components/table/tags.defaults.json"
+    },
+    "text": {
+      "tags_contract": "contracts/components/text/tags.contract.json",
+      "content_contract": "contracts/components/text/content.contract.json",
+      "tags_defaults": "contracts/components/text/tags.defaults.json"
+    }
+  }
+}
