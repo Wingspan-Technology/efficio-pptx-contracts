@@ -12,6 +12,12 @@ export const slideTagSchema = {
       "pattern": "^slide_\\d{3}$",
       "description": "Position-based slide identifier in the format slide_001. Assigned and validated at the deck level."
     },
+    "efficio_slide_name": {
+      "type": "string",
+      "required": false,
+      "max_length": 120,
+      "description": "User-friendly slide display name for selection UIs. A human-readable label only, not an AI instruction (no ai block); absent or blank means clients fall back to the slide id."
+    },
     "efficio_slide_placement": {
       "type": "string",
       "required": true,
@@ -77,6 +83,7 @@ export type SlideTagSchema = typeof slideTagSchema;
 
 export const slideTagKeys = [
   "efficio_slide_id",
+  "efficio_slide_name",
   "efficio_slide_placement",
   "efficio_slide_group_order",
   "efficio_slide_purpose",
@@ -85,6 +92,7 @@ export const slideTagKeys = [
 ] as const;
 
 export const SLIDE_ID_TAG = "efficio_slide_id";
+export const SLIDE_NAME_TAG = "efficio_slide_name";
 export const SLIDE_PLACEMENT_TAG = "efficio_slide_placement";
 export const SLIDE_GROUP_ORDER_TAG = "efficio_slide_group_order";
 export const SLIDE_PURPOSE_TAG = "efficio_slide_purpose";
@@ -97,5 +105,6 @@ export type SlidePlacement = (typeof SLIDE_PLACEMENTS)[number];
 export const SLIDE_INCLUSION_POLICIES = slideTagSchema.tags["efficio_slide_inclusion_policy"].enum;
 export type SlideInclusionPolicy = (typeof SLIDE_INCLUSION_POLICIES)[number];
 
+export const SLIDE_NAME_MAX_LENGTH = slideTagSchema.tags["efficio_slide_name"].max_length;
 export const SLIDE_PURPOSE_MAX_LENGTH = slideTagSchema.tags["efficio_slide_purpose"].max_length;
 export const SLIDE_CONTENT_DESCRIPTION_MAX_LENGTH = slideTagSchema.tags["efficio_slide_content_description"].max_length;

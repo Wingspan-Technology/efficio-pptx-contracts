@@ -179,6 +179,23 @@ describe("deck template instruction tag", () => {
   });
 });
 
+describe("slide display name tag", () => {
+  const slideSchema = readJson(
+    path.join(pkgRoot, "generated", "schemas", "presentation", "slide-tags.json"),
+  );
+
+  it("generates the optional efficio_slide_name slide tag with no ai block", () => {
+    const tag = (slideSchema.tags as JsonObject).efficio_slide_name as JsonObject;
+    expect(tag).toBeDefined();
+    expect(tag.type).toBe("string");
+    expect(tag.required).toBe(false);
+    expect(tag.max_length).toBe(120);
+    // A display label only — no AI instruction metadata, so it never reaches
+    // slide_tag_instructions.
+    expect(tag).not.toHaveProperty("ai");
+  });
+});
+
 describe("text sizing tags", () => {
   it("generates sizing fields as normal required tags", () => {
     const schema = readJson(generatedFileFor("text"));
@@ -606,6 +623,8 @@ describe("generated slide-selection AI instructions", () => {
     expect(tags).toHaveProperty("efficio_slide_inclusion_policy");
     expect(tags).not.toHaveProperty("efficio_slide_id");
     expect(tags).not.toHaveProperty("efficio_slide_purpose");
+    // The display-name tag has no ai block, so it is never an AI instruction.
+    expect(tags).not.toHaveProperty("efficio_slide_name");
   });
 
   it("expected_slide_selection_schema equals the authored slide-selection schema", () => {

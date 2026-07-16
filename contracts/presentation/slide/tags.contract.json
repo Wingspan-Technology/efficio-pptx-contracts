@@ -8,6 +8,12 @@
       "pattern": "^slide_\\d{3}$",
       "description": "Position-based slide identifier in the format slide_001. Assigned and validated at the deck level."
     },
+    "efficio_slide_name": {
+      "type": "string",
+      "required": false,
+      "max_length": 120,
+      "description": "User-friendly slide display name for selection UIs. A human-readable label only, not an AI instruction (no ai block); absent or blank means clients fall back to the slide id."
+    },
     "efficio_slide_placement": {
       "type": "string",
       "required": true,

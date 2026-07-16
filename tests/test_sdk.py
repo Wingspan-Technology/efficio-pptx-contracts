@@ -830,6 +830,35 @@ def test_validate_slide_tags_reports_contract_errors() -> None:
     assert ("below_minimum", "efficio_slide_group_order") in codes
 
 
+def valid_slide_tags(**overrides: str) -> dict[str, str]:
+    tags = {
+        "efficio_slide_id": "slide_001",
+        "efficio_slide_placement": "body",
+        "efficio_slide_inclusion_policy": "when_relevant",
+    }
+    tags.update(overrides)
+    return tags
+
+
+def test_validate_slide_tags_accepts_missing_or_blank_slide_name() -> None:
+    # The optional display name may be absent, or blank/whitespace (treated as absent).
+    assert sdk.validate_slide_tags(valid_slide_tags()) == []
+    assert sdk.validate_slide_tags(valid_slide_tags(efficio_slide_name="   ")) == []
+
+
+def test_validate_slide_tags_accepts_a_normal_slide_name() -> None:
+    assert sdk.validate_slide_tags(valid_slide_tags(efficio_slide_name="Executive Summary")) == []
+    # The 120-character boundary is allowed.
+    assert sdk.validate_slide_tags(valid_slide_tags(efficio_slide_name="x" * 120)) == []
+
+
+def test_validate_slide_tags_rejects_too_long_slide_name() -> None:
+    issues = sdk.validate_slide_tags(valid_slide_tags(efficio_slide_name="x" * 121))
+    assert ("exceeds_max_length", "efficio_slide_name") in [
+        (issue.code, issue.tag_name) for issue in issues
+    ]
+
+
 def valid_deck_tags(**overrides: str) -> dict[str, str]:
     tags = {"efficio_template_id": "acme_quarterly"}
     tags.update(overrides)
