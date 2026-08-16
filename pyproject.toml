@@ -10,6 +10,9 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = ["jsonschema>=4"]
 
+[project.urls]
+Repository = "https://github.com/Wingspan-Technology/efficio-pptx-contracts"
+
 [project.optional-dependencies]
 test = ["pytest>=8"]
 

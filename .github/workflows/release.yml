@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   release:
@@ -22,6 +23,8 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@wingspan-technology"
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -51,6 +54,11 @@ jobs:
 
       - name: Build and verify release artifacts
         run: npm run release:verify
+
+      - name: Publish npm package
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: npm publish
 
       - name: Create GitHub release
         env:

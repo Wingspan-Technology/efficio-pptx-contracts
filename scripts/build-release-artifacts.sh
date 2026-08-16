@@ -13,7 +13,7 @@ npm pack --pack-destination "$OUTPUT" >/dev/null
 uv build --out-dir "$OUTPUT" >/dev/null
 rm -f "$OUTPUT/.gitignore"
 
-NPM_PACKAGE="efficio-pptx-contracts-$VERSION.tgz"
+NPM_PACKAGE="wingspan-technology-efficio-pptx-contracts-$VERSION.tgz"
 PYTHON_SDIST="efficio_pptx_contracts-$VERSION.tar.gz"
 PYTHON_WHEEL="efficio_pptx_contracts-$VERSION-py3-none-any.whl"
 

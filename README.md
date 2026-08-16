@@ -27,14 +27,14 @@ edited manually.
 
 ## Public SDKs
 
-The npm package is `@efficio/pptx-contracts`. Its supported TypeScript entrypoint
+The npm package is `@wingspan-technology/efficio-pptx-contracts`. Its supported TypeScript entrypoint
 is:
 
 ```ts
 import {
   getComponentMetadata,
   listComponentTypes,
-} from "@efficio/pptx-contracts/editor";
+} from "@wingspan-technology/efficio-pptx-contracts/editor";
 ```
 
 The Python distribution is `efficio-pptx-contracts`. Its import name is:
@@ -115,13 +115,14 @@ For a manual release:
 
 Pushing a matching `vX.Y.Z` tag runs `.github/workflows/release.yml`. The
 workflow verifies the tag and both package versions, rebuilds and installs the
-artifacts, then creates a GitHub Release containing all files from `release/`.
-It uses the repository-scoped `GITHUB_TOKEN`; no publication secret is needed.
+artifacts, publishes the npm package to GitHub Packages, then creates a GitHub
+Release containing all files from `release/`. It uses the repository-scoped
+`GITHUB_TOKEN`; no publication secret is needed.
 
 After creating the GitHub repository, connect and publish this local history:
 
 ```bash
-git remote add origin git@github.com:<owner>/efficio-pptx-contracts.git
+git remote add origin git@github.com:Wingspan-Technology/efficio-pptx-contracts.git
 git push -u origin main
 git push origin v0.1.0
 ```

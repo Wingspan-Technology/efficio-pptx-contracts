@@ -13,7 +13,7 @@ cd "$ROOT"
 cd "$ARTIFACTS"
 sha256sum --check SHA256SUMS
 
-NPM_PACKAGE="$ARTIFACTS/efficio-pptx-contracts-$VERSION.tgz"
+NPM_PACKAGE="$ARTIFACTS/wingspan-technology-efficio-pptx-contracts-$VERSION.tgz"
 WHEEL="$ARTIFACTS/efficio_pptx_contracts-$VERSION-py3-none-any.whl"
 
 UNEXPECTED_NPM_FILES="$(tar -tzf "$NPM_PACKAGE" | grep -Ev '^package/(package.json|README.md|dist(/.*)?)$' || true)"
@@ -27,7 +27,7 @@ cd "$WORK/node-consumer"
 npm init --yes >/dev/null
 npm install --ignore-scripts "$NPM_PACKAGE" >/dev/null
 node --input-type=module -e '
-  const sdk = await import("@efficio/pptx-contracts/editor");
+  const sdk = await import("@wingspan-technology/efficio-pptx-contracts/editor");
   const types = sdk.listComponentTypes();
   if (!types.includes("text") || !types.includes("table") || !types.includes("category_chart")) {
     throw new Error(`Unexpected component types: ${JSON.stringify(types)}`);
