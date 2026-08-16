@@ -1,4 +1,4 @@
-import type { ComponentType } from "./componentTypes";
+import type { ComponentType } from "./componentTypes.js";
 
 export const tagSchemas = {
   "category_chart": {

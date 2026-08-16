@@ -5,7 +5,7 @@
 // skipped when an operand is not a positive integer (the per-tag schema owns those structural errors).
 // Mirrors the Python SDK's `text_sizing_issues`.
 
-import type { ComponentSemanticIssue } from "./component-metadata";
+import type { ComponentSemanticIssue } from "./component-metadata.js";
 
 const TEXT_FORMAT_TAG = "efficio_text_format";
 const PLAIN_TEXT_FORMAT = "plain";

@@ -49,7 +49,7 @@ describe("component discovery", () => {
       expect.arrayContaining(["components", "presentation", "shared"]),
     );
     expect(readdirSync(srcDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name)).toEqual(
-      ["efficio_ppt_components"],
+      ["efficio_pptx_contracts"],
     );
     expect(components).not.toContain("presentation");
     expect(components).not.toContain("shared");

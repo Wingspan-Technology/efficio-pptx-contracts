@@ -1,4 +1,4 @@
-"""Tests for the public efficio_ppt_components Python SDK surface."""
+"""Tests for the public efficio_pptx_contracts Python SDK surface."""
 
 from __future__ import annotations
 
@@ -6,9 +6,9 @@ import json
 
 import pytest
 
-import efficio_ppt_components as sdk
-from efficio_ppt_components import _resources
-from efficio_ppt_components.errors import (
+import efficio_pptx_contracts as sdk
+from efficio_pptx_contracts import _resources
+from efficio_pptx_contracts.errors import (
     EfficioComponentsError,
     MissingResourceError,
     UnknownComponentTypeError,

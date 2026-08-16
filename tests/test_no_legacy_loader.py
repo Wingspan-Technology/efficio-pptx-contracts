@@ -1,6 +1,6 @@
 """Guards that the legacy src/schema_loader.py path stays retired.
 
-The only supported Python contract API is the efficio_ppt_components SDK.
+The only supported Python contract API is the efficio_pptx_contracts SDK.
 """
 
 from __future__ import annotations

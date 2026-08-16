@@ -15,11 +15,11 @@ import {
   assertValidJsonSchema,
   assertTextContentShape,
   getRecord,
-  mergeTagSchema,
   validateComponentDefaults,
   validateTagEntityContract,
   type JsonObject,
 } from "./contractLib.js";
+import { mergeTagSchema } from "./compatibilityTagSchema.js";
 import { validateComponentsInstruction } from "./componentSources.js";
 import { validateSlideDefaults, validateSlidesInstructions } from "./presentationSources.js";
 import { readJson } from "./generatorIo.js";

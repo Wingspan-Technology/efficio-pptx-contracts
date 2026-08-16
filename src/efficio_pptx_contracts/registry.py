@@ -1,4 +1,4 @@
-"""Component registry access for the efficio_ppt_components SDK.
+"""Component registry access for the efficio_pptx_contracts SDK.
 
 Backed by the generated ``_generated/component-registry.json`` resource, which is
 produced from ``contracts/components/*`` by ``scripts/generate-ts-contracts.ts``. The

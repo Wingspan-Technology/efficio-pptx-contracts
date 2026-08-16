@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from efficio_ppt_components._category_chart_validation import category_chart_issues
+from efficio_pptx_contracts._category_chart_validation import category_chart_issues
 
 
 def _tags(**overrides: str) -> dict[str, str]:

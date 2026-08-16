@@ -3,9 +3,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "efficio-ppt-components"
+name = "efficio-pptx-contracts"
 version = "0.1.0"
-description = "Component contracts, schemas, and prompt-fragment builders for Efficio"
+description = "Efficio PPTX contracts, schemas, and Python SDK"
+readme = "README.md"
 requires-python = ">=3.12"
 dependencies = ["jsonschema>=4"]
 
@@ -13,12 +14,12 @@ dependencies = ["jsonschema>=4"]
 test = ["pytest>=8"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/efficio_ppt_components"]
+packages = ["src/efficio_pptx_contracts"]
 
 # Generated SDK resources live inside the package; keep them in the wheel even if
 # the _generated tree is ever VCS-ignored.
 [tool.hatch.build]
-artifacts = ["src/efficio_ppt_components/_generated/**/*.json"]
+artifacts = ["src/efficio_pptx_contracts/_generated/**/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

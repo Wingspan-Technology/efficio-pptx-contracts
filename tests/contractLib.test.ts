@@ -5,14 +5,12 @@ import {
   assertTextContentShape,
   assertValidJsonSchema,
   isValidEfficioTagName,
-  legacyEnum,
-  legacyType,
-  mergeTagSchema,
   publicTagAlias,
   validateComponentDefaults,
   validateTagEntityContract,
   type JsonObject,
 } from "../scripts/contractLib";
+import { legacyEnum, legacyType, mergeTagSchema } from "../scripts/compatibilityTagSchema";
 
 const COMMON_LABELS = [
   "contracts/shared/render-behavior-tags.contract.json",

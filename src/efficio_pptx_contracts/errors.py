@@ -1,8 +1,8 @@
-"""Public exception types for the efficio_ppt_components SDK."""
+"""Public exception types for the efficio_pptx_contracts SDK."""
 
 
 class EfficioComponentsError(Exception):
-    """Base class for all efficio_ppt_components SDK errors."""
+    """Base class for all efficio_pptx_contracts SDK errors."""
 
 
 class MissingResourceError(EfficioComponentsError):

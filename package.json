@@ -1,13 +1,31 @@
 {
-  "name": "@efficio/ppt-components",
-  "private": true,
+  "name": "@efficio/pptx-contracts",
+  "version": "0.1.0",
+  "description": "Efficio PPTX contracts and generated TypeScript SDK.",
   "type": "module",
+  "license": "UNLICENSED",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "./editor": {
+      "types": "./dist/ts/editor.d.ts",
+      "import": "./dist/ts/editor.js"
+    }
+  },
+  "engines": {
+    "node": "^20.0.0 || ^22.0.0 || >=24.0.0"
+  },
   "scripts": {
     "validate:contracts": "tsx scripts/validate-contracts.ts",
     "generate:ts": "tsx scripts/generate-ts-contracts.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
     "test:run": "vitest run",
-    "check": "npm run validate:contracts && npm run generate:ts && tsc --noEmit && vitest run"
+    "check": "npm run validate:contracts && npm run generate:ts && npm run typecheck && npm test && npm run build",
+    "prepack": "npm run build"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

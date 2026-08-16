@@ -26,7 +26,7 @@ export const tsAiDir = path.join(tsOutputDir, "ai");
 // Runtime JSON for the Python SDK ships inside the importable package so it is
 // wheel-safe via importlib.resources. It is a mirror of the canonical top-level
 // generated JSON, copied in the same generation pass (see sdkMirror.ts).
-export const sdkPackageDir = path.join(packageRoot, "src", "efficio_ppt_components");
+export const sdkPackageDir = path.join(packageRoot, "src", "efficio_pptx_contracts");
 export const sdkGeneratedDir = path.join(sdkPackageDir, "_generated");
 
 export const sharedTagFragmentNames = [

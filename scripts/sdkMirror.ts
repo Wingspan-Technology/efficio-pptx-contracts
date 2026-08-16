@@ -11,7 +11,7 @@ import {
 } from "./generatorPaths.js";
 
 // Mirrors the runtime JSON consumed by the Python SDK into the importable
-// package under efficio_ppt_components/_generated/. These are exact copies of the
+// package under efficio_pptx_contracts/_generated/. These are exact copies of the
 // canonical top-level generated JSON, written in the same pass so the two stay
 // in sync (asserted by tests/generated.test.ts). Only the artifacts the SDK
 // loads are mirrored; generated/ts/* stays TypeScript-only.

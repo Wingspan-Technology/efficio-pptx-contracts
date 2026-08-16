@@ -3,7 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { mergeTagSchema, publicTagAlias, type JsonObject } from "../scripts/contractLib";
+import { publicTagAlias, type JsonObject } from "../scripts/contractLib";
+import { mergeTagSchema } from "../scripts/compatibilityTagSchema";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pkgRoot = path.resolve(here, "..");
@@ -125,7 +126,7 @@ describe("generated JSON omits the redundant `generated` marker", () => {
 });
 
 describe("Python SDK generated resource mirror", () => {
-  const sdkGeneratedDir = path.join(srcDir, "efficio_ppt_components", "_generated");
+  const sdkGeneratedDir = path.join(srcDir, "efficio_pptx_contracts", "_generated");
 
   it.each(COMPONENTS)("mirrors %s component schema for Python SDK validation", (component) => {
     const relativePath = path.join("schemas", "components", `${component.replace(/_/g, "-")}.json`);
@@ -649,12 +650,12 @@ describe("generated slide-selection AI instructions", () => {
   });
 });
 
-// The Python SDK reads runtime JSON from efficio_ppt_components/_generated/, which
+// The Python SDK reads runtime JSON from efficio_pptx_contracts/_generated/, which
 // is mirrored from the canonical top-level generated JSON in the same generation
 // pass. These tests guard against the two locations drifting.
 describe("SDK _generated runtime resources mirror top-level generated JSON", () => {
   const generatedDir = path.join(pkgRoot, "generated");
-  const sdkGeneratedDir = path.join(pkgRoot, "src", "efficio_ppt_components", "_generated");
+  const sdkGeneratedDir = path.join(pkgRoot, "src", "efficio_pptx_contracts", "_generated");
 
   const mirroredFiles = [
     "component-registry.json",

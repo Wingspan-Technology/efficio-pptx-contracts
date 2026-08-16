@@ -1,4 +1,4 @@
-"""AI instruction artifact access for the efficio_ppt_components SDK.
+"""AI instruction artifact access for the efficio_pptx_contracts SDK.
 
 Backed by generated ``_generated/ai/*`` resources produced from authored tag
 ``ai`` metadata, content contracts, and the authored slide-selection sources.

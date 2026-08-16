@@ -7,7 +7,7 @@ import json
 import pytest
 from jsonschema import Draft202012Validator
 
-from efficio_ppt_components import (
+from efficio_pptx_contracts import (
     UnknownComponentTypeError,
     build_validation_content_schema,
     list_component_types,

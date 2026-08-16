@@ -1,4 +1,5 @@
-import { getRecord, mergeNativeTags, publicTagAlias, type JsonObject } from "./contractLib.js";
+import { getRecord, publicTagAlias, type JsonObject } from "./contractLib.js";
+import { mergeNativeTags } from "./compatibilityTagSchema.js";
 
 // AI component instruction artifacts are derived entirely from authored tag `ai`
 // metadata (shared fragments + component tags) and the authored content contract.

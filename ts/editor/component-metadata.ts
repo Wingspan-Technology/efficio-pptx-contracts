@@ -3,9 +3,9 @@
 // that read the generated component contracts. Extensionless imports match the generated TS and the
 // editor's bundler resolution; this file is type-checked by the editor's tsc, like generated TS.
 
-import { componentMetadata } from "../../generated/ts/components/componentMetadata";
-import { componentTypes } from "../../generated/ts/components/componentTypes";
-import { tagSchemas } from "../../generated/ts/components/tagSchemas";
+import { componentMetadata } from "../../generated/ts/components/componentMetadata.js";
+import { componentTypes } from "../../generated/ts/components/componentTypes.js";
+import { tagSchemas } from "../../generated/ts/components/tagSchemas.js";
 
 const RENDER_BEHAVIOR_TAG = "efficio_render_behavior";
 

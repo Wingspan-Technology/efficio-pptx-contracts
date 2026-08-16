@@ -4,7 +4,7 @@
 // an operand is not a positive integer. Every issue is tagged efficio_table_config. Mirrors the Python
 // SDK's table_config_issues, plus duplicate cell/row/column detection.
 
-import type { ComponentSemanticIssue } from "./component-metadata";
+import type { ComponentSemanticIssue } from "./component-metadata.js";
 
 const TABLE_CONFIG_TAG = "efficio_table_config";
 const PLAIN_TEXT_FORMAT = "plain";

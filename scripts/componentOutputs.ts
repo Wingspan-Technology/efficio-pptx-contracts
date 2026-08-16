@@ -1,12 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import {
-  mergeNativeTags,
-  mergeTagSchema,
-  validateComponentDefaults,
-  type JsonObject,
-} from "./contractLib.js";
+import { validateComponentDefaults, type JsonObject } from "./contractLib.js";
+import { mergeNativeTags, mergeTagSchema } from "./compatibilityTagSchema.js";
 import { buildConstSource, readJson, toCamelCase, writeJson } from "./generatorIo.js";
 import type { ComponentSource, SharedTagContract } from "./componentSources.js";
 import {
@@ -41,7 +37,7 @@ export type ComponentType = (typeof componentTypes)[number];
 }
 
 export function buildTagSchemasSource(tagSchemas: Record<string, JsonObject>): string {
-  return `import type { ComponentType } from "./componentTypes";
+  return `import type { ComponentType } from "./componentTypes.js";
 
 export const tagSchemas = ${JSON.stringify(tagSchemas, null, 2)} as const;
 

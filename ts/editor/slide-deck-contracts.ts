@@ -2,13 +2,13 @@
 // deck tag schemas/defaults, plus a re-export of the generated tag-name constants and literal-union types.
 // Extensionless imports match the generated TS and the editor's bundler resolution.
 
-import { slideDefaults } from "../../generated/ts/presentation/slideDefaults";
-import { deckDefaults } from "../../generated/ts/presentation/deckDefaults";
+import { slideDefaults } from "../../generated/ts/presentation/slideDefaults.js";
+import { deckDefaults } from "../../generated/ts/presentation/deckDefaults.js";
 import {
   deckTagSchema,
   DECK_TEMPLATE_ID_TAG,
   DECK_INITIALIZED_TAG,
-} from "../../generated/ts/presentation/deckTagSchema";
+} from "../../generated/ts/presentation/deckTagSchema.js";
 import {
   slideTagSchema,
   SLIDE_ID_TAG,
@@ -25,7 +25,7 @@ import {
   SLIDE_CONTENT_DESCRIPTION_MAX_LENGTH,
   type SlidePlacement,
   type SlideInclusionPolicy,
-} from "../../generated/ts/presentation/slideTagSchema";
+} from "../../generated/ts/presentation/slideTagSchema.js";
 
 // ---- Slide contract surface (re-exported generated constants) ----
 
