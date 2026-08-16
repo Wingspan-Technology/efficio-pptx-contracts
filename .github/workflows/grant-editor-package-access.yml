@@ -1,0 +1,19 @@
+name: Grant Editor package access
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  grant:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Grant repository Actions access
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh api --method PUT
+          /orgs/Wingspan-Technology/packages/npm/efficio-pptx-contracts/actions/permissions/repositories/1336294655
