@@ -78,13 +78,25 @@ changes. CI regenerates them and fails when the committed result is stale.
 
 ## Release Artifacts
 
-Build and verify both SDK artifacts locally:
+Build the versioned release files locally:
 
 ```bash
-timeout 60s ./scripts/verify-release-artifacts.sh
+timeout 60s npm run release:build
 ```
 
-The npm tarball contains only compiled JavaScript, declarations, and package
+This creates `release/` with:
+
+- the npm `.tgz` package;
+- the Python wheel and source distribution;
+- `SHA256SUMS` for downstream verification.
+
+Build, checksum, install, and exercise both packages with:
+
+```bash
+timeout 120s npm run release:verify
+```
+
+The npm package contains only compiled JavaScript, declarations, and package
 metadata. The Python wheel contains the SDK and its runtime schemas,
 instructions, and component registry.
 
@@ -99,5 +111,20 @@ For a manual release:
 2. Regenerate and run all checks.
 3. Commit the source and generated outputs.
 4. Create an annotated matching tag, for example `v0.1.0`.
+5. Push the commit and tag.
 
-Registry publication is intentionally not automated yet.
+Pushing a matching `vX.Y.Z` tag runs `.github/workflows/release.yml`. The
+workflow verifies the tag and both package versions, rebuilds and installs the
+artifacts, then creates a GitHub Release containing all files from `release/`.
+It uses the repository-scoped `GITHUB_TOKEN`; no publication secret is needed.
+
+After creating the GitHub repository, connect and publish this local history:
+
+```bash
+git remote add origin git@github.com:<owner>/efficio-pptx-contracts.git
+git push -u origin main
+git push origin v0.1.0
+```
+
+Downstream CI must download an exact tagged asset and validate it against that
+release's `SHA256SUMS`. It must not download an unpinned latest release.

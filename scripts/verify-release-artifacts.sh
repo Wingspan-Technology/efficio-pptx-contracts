@@ -4,13 +4,17 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
+VERSION="$("$ROOT/scripts/verify-release-version.sh")"
+ARTIFACTS="$ROOT/release"
 
 cd "$ROOT"
+"$ROOT/scripts/build-release-artifacts.sh"
 
-mkdir -p "$WORK/npm"
-npm pack --pack-destination "$WORK/npm" >/dev/null
-NPM_PACKAGE="$(find "$WORK/npm" -maxdepth 1 -name '*.tgz' -print -quit)"
-test -n "$NPM_PACKAGE"
+cd "$ARTIFACTS"
+sha256sum --check SHA256SUMS
+
+NPM_PACKAGE="$ARTIFACTS/efficio-pptx-contracts-$VERSION.tgz"
+WHEEL="$ARTIFACTS/efficio_pptx_contracts-$VERSION-py3-none-any.whl"
 
 UNEXPECTED_NPM_FILES="$(tar -tzf "$NPM_PACKAGE" | grep -Ev '^package/(package.json|README.md|dist(/.*)?)$' || true)"
 if [[ -n "$UNEXPECTED_NPM_FILES" ]]; then
@@ -29,12 +33,6 @@ node --input-type=module -e '
     throw new Error(`Unexpected component types: ${JSON.stringify(types)}`);
   }
 '
-
-cd "$ROOT"
-mkdir -p "$WORK/python"
-uv build --out-dir "$WORK/python" >/dev/null
-WHEEL="$(find "$WORK/python" -maxdepth 1 -name '*.whl' -print -quit)"
-test -n "$WHEEL"
 
 uv venv --python 3.12 "$WORK/venv" >/dev/null
 uv pip install --python "$WORK/venv/bin/python" "$WHEEL" >/dev/null

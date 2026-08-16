@@ -25,6 +25,8 @@
     "test": "vitest run",
     "test:run": "vitest run",
     "check": "npm run validate:contracts && npm run generate:ts && npm run typecheck && npm test && npm run build",
+    "release:build": "./scripts/build-release-artifacts.sh",
+    "release:verify": "./scripts/verify-release-artifacts.sh",
     "prepack": "npm run build"
   },
   "devDependencies": {

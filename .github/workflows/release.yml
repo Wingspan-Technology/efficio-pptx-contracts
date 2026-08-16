@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          uv sync --extra test --frozen
+
+      - name: Verify release version
+        run: ./scripts/verify-release-version.sh "$GITHUB_REF_NAME"
+
+      - name: Verify contracts and SDKs
+        run: |
+          npm run check
+          uv run pytest -q
+
+      - name: Verify generated files are current
+        run: git diff --exit-code
+
+      - name: Build and verify release artifacts
+        run: npm run release:verify
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME" release/*
+          --verify-tag
+          --generate-notes
+          --title "$GITHUB_REF_NAME"
