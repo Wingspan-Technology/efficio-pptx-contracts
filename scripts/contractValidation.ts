@@ -21,7 +21,11 @@ import {
 } from "./contractLib.js";
 import { mergeTagSchema } from "./compatibilityTagSchema.js";
 import { validateComponentsInstruction } from "./componentSources.js";
-import { validateSlideDefaults, validateSlidesInstructions } from "./presentationSources.js";
+import {
+  validateSelectionGroupContract,
+  validateSlideDefaults,
+  validateSlidesInstructions,
+} from "./presentationSources.js";
 import { readJson } from "./generatorIo.js";
 import { contractsDir as defaultContractsDir, sharedDefaultsLabel, sharedTagFragmentNames } from "./generatorPaths.js";
 
@@ -204,11 +208,24 @@ export async function validateAllContracts(
   });
 
   const slidesInstructionLabel = "contracts/presentation/slide/slides.instructions.json";
+  let slidesInstructions: JsonObject | undefined;
   await check(slidesInstructionLabel, async () => {
     const value = await readJson(path.join(layout.slideDir, "slides.instructions.json"));
     assertObject(value, slidesInstructionLabel);
     validateSlidesInstructions(value, slidesInstructionLabel);
+    slidesInstructions = value;
   });
+
+  if (slideSchema !== undefined && deckSchema !== undefined && slidesInstructions !== undefined) {
+    await check("presentation slide-selection groups", () => {
+      validateSelectionGroupContract(
+        deckSchema as JsonObject,
+        slideSchema as JsonObject,
+        slidesInstructions as JsonObject,
+        "presentation slide-selection groups",
+      );
+    });
+  }
 
   // Slide and template contracts are copied verbatim by the generator; it only
   // requires that they are JSON objects, so that is all the gate checks here.

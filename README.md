@@ -43,6 +43,14 @@ The Python distribution is `efficio-pptx-contracts`. Its import name is:
 from efficio_pptx_contracts import list_component_types
 ```
 
+Deck-level slide-selection groups are authored in the optional
+`efficio_slide_selection_groups` tag as a direct JSON array. Python consumers
+use `parse_slide_selection_groups()` and `normalize_slide_selection_groups()`
+to build the validated graph, then call
+`validate_slide_selection_group_selection()` on the final selected slide IDs.
+Valid root wrappers containing one direct slide are normalized away and remain
+ordinary standalone slides.
+
 Generated TypeScript modules and bundled Python JSON resources are package
 internals. Consumers must use the public SDK entrypoints instead of importing
 generated files directly.

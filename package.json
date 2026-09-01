@@ -1,6 +1,6 @@
 {
   "name": "@wingspan-technology/efficio-pptx-contracts",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Efficio PPTX contracts and generated TypeScript SDK.",
   "type": "module",
   "license": "UNLICENSED",

@@ -22,6 +22,7 @@ import {
   validateTextSizingSemantics,
   DECK_TEMPLATE_ID_TAG,
   DECK_INITIALIZED_TAG,
+  DECK_SLIDE_SELECTION_GROUPS_TAG,
   SLIDE_ID_TAG,
   SLIDE_PLACEMENTS,
   SLIDE_PURPOSE_MAX_LENGTH,
@@ -168,6 +169,7 @@ describe("editor SDK deck surface", () => {
   it("re-exports the deck tag constants", () => {
     expect(DECK_TEMPLATE_ID_TAG).toBe("efficio_template_id");
     expect(DECK_INITIALIZED_TAG).toBe("efficio_initialized");
+    expect(DECK_SLIDE_SELECTION_GROUPS_TAG).toBe("efficio_slide_selection_groups");
   });
 
   it("exposes the deck tag contract with the template-id entity", () => {
@@ -184,6 +186,13 @@ describe("editor SDK deck surface", () => {
     expect(entity.type).toBe("string");
     expect(entity.required).toBe(false);
     expect(entity.enum).toEqual(["true"]);
+  });
+
+  it("exposes slide-selection groups as an optional direct JSON array", () => {
+    const entity = getDeckTagContract().tags.efficio_slide_selection_groups;
+    expect(entity.type).toBe("array");
+    expect(entity.required).toBe(false);
+    expect(entity.schema.type).toBe("array");
   });
 
   it("exposes the deck tag contract as a defensive copy", () => {

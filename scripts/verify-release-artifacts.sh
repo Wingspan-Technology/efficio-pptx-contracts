@@ -32,6 +32,9 @@ node --input-type=module -e '
   if (!types.includes("text") || !types.includes("table") || !types.includes("category_chart")) {
     throw new Error(`Unexpected component types: ${JSON.stringify(types)}`);
   }
+  if (sdk.DECK_SLIDE_SELECTION_GROUPS_TAG !== "efficio_slide_selection_groups") {
+    throw new Error("Missing slide-selection group deck tag export.");
+  }
 '
 
 uv venv --python 3.12 "$WORK/venv" >/dev/null
@@ -40,6 +43,7 @@ uv pip install --python "$WORK/venv/bin/python" "$WHEEL" >/dev/null
 from importlib.resources import files
 
 from efficio_pptx_contracts import (
+    SlideSelectionGroupType,
     V2ComponentRepairReason,
     V2ComponentSemanticFinding,
     V2SemanticRule,
@@ -47,6 +51,9 @@ from efficio_pptx_contracts import (
     list_component_types,
     load_component_instructions,
     normalize_v2_component_content,
+    normalize_slide_selection_groups,
+    parse_slide_selection_groups,
+    validate_slide_selection_group_selection,
     validate_v2_component_semantics,
     validate_v2_executable_component_schema,
 )
@@ -55,6 +62,27 @@ component_types = list_component_types()
 assert {"text", "table", "category_chart"}.issubset(component_types)
 assert load_component_instructions()["component_instructions"]
 assert files("efficio_pptx_contracts").joinpath("_generated/component-registry.json").is_file()
+
+selection_groups = parse_slide_selection_groups(
+    [
+        {
+            "group_id": "group_release",
+            "name": "Release smoke",
+            "type": "choice",
+            "inclusion_policy": "when_relevant",
+            "members": ["slide_001", "slide_002"],
+        }
+    ]
+)
+assert selection_groups[0].group_type is SlideSelectionGroupType.CHOICE
+selection_registry = normalize_slide_selection_groups(
+    selection_groups,
+    slide_inclusion_policies={
+        "slide_001": "when_relevant",
+        "slide_002": "when_relevant",
+    },
+)
+assert validate_slide_selection_group_selection(selection_registry, ["slide_001"]) == ()
 
 text_contract = build_v2_component_contract(
     "text",

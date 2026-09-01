@@ -1,5 +1,5 @@
 {
-  "description": "Select the slides that best fit the current presentation request. Respect each slide inclusion policy and placement metadata.",
+  "description": "Select the slides that best fit the current presentation request. Respect each slide inclusion policy, placement metadata, and every slide-selection group rule.",
   "slide_tag_instructions": {
     "efficio_slide_placement": {
       "purpose": "Indicates where the slide must sit in the deck so selection preserves required opening and closing slides.",
@@ -19,6 +19,26 @@
         "never": "Never include this slide."
       }
     }
+  },
+  "selection_group_instructions": {
+    "purpose": "Selection groups constrain which slides may be returned together. Return only selected_slides; do not return group decisions or group metadata.",
+    "type_descriptions": {
+      "choice": "An active choice group selects exactly one direct member. An optional root choice may select no members.",
+      "bundle": "An active bundle group selects every direct member recursively. An inactive bundle selects none of them."
+    },
+    "inclusion_policy_descriptions": {
+      "always": "Always include this slide regardless of the request.",
+      "default_include": "Include this slide unless there is a clear reason not to.",
+      "when_relevant": "Include this slide only when it is relevant to the request.",
+      "default_exclude": "Exclude this slide unless there is a clear reason to include it.",
+      "never": "Never include this slide."
+    },
+    "rules": [
+      "Only root groups carry inclusion_policy; nested groups are activated by their parent.",
+      "Group members are direct slide_id or group_id references.",
+      "A valid final selection must satisfy every active choice and bundle recursively.",
+      "A normalized single-slide root is treated as a standalone slide rather than a group."
+    ]
   },
   "expected_slide_selection_schema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",

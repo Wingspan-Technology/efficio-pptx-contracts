@@ -178,6 +178,17 @@ describe("deck template instruction tag", () => {
     );
     expect(authored).not.toHaveProperty("efficio_template_instruction");
   });
+
+  it("generates the optional direct-array slide-selection group tag", () => {
+    const tag = (deckSchema.tags as JsonObject).efficio_slide_selection_groups as JsonObject;
+    expect(tag.type).toBe("array");
+    expect(tag.required).toBe(false);
+    const schema = tag.schema as JsonObject;
+    expect(schema.type).toBe("array");
+    const item = schema.items as JsonObject;
+    expect(item.required).toEqual(["group_id", "name", "type", "members"]);
+    expect(item.additionalProperties).toBe(false);
+  });
 });
 
 describe("slide display name tag", () => {
@@ -610,17 +621,21 @@ describe("generated slide-selection AI instructions", () => {
   const slideDir = path.join(contractsDir, "presentation", "slide");
   const artifact = readJson(path.join(pkgRoot, "generated", "ai", "slide-selection.instruction.json"));
 
-  it("authored slides.instructions.json contains only a non-empty description", () => {
+  it("authored slides.instructions.json owns the group purpose, types, and rules", () => {
     const instructions = readJson(path.join(slideDir, "slides.instructions.json"));
-    expect(Object.keys(instructions)).toEqual(["description"]);
+    expect(Object.keys(instructions)).toEqual(["description", "selection_group_instructions"]);
     expect(instructions.description).toBeTypeOf("string");
     expect((instructions.description as string).trim().length).toBeGreaterThan(0);
+    const groups = instructions.selection_group_instructions as JsonObject;
+    expect(Object.keys(groups)).toEqual(["purpose", "type_descriptions", "rules"]);
+    expect(groups).not.toHaveProperty("inclusion_policy_descriptions");
   });
 
   it("has exactly the prompt-facing fields and no build/wrapper metadata", () => {
     expect(Object.keys(artifact).sort()).toEqual([
       "description",
       "expected_slide_selection_schema",
+      "selection_group_instructions",
       "slide_tag_instructions",
     ]);
     for (const forbidden of ["catalog_type", "generated", "generated_from", "schema_standard"]) {
@@ -629,6 +644,15 @@ describe("generated slide-selection AI instructions", () => {
     // expected schema is the direct schema, not wrapped under a "schema" field
     expect(artifact.expected_slide_selection_schema).not.toHaveProperty("schema");
     expect(artifact.expected_slide_selection_schema).not.toHaveProperty("schema_standard");
+  });
+
+  it("derives group policy guidance from the slide inclusion-policy tag", () => {
+    const instructions = artifact.selection_group_instructions as JsonObject;
+    const slideTags = readJson(path.join(slideDir, "tags.contract.json"));
+    const policy = (slideTags.tags as JsonObject).efficio_slide_inclusion_policy as JsonObject;
+    expect(instructions.inclusion_policy_descriptions).toEqual(
+      (policy.ai as JsonObject).enum_descriptions,
+    );
   });
 
   it("slide_tag_instructions includes ai-bearing slide tags and excludes the rest", () => {

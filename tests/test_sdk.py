@@ -27,6 +27,16 @@ def test_import_exposes_only_stable_public_names() -> None:
             "list_component_types",
             "has_component_type",
             "assert_component_type",
+            "SLIDE_SELECTION_GROUPS_TAG",
+            "SlideSelectionGroup",
+            "SlideSelectionGroupContractError",
+            "SlideSelectionGroupIssue",
+            "SlideSelectionGroupIssueCode",
+            "SlideSelectionGroupRegistry",
+            "SlideSelectionGroupType",
+            "normalize_slide_selection_groups",
+            "parse_slide_selection_groups",
+            "validate_slide_selection_group_selection",
             "load_component_instruction",
             "load_component_instructions",
             "build_component_instruction_block",
@@ -901,6 +911,39 @@ def test_validate_deck_tags_accepts_a_normal_template_instruction() -> None:
         )
         == []
     )
+
+
+def test_validate_deck_tags_accepts_selection_groups_as_json_array() -> None:
+    value = json.dumps(
+        [
+            {
+                "group_id": "group_options",
+                "name": "Options",
+                "type": "choice",
+                "inclusion_policy": "when_relevant",
+                "members": ["slide_001", "slide_002"],
+            }
+        ]
+    )
+    assert sdk.validate_deck_tags(
+        valid_deck_tags(efficio_slide_selection_groups=value)
+    ) == []
+
+
+def test_validate_deck_tags_rejects_invalid_selection_group_json() -> None:
+    invalid_json = sdk.validate_deck_tags(
+        valid_deck_tags(efficio_slide_selection_groups="[not-json")
+    )
+    assert [(issue.code, issue.tag_name) for issue in invalid_json] == [
+        ("invalid_json", "efficio_slide_selection_groups")
+    ]
+
+    invalid_shape = sdk.validate_deck_tags(
+        valid_deck_tags(efficio_slide_selection_groups='{"group_id":"group_wrong"}')
+    )
+    assert [(issue.code, issue.tag_name) for issue in invalid_shape] == [
+        ("invalid_json_type", "efficio_slide_selection_groups")
+    ]
 
 
 def test_validate_deck_tags_rejects_too_long_template_instruction() -> None:

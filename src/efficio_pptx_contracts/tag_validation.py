@@ -260,6 +260,15 @@ def _validate_tag_value(
     definition: dict[str, Any],
 ) -> list[TagValidationIssue]:
     expected_type = definition.get("type")
+    if expected_type in {"object", "array"}:
+        if not isinstance(value, str):
+            return [_type_issue(tag_name, "JSON string", value)]
+        return _validate_structured_value(
+            tag_name,
+            value,
+            f"json_{expected_type}",
+            definition.get("schema"),
+        )
     if expected_type == "string" and not isinstance(value, str):
         return [_type_issue(tag_name, "string", value)]
     if expected_type == "integer":

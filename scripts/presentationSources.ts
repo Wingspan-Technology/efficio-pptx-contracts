@@ -3,6 +3,7 @@ import path from "node:path";
 import {
   assertNoDefaults,
   assertObject,
+  assertStringArray,
   assertValidJsonSchema,
   getRecord,
   validateTagEntityContract,
@@ -82,14 +83,84 @@ export async function loadSlidesInstructions(): Promise<JsonObject> {
   return value;
 }
 
-// Pure shape check: the file holds exactly one non-empty "description" string.
+const SELECTION_GROUP_TYPES = ["choice", "bundle"];
+
+// Pure shape check for the reusable slide-selection prompt guidance.
 export function validateSlidesInstructions(value: JsonObject, label: string): void {
-  const keys = Object.keys(value);
-  if (keys.length !== 1 || keys[0] !== "description") {
-    throw new Error(`${label} must contain only a "description" field.`);
+  const keys = Object.keys(value).sort();
+  if (JSON.stringify(keys) !== JSON.stringify(["description", "selection_group_instructions"])) {
+    throw new Error(`${label} must contain description and selection_group_instructions.`);
   }
   if (typeof value.description !== "string" || value.description.trim().length === 0) {
     throw new Error(`${label}.description must be a non-empty string.`);
+  }
+
+  const groupInstructions = value.selection_group_instructions;
+  assertObject(groupInstructions, `${label}.selection_group_instructions`);
+  const instructionKeys = Object.keys(groupInstructions).sort();
+  const expectedKeys = ["purpose", "rules", "type_descriptions"];
+  if (JSON.stringify(instructionKeys) !== JSON.stringify(expectedKeys)) {
+    throw new Error(`${label}.selection_group_instructions has unexpected fields.`);
+  }
+  if (typeof groupInstructions.purpose !== "string" || groupInstructions.purpose.trim().length === 0) {
+    throw new Error(`${label}.selection_group_instructions.purpose must be a non-empty string.`);
+  }
+  assertDescriptionMap(
+    groupInstructions.type_descriptions,
+    SELECTION_GROUP_TYPES,
+    `${label}.selection_group_instructions.type_descriptions`,
+  );
+  assertStringArray(groupInstructions.rules, `${label}.selection_group_instructions.rules`);
+  if (groupInstructions.rules.length === 0 || groupInstructions.rules.some((rule) => rule.trim().length === 0)) {
+    throw new Error(`${label}.selection_group_instructions.rules must contain non-empty strings.`);
+  }
+}
+
+export function validateSelectionGroupContract(
+  deckSchema: JsonObject,
+  slideSchema: JsonObject,
+  slidesInstructions: JsonObject,
+  label: string,
+): void {
+  const deckTags = getRecord(deckSchema, "tags");
+  const groupTag = getRecord(deckTags, "efficio_slide_selection_groups");
+  if (groupTag.type !== "array" || groupTag.required !== false) {
+    throw new Error(`${label} must define efficio_slide_selection_groups as an optional array tag.`);
+  }
+  const groupSchema = getRecord(groupTag, "schema");
+  const groupItem = getRecord(groupSchema, "items");
+  const groupProperties = getRecord(groupItem, "properties");
+  const groupTypeValues = getRecord(groupProperties, "type").enum;
+  if (
+    !Array.isArray(groupTypeValues) ||
+    JSON.stringify(groupTypeValues) !== JSON.stringify(SELECTION_GROUP_TYPES)
+  ) {
+    throw new Error(`${label} group type enum must be ${JSON.stringify(SELECTION_GROUP_TYPES)}.`);
+  }
+
+  const slideTags = getRecord(slideSchema, "tags");
+  const slidePolicies = getRecord(slideTags, "efficio_slide_inclusion_policy").enum;
+  const groupPolicies = getRecord(groupProperties, "inclusion_policy").enum;
+  if (!Array.isArray(slidePolicies) || JSON.stringify(groupPolicies) !== JSON.stringify(slidePolicies)) {
+    throw new Error(`${label} group inclusion policies must exactly match slide inclusion policies.`);
+  }
+  const groupInstructions = getRecord(slidesInstructions, "selection_group_instructions");
+  assertDescriptionMap(
+    groupInstructions.type_descriptions,
+    groupTypeValues.map(String),
+    `${label} type_descriptions`,
+  );
+}
+
+function assertDescriptionMap(value: unknown, expectedKeys: string[], label: string): void {
+  assertObject(value, label);
+  if (JSON.stringify(Object.keys(value)) !== JSON.stringify(expectedKeys)) {
+    throw new Error(`${label} keys must be ${JSON.stringify(expectedKeys)}.`);
+  }
+  for (const description of Object.values(value)) {
+    if (typeof description !== "string" || description.trim().length === 0) {
+      throw new Error(`${label} values must be non-empty strings.`);
+    }
   }
 }
 

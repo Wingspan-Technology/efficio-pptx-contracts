@@ -33,6 +33,74 @@ export const deckTagSchema = {
         "purpose": "Global deck-level guidance applied consistently across every selected slide and component: tone, audience, terminology, narrative direction, and content style. It is the least specific instruction — slide, component, table, and chart instructions, and all hard schema/content limits, override it. Never echo it back as generated content."
       },
       "description": "Optional deck-wide AI guidance for the whole generated presentation. Absent or blank means no template instruction."
+    },
+    "efficio_slide_selection_groups": {
+      "type": "array",
+      "required": false,
+      "description": "Optional deck-wide slide-selection groups. Stored as a JSON array; absent, blank, or an empty array means the slides are selected independently.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "group_id",
+            "name",
+            "type",
+            "members"
+          ],
+          "properties": {
+            "group_id": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^group_[a-z0-9]+(?:_[a-z0-9]+)*$",
+              "description": "Stable selection-group identifier in the group_ namespace."
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "\\S",
+              "description": "Short human-readable group name."
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "choice",
+                "bundle"
+              ],
+              "description": "choice selects at most one direct member; bundle keeps every direct member together."
+            },
+            "inclusion_policy": {
+              "type": "string",
+              "enum": [
+                "always",
+                "default_include",
+                "when_relevant",
+                "default_exclude",
+                "never"
+              ],
+              "description": "Root-group inclusion guidance. Required on roots and forbidden on nested groups by semantic validation."
+            },
+            "instruction": {
+              "type": "string",
+              "maxLength": 1000,
+              "pattern": "\\S",
+              "description": "Optional AI guidance explaining when this selection group is useful."
+            },
+            "members": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^(?:slide_\\d{3}|group_[a-z0-9]+(?:_[a-z0-9]+)*)$"
+              },
+              "description": "Ordered direct references to slide IDs or other selection-group IDs."
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     }
   }
 } as const;
@@ -42,9 +110,11 @@ export type DeckTagSchema = typeof deckTagSchema;
 export const deckTagKeys = [
   "efficio_template_id",
   "efficio_initialized",
-  "efficio_template_instruction"
+  "efficio_template_instruction",
+  "efficio_slide_selection_groups"
 ] as const;
 
 export const DECK_TEMPLATE_ID_TAG = "efficio_template_id";
 export const DECK_INITIALIZED_TAG = "efficio_initialized";
 export const DECK_TEMPLATE_INSTRUCTION_TAG = "efficio_template_instruction";
+export const DECK_SLIDE_SELECTION_GROUPS_TAG = "efficio_slide_selection_groups";

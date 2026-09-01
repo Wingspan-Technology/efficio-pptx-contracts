@@ -8,6 +8,7 @@ import {
   deckTagSchema,
   DECK_TEMPLATE_ID_TAG,
   DECK_INITIALIZED_TAG,
+  DECK_SLIDE_SELECTION_GROUPS_TAG,
 } from "../../generated/ts/presentation/deckTagSchema.js";
 import {
   slideTagSchema,
@@ -74,4 +75,4 @@ export function getDeckTagDefaults(): DeckDefaults {
   return { ...deckDefaults };
 }
 
-export { DECK_TEMPLATE_ID_TAG, DECK_INITIALIZED_TAG };
+export { DECK_TEMPLATE_ID_TAG, DECK_INITIALIZED_TAG, DECK_SLIDE_SELECTION_GROUPS_TAG };

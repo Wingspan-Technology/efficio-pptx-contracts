@@ -67,9 +67,20 @@ export function buildSlideSelectionInstruction(
   slideTagsContract: JsonObject,
   slideSelectionSchema: JsonObject,
 ): JsonObject {
+  const slideTags = getRecord(slideTagsContract, "tags");
+  const groupInstructions = getRecord(slidesInstructions, "selection_group_instructions");
+  const inclusionPolicy = getRecord(slideTags, "efficio_slide_inclusion_policy");
+  const inclusionPolicyAi = getRecord(inclusionPolicy, "ai");
+
   return {
     description: slidesInstructions.description,
-    slide_tag_instructions: extractAiTagInstructions(getRecord(slideTagsContract, "tags")),
+    slide_tag_instructions: extractAiTagInstructions(slideTags),
+    selection_group_instructions: {
+      purpose: groupInstructions.purpose,
+      type_descriptions: groupInstructions.type_descriptions,
+      inclusion_policy_descriptions: inclusionPolicyAi.enum_descriptions,
+      rules: groupInstructions.rules,
+    },
     expected_slide_selection_schema: slideSelectionSchema,
   };
 }

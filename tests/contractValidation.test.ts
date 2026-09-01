@@ -76,4 +76,28 @@ describe("validateAllContracts — structured report over an injected contracts 
     expect(report.ok).toBe(true);
     expect(report.issues).toEqual([]);
   });
+
+  it("rejects selection-group policies that drift from slide policies", async () => {
+    const dir = await copyContracts();
+    await mutateJson(path.join(dir, "presentation", "deck", "tags.contract.json"), (contract) => {
+      const tags = contract.tags as Record<string, unknown>;
+      const groupTag = tags.efficio_slide_selection_groups as Record<string, unknown>;
+      const schema = groupTag.schema as Record<string, unknown>;
+      const item = schema.items as Record<string, unknown>;
+      const properties = item.properties as Record<string, unknown>;
+      const policy = properties.inclusion_policy as Record<string, unknown>;
+      policy.enum = ["always", "never"];
+    });
+
+    const report = await validateAllContracts({ contractsDir: dir });
+
+    expect(report.ok).toBe(false);
+    expect(
+      report.issues.some(
+        (issue) =>
+          issue.contract === "presentation slide-selection groups" &&
+          /must exactly match slide inclusion policies/.test(issue.message),
+      ),
+    ).toBe(true);
+  });
 });
