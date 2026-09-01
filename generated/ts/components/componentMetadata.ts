@@ -305,7 +305,7 @@ export const componentMetadata = {
       "efficio_table_config": {
         "type": "object",
         "required": true,
-        "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration (position plus an optional render action defaulting to preserve, text format, and optional item-based sizing limits — strict min/max item and per-item character bounds plus optional preferred-size guidance).",
+        "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration (position plus an optional render action defaulting to preserve, text format, and optional item-based sizing limits — strict min/max item and per-item character bounds plus optional preferred-size guidance). An optional row is removed during rendering when none of its configured render cells receives meaningful generated text; required rows remain. If every physical row is optional and empty, the original first row remains.",
         "ui": {
           "order": 50
         },
@@ -339,7 +339,7 @@ export const componentMetadata = {
                       "optional"
                     ],
                     "default": "required",
-                    "description": "Content policy for the row: required means its cells should be filled, optional means they may be filled. Does not control rendering."
+                    "description": "Content policy for the row: required or unspecified keeps the physical row; optional removes the row when none of its configured render cells contains meaningful generated text. If every physical row is optional and empty, the original first row remains. Cell requiredness combines the row and column policies."
                   },
                   "instruction": {
                     "type": "string",
@@ -371,7 +371,7 @@ export const componentMetadata = {
                       "optional"
                     ],
                     "default": "required",
-                    "description": "Content policy for the column: required means its cells should be filled, optional means they may be filled. Does not control rendering."
+                    "description": "Content policy for the column: optional permits matching render cells to be omitted, while required contributes to cell requiredness. Column policy never removes a physical row."
                   },
                   "instruction": {
                     "type": "string",

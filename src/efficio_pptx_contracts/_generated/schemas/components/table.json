@@ -65,7 +65,7 @@
                   "optional"
                 ],
                 "default": "required",
-                "description": "Content policy for the row: required means its cells should be filled, optional means they may be filled. Does not control rendering."
+                "description": "Content policy for the row: required or unspecified keeps the physical row; optional removes the row when none of its configured render cells contains meaningful generated text. If every physical row is optional and empty, the original first row remains. Cell requiredness combines the row and column policies."
               },
               "instruction": {
                 "type": "string",
@@ -97,7 +97,7 @@
                   "optional"
                 ],
                 "default": "required",
-                "description": "Content policy for the column: required means its cells should be filled, optional means they may be filled. Does not control rendering."
+                "description": "Content policy for the column: optional permits matching render cells to be omitted, while required contributes to cell requiredness. Column policy never removes a physical row."
               },
               "instruction": {
                 "type": "string",

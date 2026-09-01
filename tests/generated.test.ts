@@ -576,14 +576,27 @@ describe("table content generation instructions", () => {
     expect(tablePurpose).toContain(
       "preserve or missing render_action means keep authored content and do not return that cell",
     );
-    // content_policy is about expected/optional, not renderability
-    expect(tablePurpose).toContain("it does not make a preserved cell renderable");
+    expect(tablePurpose).toContain("content_policy does not make a preserved cell renderable");
+  });
+
+  it("explains optional-row removal without encouraging filler content", () => {
+    expect(tablePurpose).toContain('For a row with content_policy "optional"');
+    expect(tablePurpose).toContain("omit every render cell in that row when no applicable content exists");
+    expect(tablePurpose).toContain("at least one non-whitespace string");
+    expect(tablePurpose).toContain("never invent filler or placeholder content merely to keep it");
+    expect(tablePurpose).toContain("A required or unspecified row remains");
+    expect(tablePurpose).toContain(
+      'A column with content_policy "optional" permits its matching render cells to be omitted but never removes a row',
+    );
   });
 
   it("expected content schema describes generated content keyed to configured render cells", () => {
     const schema = tableInstruction.expected_content_schema as JsonObject;
     expect(schema.description as string).toContain(
       "generated cell content only, never table configuration",
+    );
+    expect(schema.description as string).toContain(
+      "For an optional row with no applicable content, omit every render cell in that row",
     );
     const cells = (schema.properties as JsonObject).cells as JsonObject;
     expect(cells.description as string).toContain("must match a render cell configured");

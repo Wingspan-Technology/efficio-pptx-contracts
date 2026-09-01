@@ -43,6 +43,25 @@ from .tag_validation import (
     validate_deck_tags,
     validate_slide_tags,
 )
+from .v2_semantic_findings import (
+    V2ComponentRepairReason,
+    V2ComponentSemanticFinding,
+    V2SemanticRule,
+    collect_v2_component_semantic_findings,
+    collect_v2_table_cell_semantic_findings,
+    format_v2_component_repair_instruction,
+)
+from .v2_structured_outputs import (
+    JSON_SCHEMA_DRAFT_2020_12_PROFILE,
+    JSON_SCHEMA_DRAFT_2020_12_URI,
+    build_v2_component_contract,
+    normalize_v2_component_content,
+    validate_prompt_json_schema,
+    validate_v2_component_contract_coherence,
+    validate_v2_component_normalization,
+    validate_v2_component_semantics,
+    validate_v2_executable_component_schema,
+)
 from .validation_schema import build_validation_content_schema
 
 __all__ = [
@@ -73,4 +92,19 @@ __all__ = [
     "validate_slide_tags",
     "validate_deck_tags",
     "build_validation_content_schema",
+    "V2ComponentRepairReason",
+    "V2ComponentSemanticFinding",
+    "V2SemanticRule",
+    "collect_v2_component_semantic_findings",
+    "collect_v2_table_cell_semantic_findings",
+    "format_v2_component_repair_instruction",
+    "JSON_SCHEMA_DRAFT_2020_12_PROFILE",
+    "JSON_SCHEMA_DRAFT_2020_12_URI",
+    "build_v2_component_contract",
+    "validate_prompt_json_schema",
+    "validate_v2_executable_component_schema",
+    "validate_v2_component_contract_coherence",
+    "normalize_v2_component_content",
+    "validate_v2_component_normalization",
+    "validate_v2_component_semantics",
 ]

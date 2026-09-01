@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "component_type": "table",
-  "description": "Expected AI output for a generic table component: generated cell content only, never table configuration. The response lists only the cells the AI fills, keyed by \"row,col\". Cell render actions, row/column content policies, sizing limits, and PowerPoint structure are defined by the component's tag_context.table_config.",
+  "description": "Expected AI output for a generic table component: generated cell content only, never table configuration. The response lists only the cells the AI fills, keyed by \"row,col\". For an optional row with no applicable content, omit every render cell in that row; any valid render cell containing non-whitespace generated text keeps the row. Required rows remain, and column optionality never removes a row. If every physical row is optional and empty, the original first row remains. Cell render actions, row/column content policies, sizing limits, and PowerPoint structure are defined by the component's tag_context.table_config.",
   "type": "object",
   "additionalProperties": false,
   "required": ["cells"],
