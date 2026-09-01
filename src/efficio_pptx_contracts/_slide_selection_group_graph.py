@@ -208,17 +208,10 @@ def validate_slide_selection_group_selection(
             )
         selected.add(slide_id)
 
-    active_cache: dict[str, bool] = {}
+    active_groups = _active_groups(registry.groups, selected)
 
     def member_active(member_id: str) -> bool:
-        return group_active(member_id) if member_id in registry.groups else member_id in selected
-
-    def group_active(group_id: str) -> bool:
-        if group_id not in active_cache:
-            active_cache[group_id] = any(
-                member_active(member) for member in registry.groups[group_id].members
-            )
-        return active_cache[group_id]
+        return active_groups[member_id] if member_id in registry.groups else member_id in selected
 
     for group in registry.groups.values():
         active_members = sum(member_active(member) for member in group.members)
@@ -245,7 +238,7 @@ def validate_slide_selection_group_selection(
 
     for root_id in registry.root_group_ids:
         root = registry.groups[root_id]
-        active = group_active(root_id)
+        active = active_groups[root_id]
         if root.inclusion_policy == "always" and not active:
             issues.append(
                 _selection_issue(
@@ -273,10 +266,20 @@ def _cycle_issues(
     state: dict[str, int] = {}
     issues: list[SlideSelectionGroupIssue] = []
 
-    def visit(group_id: str) -> None:
-        state[group_id] = 1
-        group = by_id[group_id]
-        for member_index, member in enumerate(group.members):
+    for first_group in groups:
+        if state.get(first_group.group_id, 0) != 0:
+            continue
+        state[first_group.group_id] = 1
+        stack = [(first_group.group_id, 0)]
+        while stack:
+            group_id, member_index = stack[-1]
+            group = by_id[group_id]
+            if member_index >= len(group.members):
+                state[group_id] = 2
+                stack.pop()
+                continue
+            stack[-1] = (group_id, member_index + 1)
+            member = group.members[member_index]
             if member not in by_id:
                 continue
             if state.get(member) == 1:
@@ -292,12 +295,8 @@ def _cycle_issues(
                     )
                 )
             elif state.get(member, 0) == 0:
-                visit(member)
-        state[group_id] = 2
-
-    for group in groups:
-        if state.get(group.group_id, 0) == 0:
-            visit(group.group_id)
+                state[member] = 1
+                stack.append((member, 0))
     return issues
 
 
@@ -307,22 +306,53 @@ def _slide_descendants(
     known_slides: frozenset[str],
 ) -> dict[str, frozenset[str]]:
     result: dict[str, frozenset[str]] = {}
-
-    def collect(group_id: str) -> frozenset[str]:
-        if group_id in result:
-            return result[group_id]
+    group_ids = (group.group_id for group in groups)
+    for group_id in _postorder_group_ids(group_ids, by_id):
         slides: set[str] = set()
         for member in by_id[group_id].members:
             if member in known_slides:
                 slides.add(member)
             elif member in by_id:
-                slides.update(collect(member))
+                slides.update(result[member])
         result[group_id] = frozenset(slides)
-        return result[group_id]
-
-    for group in groups:
-        collect(group.group_id)
     return result
+
+
+def _active_groups(
+    groups: Mapping[str, SlideSelectionGroup], selected: set[str]
+) -> dict[str, bool]:
+    active: dict[str, bool] = {}
+    for group_id in _postorder_group_ids(groups, groups):
+        active[group_id] = any(
+            active[member] if member in groups else member in selected
+            for member in groups[group_id].members
+        )
+    return active
+
+
+def _postorder_group_ids(
+    group_ids: Iterable[str], by_id: Mapping[str, SlideSelectionGroup]
+) -> tuple[str, ...]:
+    """Return child-before-parent IDs for an already cycle-free group graph."""
+    complete: set[str] = set()
+    result: list[str] = []
+    for first_group_id in group_ids:
+        if first_group_id in complete:
+            continue
+        stack = [(first_group_id, False)]
+        while stack:
+            group_id, expanded = stack.pop()
+            if group_id in complete:
+                continue
+            if expanded:
+                complete.add(group_id)
+                result.append(group_id)
+                continue
+            stack.append((group_id, True))
+            for member in reversed(by_id[group_id].members):
+                if member in by_id and member not in complete:
+                    stack.append((member, False))
+    return tuple(result)
 
 
 def _issue(

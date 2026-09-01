@@ -48,6 +48,32 @@ def _codes(error: SlideSelectionGroupContractError) -> set[SlideSelectionGroupIs
     return {issue.code for issue in error.issues}
 
 
+def _deep_choice_chain(
+    depth: int,
+) -> tuple[list[SlideSelectionGroup], dict[str, str], str]:
+    groups: list[SlideSelectionGroup] = []
+    policies: dict[str, str] = {}
+    selected_slide_id = f"slide_terminal_{depth:04d}"
+    policies[selected_slide_id] = "when_relevant"
+    for index in range(depth):
+        side_slide_id = f"slide_side_{index:04d}"
+        policies[side_slide_id] = "when_relevant"
+        child_id = (
+            selected_slide_id
+            if index == depth - 1
+            else f"group_level_{index + 1:04d}"
+        )
+        groups.append(
+            _group(
+                f"group_level_{index:04d}",
+                SlideSelectionGroupType.CHOICE,
+                (child_id, side_slide_id),
+                inclusion_policy="always" if index == 0 else None,
+            )
+        )
+    return groups, policies, selected_slide_id
+
+
 @pytest.mark.parametrize("value", [None, "", "  ", "[]", []])
 def test_parse_empty_registry_values(value: str | list[object] | None) -> None:
     assert parse_slide_selection_groups(value) == ()
@@ -377,3 +403,29 @@ def test_final_selection_checks_nested_activation_and_selected_id_integrity() ->
         SlideSelectionGroupIssueCode.DUPLICATE_SELECTED_SLIDE,
         SlideSelectionGroupIssueCode.UNKNOWN_SELECTED_SLIDE,
     ]
+
+
+def test_normalize_handles_more_groups_than_the_python_recursion_limit() -> None:
+    groups, policies, _selected_slide_id = _deep_choice_chain(1_100)
+
+    registry = normalize_slide_selection_groups(
+        groups,
+        slide_inclusion_policies=policies,
+    )
+
+    assert len(registry.groups) == 1_100
+    assert registry.root_group_ids == ("group_level_0000",)
+    assert len(registry.grouped_slide_ids) == 1_101
+
+
+def test_final_selection_handles_more_groups_than_the_python_recursion_limit() -> None:
+    groups, policies, selected_slide_id = _deep_choice_chain(1_100)
+    registry = normalize_slide_selection_groups(
+        groups,
+        slide_inclusion_policies=policies,
+    )
+
+    assert validate_slide_selection_group_selection(
+        registry,
+        [selected_slide_id],
+    ) == ()
