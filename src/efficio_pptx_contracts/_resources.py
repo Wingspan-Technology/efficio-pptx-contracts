@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 from importlib.resources import files
 from importlib.resources.abc import Traversable
+from typing import Any, cast
 
 from .errors import EfficioComponentsError, MissingResourceError
 
@@ -26,7 +27,7 @@ def _resource(*parts: str) -> Traversable:
     return resource
 
 
-def load_json(*parts: str) -> dict:
+def load_json(*parts: str) -> dict[str, Any]:
     """Load and parse a generated JSON resource under ``_generated/``.
 
     ``parts`` is the path relative to ``_generated/`` (e.g.
@@ -42,6 +43,6 @@ def load_json(*parts: str) -> dict:
         raise MissingResourceError(f"Generated SDK resource not found: {rel}") from error
 
     try:
-        return json.loads(text)
+        return cast(dict[str, Any], json.loads(text))
     except json.JSONDecodeError as error:
         raise EfficioComponentsError(f"Generated SDK resource is not valid JSON: {rel}") from error

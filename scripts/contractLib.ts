@@ -1,4 +1,4 @@
-// Pure contract validation and Tag Entity → legacy compatibility conversion.
+// Pure authored-contract validation and shared JSON shape helpers.
 // The generator entrypoint (generate-ts-contracts.ts) owns file IO and
 // orchestration; this module owns the logic so it can be unit-tested directly.
 

@@ -7,13 +7,15 @@ registry is the authority for which component types exist.
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 from ._resources import load_json
 from .errors import UnknownComponentTypeError
 
 _REGISTRY_RESOURCE = ("component-registry.json",)
 
 
-def load_component_registry() -> dict:
+def load_component_registry() -> dict[str, Any]:
     """Return the generated component registry as a plain ``dict``."""
     return load_json(*_REGISTRY_RESOURCE)
 
@@ -21,14 +23,15 @@ def load_component_registry() -> dict:
 def list_component_types() -> list[str]:
     """Return the registered component types, sorted deterministically."""
     registry = load_component_registry()
-    components = registry.get("components", {})
+    components = cast(dict[str, object], registry.get("components", {}))
     return sorted(components.keys())
 
 
 def has_component_type(component_type: str) -> bool:
     """Return whether ``component_type`` is present in the registry."""
     registry = load_component_registry()
-    return component_type in registry.get("components", {})
+    components = cast(dict[str, object], registry.get("components", {}))
+    return component_type in components
 
 
 def assert_component_type(component_type: str) -> None:

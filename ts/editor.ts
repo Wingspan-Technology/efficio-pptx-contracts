@@ -5,8 +5,7 @@
 // internal. This module is a thin barrel that re-exports the SDK's public
 // surface from focused internal modules under `./editor/`.
 //
-// Imports are extensionless to match the generated TS and the editor's bundler resolution; this file is
-// type-checked by the editor's tsc, like generated TS.
+// Explicit .js specifiers preserve native ESM behavior after TypeScript compilation.
 
 export * from "./editor/component-metadata.js";
 export * from "./editor/text-sizing-semantics.js";

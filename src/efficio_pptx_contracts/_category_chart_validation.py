@@ -19,7 +19,8 @@ offending flat tag:
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
+from typing import cast
 
 CHART_TYPE_TAG = "efficio_chart_type"
 CATEGORY_MODE_TAG = "efficio_category_mode"
@@ -58,6 +59,11 @@ AI_GENERATED_MODE = "ai_generated"
 
 PERCENT_STACKED_CHART_TYPES = frozenset({"PERCENTS_STACKED_COLUMN", "PERCENTS_STACKED_BAR"})
 
+ChartIssue = tuple[str, str, str]
+IntegerReader = Callable[[str], int | None]
+LabelsReader = Callable[[str], list[object] | None]
+PresenceCheck = Callable[[str], bool]
+
 
 def category_chart_issues(
     tags: Mapping[str, str], prior_issue_tags: Iterable[str]
@@ -85,7 +91,7 @@ def category_chart_issues(
             parsed = json.loads(raw)
         except json.JSONDecodeError:
             return None
-        return parsed if isinstance(parsed, list) else None
+        return cast(list[object], parsed) if isinstance(parsed, list) else None
 
     def present(tag: str) -> bool:
         raw = tags.get(tag)
@@ -124,7 +130,9 @@ def category_chart_issues(
     return issues
 
 
-def _count_order_issues(as_int, min_tag, target_tag, max_tag):
+def _count_order_issues(
+    as_int: IntegerReader, min_tag: str, target_tag: str, max_tag: str
+) -> list[ChartIssue]:
     minimum, target, maximum = as_int(min_tag), as_int(target_tag), as_int(max_tag)
     issues: list[tuple[str, str, str]] = []
     if minimum is not None and maximum is not None and minimum > maximum:
@@ -136,8 +144,18 @@ def _count_order_issues(as_int, min_tag, target_tag, max_tag):
     return issues
 
 
-def _axis_issues(mode, array_tag, mode_tag, min_tag, max_tag, as_int, as_labels, present, skip):
-    issues: list[tuple[str, str, str]] = []
+def _axis_issues(
+    mode: str | None,
+    array_tag: str,
+    mode_tag: str,
+    min_tag: str,
+    max_tag: str,
+    as_int: IntegerReader,
+    as_labels: LabelsReader,
+    present: PresenceCheck,
+    skip: set[str],
+) -> list[ChartIssue]:
+    issues: list[ChartIssue] = []
     if array_tag in skip:
         return issues  # a structural issue on the labels tag is already reported
     if mode == FIXED_MODE:

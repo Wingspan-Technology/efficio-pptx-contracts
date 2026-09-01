@@ -1,11 +1,12 @@
 // Component metadata surface of the editor SDK: the type authority for component metadata
 // (TagEntity / ComponentMetadata / CompatibilityTagSchema / ComponentSemanticIssue) and the accessors
-// that read the generated component contracts. Extensionless imports match the generated TS and the
-// editor's bundler resolution; this file is type-checked by the editor's tsc, like generated TS.
+// that read the generated component contracts. Explicit .js specifiers preserve native ESM behavior
+// after TypeScript compilation.
 
 import { componentMetadata } from "../../generated/ts/components/componentMetadata.js";
 import { componentTypes } from "../../generated/ts/components/componentTypes.js";
 import { tagSchemas } from "../../generated/ts/components/tagSchemas.js";
+import { copyContractValue } from "./contract-copy.js";
 
 const RENDER_BEHAVIOR_TAG = "efficio_render_behavior";
 
@@ -66,6 +67,40 @@ export type ComponentSemanticIssue = {
 const metadata = componentMetadata as unknown as Record<string, ComponentMetadata>;
 const compatibilityTagSchemas = tagSchemas as unknown as Record<string, CompatibilityTagSchema>;
 
+function cloneTagEntity(entity: TagEntity): TagEntity {
+  return {
+    ...entity,
+    ...(entity.enum ? { enum: [...entity.enum] } : {}),
+    ...(entity.schema ? { schema: copyContractValue(entity.schema) } : {}),
+    ...(entity.ui ? { ui: { ...entity.ui } } : {}),
+  };
+}
+
+function cloneComponentMetadata(value: ComponentMetadata): ComponentMetadata {
+  return {
+    component_type: value.component_type,
+    paths: { ...value.paths },
+    tags: Object.fromEntries(
+      Object.entries(value.tags).map(([tagName, entity]) => [tagName, cloneTagEntity(entity)])
+    ),
+    defaults: { ...value.defaults },
+  };
+}
+
+function cloneCompatibilityTagSchema(value: CompatibilityTagSchema): CompatibilityTagSchema {
+  return {
+    ...value,
+    generated_from: [...value.generated_from],
+    required_tags: [...value.required_tags],
+    optional_tags: [...value.optional_tags],
+    enums: Object.fromEntries(
+      Object.entries(value.enums).map(([tagName, values]) => [tagName, [...values]])
+    ),
+    types: { ...value.types },
+    ...(value.example ? { example: { ...value.example } } : {}),
+  };
+}
+
 // ---- Component metadata accessors ----
 
 export function listComponentTypes(): string[] {
@@ -80,7 +115,7 @@ export function getComponentMetadata(componentType: string): ComponentMetadata {
   if (!hasComponentType(componentType)) {
     throw new Error(`Unknown Efficio component type "${componentType}".`);
   }
-  return metadata[componentType];
+  return cloneComponentMetadata(metadata[componentType]);
 }
 
 export function getComponentTagContract(componentType: string): Record<string, TagEntity> {
@@ -195,18 +230,21 @@ export function getRenderBehaviorValues(): string[] {
 // the text form. The SDK is the import source, not the validation boundary.
 
 export function getCompatibilityTagSchemaMap(): Record<string, CompatibilityTagSchema> {
-  return compatibilityTagSchemas;
+  return Object.fromEntries(
+    Object.entries(compatibilityTagSchemas).map(([componentType, schema]) => [
+      componentType,
+      cloneCompatibilityTagSchema(schema),
+    ])
+  );
 }
 
 export function getComponentCompatibilityTagSchema(componentType: string): CompatibilityTagSchema {
   if (!Object.prototype.hasOwnProperty.call(compatibilityTagSchemas, componentType)) {
     throw new Error(`Unknown Efficio component type "${componentType}".`);
   }
-  return compatibilityTagSchemas[componentType];
+  return cloneCompatibilityTagSchema(compatibilityTagSchemas[componentType]);
 }
 
 export function listComponentCompatibilityTagSchemas(): CompatibilityTagSchema[] {
-  return Object.keys(compatibilityTagSchemas).map(
-    (componentType) => compatibilityTagSchemas[componentType]
-  );
+  return Object.keys(compatibilityTagSchemas).map(getComponentCompatibilityTagSchema);
 }

@@ -187,8 +187,9 @@ def _value_schema(config: dict[str, Any]) -> dict[str, Any]:
 
 def _count_branch(config: dict[str, Any], count: int) -> dict[str, Any]:
     """One AI-generated-categories branch pinning category and value counts to ``count``."""
-    length = {"minItems": count, "maxItems": count}
-    item_length = {"properties": {"values": length}}
+    length: dict[str, Any] = {"minItems": count, "maxItems": count}
+    item_length: dict[str, Any] = {"properties": {"values": length}}
+    series_length: dict[str, Any]
     if config["series_mode"] == FIXED_MODE and len(config["series_names"]) > 1:
         series_length = {"prefixItems": [item_length for _ in config["series_names"]]}
     else:

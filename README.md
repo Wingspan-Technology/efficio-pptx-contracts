@@ -47,6 +47,24 @@ Generated TypeScript modules and bundled Python JSON resources are package
 internals. Consumers must use the public SDK entrypoints instead of importing
 generated files directly.
 
+## Architecture and trust boundaries
+
+Authored JSON under `contracts/` is validated before one generation pass writes
+the committed `generated/` tree and the exact Python resource mirror. The
+handwritten TypeScript and Python modules provide deterministic access,
+validation, schema projection, and normalization around those artifacts; they do
+not call AI providers, render PowerPoint content, or perform orchestration.
+
+The Python V2 schema builder returns exactly `component_type`, `output_schema`,
+and `normalization`. `output_schema` may be sent to an external structured-output
+caller. `normalization` is trusted runtime metadata: it must remain private and
+must not be accepted from or returned to that caller. Generated content is
+validated against the output schema before the SDK normalization and semantic
+validation APIs are applied.
+
+All public TypeScript metadata accessors return independent values. Consumers
+may modify a returned object locally without changing subsequent SDK results.
+
 ## Development
 
 Requirements:
@@ -69,6 +87,8 @@ timeout 30s npm run validate:contracts
 timeout 30s npm run generate:ts
 timeout 30s npm run typecheck
 timeout 30s npm test
+timeout 30s uv run ruff check src tests
+timeout 30s uv run mypy
 timeout 30s uv run pytest -q
 ```
 

@@ -8,9 +8,11 @@ import {
   getComponentMetadata,
   getComponentTagContract,
   getComponentTagDefaults,
+  getCompatibilityTagSchemaMap,
   getDeckTagContract,
   getDeckTagDefaults,
   getRenderBehaviorValues,
+  getSlideTagContract,
   getSlideTagDefaults,
   getTagEnumValues,
   hasComponentType,
@@ -59,6 +61,34 @@ describe("editor SDK component metadata", () => {
     expect(getComponentTagDefaults("text").efficio_sizing_mode).toBe("auto");
   });
 
+  it("returns defensive copies of component metadata and nested tag contracts", () => {
+    const metadata = getComponentMetadata("text");
+    metadata.paths.tags_contract = "mutated";
+    metadata.defaults.efficio_sizing_mode = "manual";
+    metadata.tags.efficio_component_type.description = "mutated";
+
+    const fresh = getComponentMetadata("text");
+    expect(fresh.paths.tags_contract).not.toBe("mutated");
+    expect(fresh.defaults.efficio_sizing_mode).toBe("auto");
+    expect(fresh.tags.efficio_component_type.description).not.toBe("mutated");
+
+    const tags = getComponentTagContract("text");
+    tags.efficio_component_type.description = "mutated again";
+    expect(getComponentTagContract("text").efficio_component_type.description).not.toBe(
+      "mutated again"
+    );
+
+    const table = getComponentMetadata("table");
+    const properties = table.tags.efficio_table_config.schema?.properties as Record<
+      string,
+      unknown
+    >;
+    properties.cells = "mutated";
+    const freshProperties = getComponentMetadata("table").tags.efficio_table_config.schema
+      ?.properties as Record<string, unknown>;
+    expect(freshProperties.cells).not.toBe("mutated");
+  });
+
   it("derives common tags, all known tags, and render behavior values", () => {
     const common = getCommonComponentTags();
     expect(common.has("efficio_component_type")).toBe(true);
@@ -90,6 +120,27 @@ describe("editor SDK compatibility tag schemas", () => {
   it("lists one compatibility schema per component type", () => {
     expect(listComponentCompatibilityTagSchemas().map((s) => s.component_type).sort()).toEqual([...EXPECTED_TYPES].sort());
   });
+
+  it("returns defensive copies of compatibility schemas", () => {
+    const schema = getComponentCompatibilityTagSchema("text");
+    schema.component_type = "mutated";
+    schema.types.efficio_component_type = "mutated";
+    (schema.required_tags as string[])[0] = "mutated";
+    (schema.enums.efficio_render_behavior as string[])[0] = "mutated";
+
+    expect(getComponentCompatibilityTagSchema("text").component_type).toBe("text");
+    expect(getComponentCompatibilityTagSchema("text").types.efficio_component_type).not.toBe(
+      "mutated"
+    );
+    expect(getComponentCompatibilityTagSchema("text").required_tags[0]).not.toBe("mutated");
+    expect(getComponentCompatibilityTagSchema("text").enums.efficio_render_behavior[0]).not.toBe(
+      "mutated"
+    );
+
+    const schemas = getCompatibilityTagSchemaMap();
+    schemas.text.component_type = "mutated again";
+    expect(getCompatibilityTagSchemaMap().text.component_type).toBe("text");
+  });
 });
 
 describe("editor SDK slide surface", () => {
@@ -102,6 +153,14 @@ describe("editor SDK slide surface", () => {
   it("exposes slide defaults as a copy", () => {
     const defaults = getSlideTagDefaults();
     expect(defaults).toBeTypeOf("object");
+  });
+
+  it("exposes the slide tag contract as a defensive copy", () => {
+    const contract = getSlideTagContract() as unknown as {
+      tags: Record<string, { description: string }>;
+    };
+    contract.tags.efficio_slide_id.description = "mutated";
+    expect(getSlideTagContract().tags.efficio_slide_id.description).not.toBe("mutated");
   });
 });
 
@@ -125,6 +184,14 @@ describe("editor SDK deck surface", () => {
     expect(entity.type).toBe("string");
     expect(entity.required).toBe(false);
     expect(entity.enum).toEqual(["true"]);
+  });
+
+  it("exposes the deck tag contract as a defensive copy", () => {
+    const contract = getDeckTagContract() as unknown as {
+      tags: Record<string, { description: string }>;
+    };
+    contract.tags.efficio_template_id.description = "mutated";
+    expect(getDeckTagContract().tags.efficio_template_id.description).not.toBe("mutated");
   });
 
   it("defaults efficio_template_id to default_template but never efficio_initialized", () => {

@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from jsonschema import Draft202012Validator
 
@@ -29,19 +29,19 @@ class TagValidationIssue:
     tag_name: str | None = None
 
 
-def load_component_tag_schema(component_type: str) -> dict:
+def load_component_tag_schema(component_type: str) -> dict[str, Any]:
     """Load the generated compatibility tag schema for one component type."""
     assert_component_type(component_type)
     file_name = f"{component_type.replace('_', '-')}.json"
     return load_json("schemas", "components", file_name)
 
 
-def load_slide_tag_contract() -> dict:
+def load_slide_tag_contract() -> dict[str, Any]:
     """Load the generated slide tag contract."""
     return load_json("schemas", "presentation", "slide-tags.json")
 
 
-def load_deck_tag_contract() -> dict:
+def load_deck_tag_contract() -> dict[str, Any]:
     """Load the generated presentation/deck tag contract.
 
     Deck tags are presentation-level Efficio metadata stored on the PowerPoint
@@ -129,7 +129,7 @@ def validate_deck_tags(tags: dict[str, str]) -> list[TagValidationIssue]:
 
 
 def _validate_presentation_tags(
-    contract: dict, tags: dict[str, str], kind: str
+    contract: dict[str, Any], tags: dict[str, str], kind: str
 ) -> list[TagValidationIssue]:
     """Validate ``tags`` against a slide/deck tag contract (shared generic rules)."""
     issues: list[TagValidationIssue] = []
@@ -154,10 +154,10 @@ def _validate_presentation_tags(
 
 def _validate_component_value(
     tag_name: str,
-    value: Any,
-    expected_type: Any,
+    value: object,
+    expected_type: object,
     enums: dict[str, list[str]],
-    json_schemas: dict[str, dict],
+    json_schemas: dict[str, dict[str, Any]],
 ) -> list[TagValidationIssue]:
     if not isinstance(value, str):
         return [_type_issue(tag_name, "string", value)]
@@ -176,15 +176,16 @@ def _validate_component_value(
                 message=f"Tag {tag_name} must be a non-empty string.",
             )
         )
-    if expected_type == "positive_integer_string":
-        if not value.isdecimal() or int(value) < 1:
-            issues.append(
-                TagValidationIssue(
-                    code="invalid_positive_integer",
-                    tag_name=tag_name,
-                    message=f"Tag {tag_name} must be a positive integer string.",
-                )
+    if expected_type == "positive_integer_string" and (
+        not value.isdecimal() or int(value) < 1
+    ):
+        issues.append(
+            TagValidationIssue(
+                code="invalid_positive_integer",
+                tag_name=tag_name,
+                message=f"Tag {tag_name} must be a positive integer string.",
             )
+        )
     if expected_type in {"enum", "enum_boolean_string"}:
         allowed = enums.get(tag_name, [])
         if value not in allowed:
@@ -196,17 +197,17 @@ def _validate_structured_value(
     tag_name: str,
     value: str,
     expected_type: str,
-    tag_schema: Any,
+    tag_schema: object,
 ) -> list[TagValidationIssue]:
     """Validate an object/array tag stored as JSON text against its JSON Schema."""
     try:
         parsed = json.loads(value)
-    except json.JSONDecodeError as error:
+    except json.JSONDecodeError as decode_error:
         return [
             TagValidationIssue(
                 code="invalid_json",
                 tag_name=tag_name,
-                message=f"Tag {tag_name} must be valid JSON: {error}.",
+                message=f"Tag {tag_name} must be valid JSON: {decode_error}.",
             )
         ]
 
@@ -235,13 +236,19 @@ def _validate_structured_value(
         Draft202012Validator(tag_schema).iter_errors(parsed),
         key=lambda error: list(error.absolute_path),
     )
-    for error in errors:
-        path = "/".join(str(part) for part in error.absolute_path) or "<root>"
+    for validation_error in errors:
+        path = (
+            "/".join(str(part) for part in validation_error.absolute_path)
+            or "<root>"
+        )
         issues.append(
             TagValidationIssue(
                 code="schema_violation",
                 tag_name=tag_name,
-                message=f"Tag {tag_name} failed schema at {path}: {error.message}.",
+                message=(
+                    f"Tag {tag_name} failed schema at {path}: "
+                    f"{validation_error.message}."
+                ),
             )
         )
     return issues
@@ -263,7 +270,7 @@ def _validate_tag_value(
     issues: list[TagValidationIssue] = []
     allowed = definition.get("enum")
     if isinstance(allowed, list) and text not in allowed:
-        issues.append(_enum_issue(tag_name, text, allowed))
+        issues.append(_enum_issue(tag_name, text, cast(list[str], allowed)))
 
     constraints = definition.get("constraints", {})
     if not isinstance(constraints, dict):
@@ -318,7 +325,7 @@ def _enum_issue(tag_name: str, value: str, allowed: list[str]) -> TagValidationI
     )
 
 
-def _type_issue(tag_name: str, expected_type: str, value: Any) -> TagValidationIssue:
+def _type_issue(tag_name: str, expected_type: str, value: object) -> TagValidationIssue:
     return TagValidationIssue(
         code="invalid_type",
         tag_name=tag_name,
@@ -326,11 +333,11 @@ def _type_issue(tag_name: str, expected_type: str, value: Any) -> TagValidationI
     )
 
 
-def _is_missing(value: Any) -> bool:
+def _is_missing(value: object) -> bool:
     return value is None or (isinstance(value, str) and not value.strip())
 
 
-def _is_integer_string(value: Any) -> bool:
+def _is_integer_string(value: object) -> bool:
     if isinstance(value, int):
         return True
     if not isinstance(value, str):

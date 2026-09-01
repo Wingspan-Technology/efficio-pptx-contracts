@@ -236,13 +236,15 @@ def _aggregate_character_instruction(
     normalization: Mapping[str, object],
     cell: str | None,
 ) -> str:
+    maximum: int
     if component_type == "text":
         maximum = validate_text_v2_normalization(normalization)
     elif component_type == "table" and cell is not None:
         _, limits = _validated_table_normalization(normalization)
-        maximum = limits.get(cell)
-        if maximum is None:
+        cell_maximum = limits.get(cell)
+        if cell_maximum is None:
             raise ValueError("table repair cell has no aggregate character limit")
+        maximum = cell_maximum
     else:
         raise ValueError("component has no aggregate character repair rule")
     return f"The combined item length must not exceed {maximum} characters."

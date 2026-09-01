@@ -9,6 +9,7 @@ runtime prompt prose.
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import Any, cast
 
 from ._resources import load_json
 from .registry import assert_component_type
@@ -17,13 +18,15 @@ _AGGREGATE_RESOURCE = ("ai", "component-instructions.json")
 _SLIDE_SELECTION_RESOURCE = ("ai", "slide-selection.instruction.json")
 
 
-def load_component_instruction(component_type: str) -> dict:
+def load_component_instruction(component_type: str) -> dict[str, Any]:
     """Return the generated AI instruction artifact for one component type."""
     assert_component_type(component_type)
     return load_json("ai", "components", f"{component_type}.instruction.json")
 
 
-def load_component_instructions(component_types: Iterable[str] | None = None) -> dict:
+def load_component_instructions(
+    component_types: Iterable[str] | None = None,
+) -> dict[str, Any]:
     """Return the AI instruction catalog, optionally filtered to selected types.
 
     With ``component_types=None`` the full generated aggregate block is returned.
@@ -38,7 +41,9 @@ def load_component_instructions(component_types: Iterable[str] | None = None) ->
     return _filter_block(aggregate, component_types)
 
 
-def build_component_instruction_block(component_types: Iterable[str]) -> dict:
+def build_component_instruction_block(
+    component_types: Iterable[str],
+) -> dict[str, Any]:
     """Return the aggregate instruction block filtered to the selected types.
 
     Component types are deduplicated, sorted, and validated against the registry.
@@ -49,15 +54,19 @@ def build_component_instruction_block(component_types: Iterable[str]) -> dict:
     return _filter_block(load_json(*_AGGREGATE_RESOURCE), component_types)
 
 
-def load_slide_selection_instruction() -> dict:
+def load_slide_selection_instruction() -> dict[str, Any]:
     """Return the generated static slide-selection AI instruction artifact."""
     return load_json(*_SLIDE_SELECTION_RESOURCE)
 
 
-def _filter_block(aggregate: dict, component_types: Iterable[str]) -> dict:
+def _filter_block(
+    aggregate: dict[str, Any], component_types: Iterable[str]
+) -> dict[str, Any]:
     """Filter the aggregate block to the selected types, preserving instruction."""
     selected = _normalize_types(component_types)
-    component_instructions = aggregate.get("component_instructions", {})
+    component_instructions = cast(
+        dict[str, Any], aggregate.get("component_instructions", {})
+    )
     return {
         "instruction": aggregate["instruction"],
         "component_instructions": {

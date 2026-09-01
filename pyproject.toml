@@ -14,7 +14,7 @@ dependencies = ["jsonschema>=4"]
 Repository = "https://github.com/Wingspan-Technology/efficio-pptx-contracts"
 
 [project.optional-dependencies]
-test = ["pytest>=8"]
+test = ["mypy>=2", "pytest>=8", "ruff>=0.16", "types-jsonschema>=4"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/efficio_pptx_contracts"]
@@ -27,3 +27,15 @@ artifacts = ["src/efficio_pptx_contracts/_generated/**/*.json"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src/efficio_pptx_contracts"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B"]

@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import copy
-import json
 import re
 from collections.abc import Mapping
 from typing import Any
@@ -16,30 +15,25 @@ from ._structured_output_common import (
     join_sentences,
     string_schema,
 )
-from ._validation_table import _table_validation_schema
+from ._table_config import TableAxis, TableCell
+from ._validation_table import _validated_table_config
 from .ai_projection import PROMPT_INSTRUCTION_TAG
 
-_TABLE_CONFIG_TAG = "efficio_table_config"
 _COORDINATE = re.compile(r"^(0|[1-9][0-9]*),(0|[1-9][0-9]*)$")
 
 
 def build_table_v2_contract(tags: Mapping[str, str]) -> dict[str, Any]:
     """Build an exact coordinate-keyed table contract from validated config."""
-    _table_validation_schema(tags)
-    config = json.loads(tags[_TABLE_CONFIG_TAG])
-    row_context = _axis_context(config.get("rows"), "row")
-    column_context = _axis_context(config.get("columns"), "col")
+    config = _validated_table_config(tags)
     component_instruction = tags.get(PROMPT_INSTRUCTION_TAG, "").strip()
 
     properties: dict[str, Any] = {}
     optional_cells: list[str] = []
     maximum_chars: dict[str, int] = {}
-    for cell in config["cells"]:
-        if cell.get("render_action", "preserve") != "render":
-            continue
-        coordinate = f"{cell['row']},{cell['col']}"
-        row = row_context.get(cell["row"], {})
-        column = column_context.get(cell["col"], {})
+    for cell in config.render_cells:
+        coordinate = cell.coordinate_key
+        row = config.row(cell.row)
+        column = config.column(cell.col)
         row_optional, column_optional = _optionality(row, column)
         optional = row_optional or column_optional
         _validate_cell_feasibility(cell, coordinate)
@@ -62,8 +56,8 @@ def build_table_v2_contract(tags: Mapping[str, str]) -> dict[str, Any]:
         )
         if optional:
             optional_cells.append(coordinate)
-        if isinstance(cell.get("max_chars"), int):
-            maximum_chars[coordinate] = cell["max_chars"]
+        if cell.max_chars is not None:
+            maximum_chars[coordinate] = cell.max_chars
 
     description = join_sentences(
         component_instruction,
@@ -193,31 +187,24 @@ def _validated_table_normalization(
     return set(raw_optional), limits
 
 
-def _axis_context(raw: Any, key: str) -> dict[int, dict[str, Any]]:
-    if not isinstance(raw, list):
-        return {}
-    return {entry[key]: entry for entry in raw if isinstance(entry, dict) and key in entry}
-
-
 def _optionality(
-    row: Mapping[str, Any], column: Mapping[str, Any]
+    row: TableAxis | None, column: TableAxis | None
 ) -> tuple[bool, bool]:
     return (
-        row.get("content_policy", "required") == "optional",
-        column.get("content_policy", "required") == "optional",
+        row is not None and row.optional,
+        column is not None and column.optional,
     )
 
 
-def _cell_schema(cell: Mapping[str, Any], description: str) -> dict[str, Any]:
-    text_format = cell.get("text_format", "plain")
-    minimum_items = 1 if text_format == "plain" else cell.get("min_items", 1)
-    maximum_items = 1 if text_format == "plain" else cell.get("max_items")
+def _cell_schema(cell: TableCell, description: str) -> dict[str, Any]:
+    minimum_items = 1 if cell.plain or cell.min_items is None else cell.min_items
+    maximum_items = 1 if cell.plain else cell.max_items
     items_schema: dict[str, Any] = {
         "type": "array",
         "description": description,
         "items": string_schema(
-            cell.get("min_chars_per_item"),
-            cell.get("max_chars_per_item"),
+            cell.min_chars_per_item,
+            cell.max_chars_per_item,
             description="One generated table-cell text item.",
         ),
         "minItems": minimum_items,
@@ -233,38 +220,36 @@ def _cell_schema(cell: Mapping[str, Any], description: str) -> dict[str, Any]:
     }
 
 
-def _validate_cell_feasibility(cell: Mapping[str, Any], coordinate: str) -> None:
-    maximum_chars = cell.get("max_chars")
+def _validate_cell_feasibility(cell: TableCell, coordinate: str) -> None:
+    maximum_chars = cell.max_chars
     if maximum_chars is None:
         return
-    text_format = cell.get("text_format", "plain")
-    minimum_items = 1 if text_format == "plain" else cell.get("min_items", 1)
+    minimum_items = 1 if cell.plain or cell.min_items is None else cell.min_items
     ensure_aggregate_character_budget_is_feasible(
         minimum_items=minimum_items,
-        minimum_chars_per_item=cell.get("min_chars_per_item", 0),
+        minimum_chars_per_item=cell.min_chars_per_item or 0,
         maximum_chars=maximum_chars,
         subject=f"table V2 cell {coordinate!r} non-null contract",
     )
 
 
 def _cell_description(
-    cell: Mapping[str, Any],
+    cell: TableCell,
     component_instruction: str,
-    row: Mapping[str, Any],
-    column: Mapping[str, Any],
+    row: TableAxis | None,
+    column: TableAxis | None,
     *,
     row_optional: bool,
     column_optional: bool,
 ) -> str:
-    text_format = cell.get("text_format", "plain")
-    minimum_items = 1 if text_format == "plain" else cell.get("min_items", 1)
-    maximum_items = 1 if text_format == "plain" else cell.get("max_items")
+    minimum_items = 1 if cell.plain or cell.min_items is None else cell.min_items
+    maximum_items = 1 if cell.plain else cell.max_items
     return join_sentences(
         component_instruction,
-        str(row.get("instruction", "")),
-        str(column.get("instruction", "")),
-        str(cell.get("instruction", "")),
-        _count_description(text_format, minimum_items, maximum_items),
+        row.instruction if row is not None else "",
+        column.instruction if column is not None else "",
+        cell.instruction,
+        _count_description(cell.text_format, minimum_items, maximum_items),
         _character_description(cell),
         _optionality_description(row_optional, column_optional),
         _target_description(cell),
@@ -304,8 +289,8 @@ def _count_description(text_format: str, minimum: int, maximum: int | None) -> s
     return f"Return {minimum}–{maximum} {label} items"
 
 
-def _character_description(cell: Mapping[str, Any]) -> str:
-    minimum, maximum = cell.get("min_chars_per_item"), cell.get("max_chars_per_item")
+def _character_description(cell: TableCell) -> str:
+    minimum, maximum = cell.min_chars_per_item, cell.max_chars_per_item
     parts: list[str] = []
     if minimum is not None and maximum is not None:
         parts.append(f"Each item must contain {minimum}–{maximum} characters")
@@ -313,20 +298,20 @@ def _character_description(cell: Mapping[str, Any]) -> str:
         parts.append(f"Each item must contain at least {minimum} characters")
     elif maximum is not None:
         parts.append(f"Each item must contain at most {maximum} characters")
-    if cell.get("max_chars") is not None:
+    if cell.max_chars is not None:
         parts.append(
-            f"The combined item length must not exceed {cell['max_chars']} characters"
+            f"The combined item length must not exceed {cell.max_chars} characters"
         )
     return join_sentences(*parts)
 
 
-def _target_description(cell: Mapping[str, Any]) -> str:
+def _target_description(cell: TableCell) -> str:
     targets: list[str] = []
-    for field, label in (
-        ("target_items", "items"),
-        ("target_chars", "characters total"),
-        ("target_chars_per_item", "characters per item"),
+    for value, label in (
+        (cell.target_items, "items"),
+        (cell.target_chars, "characters total"),
+        (cell.target_chars_per_item, "characters per item"),
     ):
-        if cell.get(field) is not None:
-            targets.append(f"{cell[field]} {label}")
+        if value is not None:
+            targets.append(f"{value} {label}")
     return "Aim for approximately " + ", and ".join(targets) if targets else ""

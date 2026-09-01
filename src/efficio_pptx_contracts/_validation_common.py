@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import copy
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
 
 from .instructions import load_component_instruction
 
@@ -23,7 +23,12 @@ _STRIPPED_BASE_KEYS = ("$schema", "component_type", "description")
 
 def _base_content_schema(component_type: str) -> dict[str, Any]:
     """Deep copy of the type's authored expected_content_schema, prose stripped."""
-    schema = copy.deepcopy(load_component_instruction(component_type)["expected_content_schema"])
+    schema = copy.deepcopy(
+        cast(
+            dict[str, Any],
+            load_component_instruction(component_type)["expected_content_schema"],
+        )
+    )
     for key in _STRIPPED_BASE_KEYS:
         schema.pop(key, None)
     return schema
