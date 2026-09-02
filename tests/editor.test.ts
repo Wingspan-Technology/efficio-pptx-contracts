@@ -24,8 +24,11 @@ import {
   DECK_INITIALIZED_TAG,
   DECK_SLIDE_SELECTION_GROUPS_TAG,
   SLIDE_ID_TAG,
+  SLIDE_ROLE_TAG,
+  SLIDE_ROLES,
   SLIDE_PLACEMENTS,
   SLIDE_PURPOSE_MAX_LENGTH,
+  type SlideRole,
 } from "../ts/editor";
 
 const EXPECTED_TYPES = ["category_chart", "table", "text"];
@@ -146,7 +149,12 @@ describe("editor SDK compatibility tag schemas", () => {
 
 describe("editor SDK slide surface", () => {
   it("re-exports slide tag constants and enums", () => {
+    const role: SlideRole = "separator";
+
     expect(SLIDE_ID_TAG).toBe("efficio_slide_id");
+    expect(SLIDE_ROLE_TAG).toBe("efficio_slide_role");
+    expect(SLIDE_ROLES).toEqual(["content", "separator"]);
+    expect(role).toBe("separator");
     expect(SLIDE_PLACEMENTS).toContain("body");
     expect(typeof SLIDE_PURPOSE_MAX_LENGTH).toBe("number");
   });
@@ -154,6 +162,7 @@ describe("editor SDK slide surface", () => {
   it("exposes slide defaults as a copy", () => {
     const defaults = getSlideTagDefaults();
     expect(defaults).toBeTypeOf("object");
+    expect(defaults.efficio_slide_role).toBe("content");
   });
 
   it("exposes the slide tag contract as a defensive copy", () => {

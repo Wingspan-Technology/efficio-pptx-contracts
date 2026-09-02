@@ -14,16 +14,19 @@ import {
   slideTagSchema,
   SLIDE_ID_TAG,
   SLIDE_NAME_TAG,
+  SLIDE_ROLE_TAG,
   SLIDE_PLACEMENT_TAG,
   SLIDE_GROUP_ORDER_TAG,
   SLIDE_PURPOSE_TAG,
   SLIDE_CONTENT_DESCRIPTION_TAG,
   SLIDE_INCLUSION_POLICY_TAG,
+  SLIDE_ROLES,
   SLIDE_PLACEMENTS,
   SLIDE_INCLUSION_POLICIES,
   SLIDE_NAME_MAX_LENGTH,
   SLIDE_PURPOSE_MAX_LENGTH,
   SLIDE_CONTENT_DESCRIPTION_MAX_LENGTH,
+  type SlideRole,
   type SlidePlacement,
   type SlideInclusionPolicy,
 } from "../../generated/ts/presentation/slideTagSchema.js";
@@ -39,7 +42,7 @@ export function getSlideTagContract(): SlideTagSchema {
 }
 
 // Returns a copy with the precise generated literal types preserved, so callers
-// can feed defaults into SlidePlacement / SlideInclusionPolicy slots.
+// can feed defaults into SlideRole / SlidePlacement / SlideInclusionPolicy slots.
 export function getSlideTagDefaults(): SlideDefaults {
   return { ...slideDefaults };
 }
@@ -47,16 +50,19 @@ export function getSlideTagDefaults(): SlideDefaults {
 export {
   SLIDE_ID_TAG,
   SLIDE_NAME_TAG,
+  SLIDE_ROLE_TAG,
   SLIDE_PLACEMENT_TAG,
   SLIDE_GROUP_ORDER_TAG,
   SLIDE_PURPOSE_TAG,
   SLIDE_CONTENT_DESCRIPTION_TAG,
   SLIDE_INCLUSION_POLICY_TAG,
+  SLIDE_ROLES,
   SLIDE_PLACEMENTS,
   SLIDE_INCLUSION_POLICIES,
   SLIDE_NAME_MAX_LENGTH,
   SLIDE_PURPOSE_MAX_LENGTH,
   SLIDE_CONTENT_DESCRIPTION_MAX_LENGTH,
+  type SlideRole,
   type SlidePlacement,
   type SlideInclusionPolicy,
 };

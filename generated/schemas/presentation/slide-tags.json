@@ -15,6 +15,22 @@
       "max_length": 120,
       "description": "User-friendly slide display name for selection UIs. A human-readable label only, not an AI instruction (no ai block); absent or blank means clients fall back to the slide id."
     },
+    "efficio_slide_role": {
+      "type": "string",
+      "required": true,
+      "enum": [
+        "content",
+        "separator"
+      ],
+      "description": "Whether the slide is normal content or a section divider. This descriptive role does not control inclusion, placement, ordering, or grouping.",
+      "ai": {
+        "purpose": "Identifies a slide as normal content or a section divider. Use it only as descriptive context; it does not control inclusion, placement, ordering, or grouping.",
+        "enum_descriptions": {
+          "content": "A normal presentation slide.",
+          "separator": "A section-divider slide."
+        }
+      }
+    },
     "efficio_slide_placement": {
       "type": "string",
       "required": true,

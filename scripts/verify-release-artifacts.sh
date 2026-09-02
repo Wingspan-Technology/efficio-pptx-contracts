@@ -35,6 +35,15 @@ node --input-type=module -e '
   if (sdk.DECK_SLIDE_SELECTION_GROUPS_TAG !== "efficio_slide_selection_groups") {
     throw new Error("Missing slide-selection group deck tag export.");
   }
+  if (sdk.SLIDE_ROLE_TAG !== "efficio_slide_role") {
+    throw new Error("Missing slide role tag export.");
+  }
+  if (JSON.stringify(sdk.SLIDE_ROLES) !== JSON.stringify(["content", "separator"])) {
+    throw new Error(`Unexpected slide roles: ${JSON.stringify(sdk.SLIDE_ROLES)}`);
+  }
+  if (sdk.getSlideTagDefaults().efficio_slide_role !== "content") {
+    throw new Error("Slide role does not default to content.");
+  }
 '
 
 uv venv --python 3.12 "$WORK/venv" >/dev/null
@@ -50,10 +59,12 @@ from efficio_pptx_contracts import (
     build_v2_component_contract,
     list_component_types,
     load_component_instructions,
+    load_slide_tag_contract,
     normalize_v2_component_content,
     normalize_slide_selection_groups,
     parse_slide_selection_groups,
     validate_slide_selection_group_selection,
+    validate_slide_tags,
     validate_v2_component_semantics,
     validate_v2_executable_component_schema,
 )
@@ -62,6 +73,20 @@ component_types = list_component_types()
 assert {"text", "table", "category_chart"}.issubset(component_types)
 assert load_component_instructions()["component_instructions"]
 assert files("efficio_pptx_contracts").joinpath("_generated/component-registry.json").is_file()
+
+slide_contract = load_slide_tag_contract()
+slide_role = slide_contract["tags"]["efficio_slide_role"]
+assert slide_role["required"] is True
+assert slide_role["enum"] == ["content", "separator"]
+for role in slide_role["enum"]:
+    assert validate_slide_tags(
+        {
+            "efficio_slide_id": "slide_001",
+            "efficio_slide_role": role,
+            "efficio_slide_placement": "body",
+            "efficio_slide_inclusion_policy": "when_relevant",
+        }
+    ) == []
 
 selection_groups = parse_slide_selection_groups(
     [

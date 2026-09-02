@@ -89,6 +89,7 @@ describe("generated defaults preserve effective behavior", () => {
 
   it("slide defaults are generated from presentation defaults", () => {
     expect(slideDefaults).toEqual({
+      efficio_slide_role: "content",
       efficio_slide_placement: "body",
       efficio_slide_inclusion_policy: "when_relevant",
     });

@@ -51,6 +51,12 @@ to build the validated graph, then call
 Valid root wrappers containing one direct slide are normalized away and remain
 ordinary standalone slides.
 
+Every slide requires `efficio_slide_role`: `content` identifies a normal
+presentation slide, while `separator` identifies a section divider. Role is
+descriptive metadata only and does not control inclusion, placement, ordering,
+or grouping; bundle groups remain responsible for all-or-none selection.
+Templates must set the role before their consumers adopt contracts 0.4.0.
+
 Generated TypeScript modules and bundled Python JSON resources are package
 internals. Consumers must use the public SDK entrypoints instead of importing
 generated files directly.

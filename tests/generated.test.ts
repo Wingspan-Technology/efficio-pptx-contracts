@@ -208,6 +208,26 @@ describe("slide display name tag", () => {
   });
 });
 
+describe("slide role tag", () => {
+  const slideSchema = readJson(
+    path.join(pkgRoot, "generated", "schemas", "presentation", "slide-tags.json"),
+  );
+
+  it("generates the required content-or-separator contract", () => {
+    const tag = (slideSchema.tags as JsonObject).efficio_slide_role as JsonObject;
+    expect(tag.type).toBe("string");
+    expect(tag.required).toBe(true);
+    expect(tag.enum).toEqual(["content", "separator"]);
+  });
+
+  it("keeps role descriptive and independent of selection behavior", () => {
+    const tag = (slideSchema.tags as JsonObject).efficio_slide_role as JsonObject;
+    const purpose = (tag.ai as JsonObject).purpose as string;
+    expect(purpose).toContain("normal content or a section divider");
+    expect(purpose).toContain("does not control inclusion, placement, ordering, or grouping");
+  });
+});
+
 describe("text sizing tags", () => {
   it("generates sizing fields as normal required tags", () => {
     const schema = readJson(generatedFileFor("text"));
@@ -657,6 +677,10 @@ describe("generated slide-selection AI instructions", () => {
 
   it("slide_tag_instructions includes ai-bearing slide tags and excludes the rest", () => {
     const tags = artifact.slide_tag_instructions as JsonObject;
+    const slideTags = readJson(path.join(slideDir, "tags.contract.json"));
+    const role = (slideTags.tags as JsonObject).efficio_slide_role as JsonObject;
+
+    expect(tags.efficio_slide_role).toEqual(role.ai);
     expect(tags).toHaveProperty("efficio_slide_placement");
     expect(tags).toHaveProperty("efficio_slide_inclusion_policy");
     expect(tags).not.toHaveProperty("efficio_slide_id");

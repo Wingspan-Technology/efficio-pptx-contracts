@@ -3,6 +3,13 @@
 export const slideSelectionInstructions = {
   "description": "Select the slides that best fit the current presentation request. Respect each slide inclusion policy, placement metadata, and every slide-selection group rule.",
   "slide_tag_instructions": {
+    "efficio_slide_role": {
+      "purpose": "Identifies a slide as normal content or a section divider. Use it only as descriptive context; it does not control inclusion, placement, ordering, or grouping.",
+      "enum_descriptions": {
+        "content": "A normal presentation slide.",
+        "separator": "A section-divider slide."
+      }
+    },
     "efficio_slide_placement": {
       "purpose": "Indicates where the slide must sit in the deck so selection preserves required opening and closing slides.",
       "enum_descriptions": {

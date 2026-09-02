@@ -361,6 +361,8 @@ def test_load_slide_tag_contract() -> None:
     contract = sdk.load_slide_tag_contract()
     assert contract["contract_type"] == "slide_tags"
     assert contract["tags"]["efficio_slide_id"]["required"] is True
+    assert contract["tags"]["efficio_slide_role"]["required"] is True
+    assert contract["tags"]["efficio_slide_role"]["enum"] == ["content", "separator"]
 
 
 def test_validate_component_tags_accepts_valid_text_tags() -> None:
@@ -829,10 +831,12 @@ def test_validate_category_chart_skips_semantics_when_structurally_invalid() -> 
     assert all(i.code != "percent_stacked_negative" for i in issues)
 
 
-def test_validate_slide_tags_accepts_required_slide_tags() -> None:
+@pytest.mark.parametrize("role", ["content", "separator"])
+def test_validate_slide_tags_accepts_required_slide_tags(role: str) -> None:
     issues = sdk.validate_slide_tags(
         {
             "efficio_slide_id": "slide_001",
+            "efficio_slide_role": role,
             "efficio_slide_placement": "body",
             "efficio_slide_inclusion_policy": "when_relevant",
         }
@@ -844,6 +848,7 @@ def test_validate_slide_tags_reports_contract_errors() -> None:
     issues = sdk.validate_slide_tags(
         {
             "efficio_slide_id": "bad id",
+            "efficio_slide_role": "content",
             "efficio_slide_placement": "unknown",
             "efficio_slide_inclusion_policy": "when_relevant",
             "efficio_slide_group_order": "0",
@@ -858,11 +863,28 @@ def test_validate_slide_tags_reports_contract_errors() -> None:
 def valid_slide_tags(**overrides: str) -> dict[str, str]:
     tags = {
         "efficio_slide_id": "slide_001",
+        "efficio_slide_role": "content",
         "efficio_slide_placement": "body",
         "efficio_slide_inclusion_policy": "when_relevant",
     }
     tags.update(overrides)
     return tags
+
+
+def test_validate_slide_tags_rejects_missing_role() -> None:
+    tags = valid_slide_tags()
+    del tags["efficio_slide_role"]
+    issues = sdk.validate_slide_tags(tags)
+    assert [(issue.code, issue.tag_name) for issue in issues] == [
+        ("missing_required_tag", "efficio_slide_role")
+    ]
+
+
+def test_validate_slide_tags_rejects_unknown_role() -> None:
+    issues = sdk.validate_slide_tags(valid_slide_tags(efficio_slide_role="title"))
+    assert [(issue.code, issue.tag_name) for issue in issues] == [
+        ("invalid_enum", "efficio_slide_role")
+    ]
 
 
 def test_validate_slide_tags_accepts_missing_or_blank_slide_name() -> None:

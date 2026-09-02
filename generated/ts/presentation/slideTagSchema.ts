@@ -18,6 +18,22 @@ export const slideTagSchema = {
       "max_length": 120,
       "description": "User-friendly slide display name for selection UIs. A human-readable label only, not an AI instruction (no ai block); absent or blank means clients fall back to the slide id."
     },
+    "efficio_slide_role": {
+      "type": "string",
+      "required": true,
+      "enum": [
+        "content",
+        "separator"
+      ],
+      "description": "Whether the slide is normal content or a section divider. This descriptive role does not control inclusion, placement, ordering, or grouping.",
+      "ai": {
+        "purpose": "Identifies a slide as normal content or a section divider. Use it only as descriptive context; it does not control inclusion, placement, ordering, or grouping.",
+        "enum_descriptions": {
+          "content": "A normal presentation slide.",
+          "separator": "A section-divider slide."
+        }
+      }
+    },
     "efficio_slide_placement": {
       "type": "string",
       "required": true,
@@ -84,6 +100,7 @@ export type SlideTagSchema = typeof slideTagSchema;
 export const slideTagKeys = [
   "efficio_slide_id",
   "efficio_slide_name",
+  "efficio_slide_role",
   "efficio_slide_placement",
   "efficio_slide_group_order",
   "efficio_slide_purpose",
@@ -93,11 +110,15 @@ export const slideTagKeys = [
 
 export const SLIDE_ID_TAG = "efficio_slide_id";
 export const SLIDE_NAME_TAG = "efficio_slide_name";
+export const SLIDE_ROLE_TAG = "efficio_slide_role";
 export const SLIDE_PLACEMENT_TAG = "efficio_slide_placement";
 export const SLIDE_GROUP_ORDER_TAG = "efficio_slide_group_order";
 export const SLIDE_PURPOSE_TAG = "efficio_slide_purpose";
 export const SLIDE_CONTENT_DESCRIPTION_TAG = "efficio_slide_content_description";
 export const SLIDE_INCLUSION_POLICY_TAG = "efficio_slide_inclusion_policy";
+
+export const SLIDE_ROLES = slideTagSchema.tags["efficio_slide_role"].enum;
+export type SlideRole = (typeof SLIDE_ROLES)[number];
 
 export const SLIDE_PLACEMENTS = slideTagSchema.tags["efficio_slide_placement"].enum;
 export type SlidePlacement = (typeof SLIDE_PLACEMENTS)[number];
