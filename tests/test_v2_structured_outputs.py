@@ -22,7 +22,7 @@ from jsonschema import Draft202012Validator
 
 def _text_tags(**overrides: str) -> dict[str, str]:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "title",
         "efficio_component_type": "text",
         "efficio_text_format": "bullets",
@@ -39,7 +39,7 @@ def _text_tags(**overrides: str) -> dict[str, str]:
 
 def _table_tags(config: dict, **overrides: str) -> dict[str, str]:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "supplier_table",
         "efficio_component_type": "table",
         "efficio_table_config": json.dumps(config),
@@ -56,7 +56,7 @@ def _chart_tags(
     allow_negatives: bool = True,
 ) -> dict[str, str]:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "spend_chart",
         "efficio_component_type": "category_chart",
         "efficio_chart_type": "CLUSTERED_COLUMN",

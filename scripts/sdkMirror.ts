@@ -9,6 +9,7 @@ import {
   generatedPresentationSchemasDir,
   sdkGeneratedDir,
 } from "./generatorPaths.js";
+import { TEMPLATE_MIGRATIONS_FILE } from "./templateMigrationOutput.js";
 
 // Mirrors the runtime JSON consumed by the Python SDK into the importable
 // package under efficio_pptx_contracts/_generated/. These are exact copies of the
@@ -52,5 +53,9 @@ export async function mirrorSdkResources(componentTypes: string[]): Promise<void
   await copyFile(
     path.join(generatedPresentationSchemasDir, "deck-tags.json"),
     path.join(sdkGeneratedDir, "schemas", "presentation", "deck-tags.json"),
+  );
+  await copyFile(
+    path.join(generatedPresentationSchemasDir, TEMPLATE_MIGRATIONS_FILE),
+    path.join(sdkGeneratedDir, "schemas", "presentation", TEMPLATE_MIGRATIONS_FILE),
   );
 }

@@ -1,0 +1,168 @@
+{
+  "successful_cases": [
+    {
+      "name": "legacy AI component and unrelated targets",
+      "targets": [
+        { "target_ref": "deck", "scope": "deck", "tags": {} },
+        {
+          "target_ref": "slide:slide_001",
+          "scope": "slide",
+          "tags": { "efficio_slide_id": "slide_001" }
+        },
+        {
+          "target_ref": "shape:slide_001/title",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_id": "title",
+            "efficio_render_behavior": "render_by_component_type"
+          }
+        },
+        {
+          "target_ref": "shape:slide_001/logo",
+          "scope": "shape",
+          "tags": { "efficio_component_id": "logo" }
+        }
+      ],
+      "expected": {
+        "from_revision": 0,
+        "to_revision": 1,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "1" },
+            "remove_tags": []
+          },
+          {
+            "target_ref": "slide:slide_001",
+            "scope": "slide",
+            "set_tags": { "efficio_slide_role": "content" },
+            "remove_tags": []
+          },
+          {
+            "target_ref": "shape:slide_001/title",
+            "scope": "shape",
+            "set_tags": { "efficio_content_mode": "ai_generated" },
+            "remove_tags": ["efficio_render_behavior"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "equivalent current and legacy values",
+      "targets": [
+        { "target_ref": "deck", "scope": "deck", "tags": {} },
+        {
+          "target_ref": "shape:slide_001/body",
+          "scope": "shape",
+          "tags": {
+            "efficio_content_mode": "preserve",
+            "efficio_render_behavior": "preserve"
+          }
+        }
+      ],
+      "expected": {
+        "from_revision": 0,
+        "to_revision": 1,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "1" },
+            "remove_tags": []
+          },
+          {
+            "target_ref": "shape:slide_001/body",
+            "scope": "shape",
+            "set_tags": {},
+            "remove_tags": ["efficio_render_behavior"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "current revision is a no-op",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:slide_001/title",
+          "scope": "shape",
+          "tags": { "efficio_content_mode": "data_bound" }
+        }
+      ],
+      "expected": {
+        "from_revision": 1,
+        "to_revision": 1,
+        "patches": []
+      }
+    }
+  ],
+  "error_cases": [
+    {
+      "name": "unknown legacy value",
+      "targets": [
+        { "target_ref": "deck", "scope": "deck", "tags": {} },
+        {
+          "target_ref": "shape:1",
+          "scope": "shape",
+          "tags": { "efficio_render_behavior": "unexpected" }
+        }
+      ],
+      "error_contains": "no migration mapping"
+    },
+    {
+      "name": "conflicting destination",
+      "targets": [
+        { "target_ref": "deck", "scope": "deck", "tags": {} },
+        {
+          "target_ref": "shape:1",
+          "scope": "shape",
+          "tags": {
+            "efficio_render_behavior": "render_by_component_type",
+            "efficio_content_mode": "remove"
+          }
+        }
+      ],
+      "error_contains": "conflicts"
+    },
+    {
+      "name": "current revision with retired tag",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:1",
+          "scope": "shape",
+          "tags": { "efficio_render_behavior": "preserve" }
+        }
+      ],
+      "error_contains": "retired tag"
+    },
+    {
+      "name": "current revision with equivalent current and retired tags",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:1",
+          "scope": "shape",
+          "tags": {
+            "efficio_content_mode": "preserve",
+            "efficio_render_behavior": "preserve"
+          }
+        }
+      ],
+      "error_contains": "retired tag"
+    }
+  ]
+}

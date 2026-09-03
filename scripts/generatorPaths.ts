@@ -12,6 +12,7 @@ export const sharedDir = path.join(contractsDir, "shared");
 export const presentationSlideDir = path.join(contractsDir, "presentation", "slide");
 export const presentationDeckDir = path.join(contractsDir, "presentation", "deck");
 export const presentationTemplateDir = path.join(contractsDir, "presentation", "template");
+export const presentationTemplateMigrationsDir = path.join(presentationTemplateDir, "migrations");
 export const generatedDir = path.join(packageRoot, "generated");
 export const generatedSchemasDir = path.join(generatedDir, "schemas");
 export const generatedComponentSchemasDir = path.join(generatedSchemasDir, "components");
@@ -30,7 +31,7 @@ export const sdkPackageDir = path.join(packageRoot, "src", "efficio_pptx_contrac
 export const sdkGeneratedDir = path.join(sdkPackageDir, "_generated");
 
 export const sharedTagFragmentNames = [
-  "render-behavior-tags.contract.json",
+  "content-mode-tags.contract.json",
   "component-base-tags.contract.json",
 ];
 export const sharedDefaultsLabel = "contracts/shared/component-default-tags.defaults.json";

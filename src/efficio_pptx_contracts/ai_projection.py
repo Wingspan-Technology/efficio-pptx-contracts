@@ -18,7 +18,7 @@ PowerPoint tags, the editor, and validation keep raw ``efficio_*`` names.
 Two structural tags are consumed by dedicated paths and appear in neither
 ``tag_instructions`` nor ``tag_context`` (their contracts declare no ``ai``):
 
-- ``efficio_render_behavior`` — decides AI-facing inclusion (``is_ai_facing``);
+- ``efficio_content_mode`` — decides AI-facing inclusion (``is_ai_facing``);
 - ``efficio_prompt_instruction`` — surfaced per instance as the top-level
   ``instructions`` field.
 
@@ -34,15 +34,14 @@ from typing import Any
 
 from .instructions import load_component_instruction
 from .tag_validation import load_component_tag_schema
+from .content_mode import CONTENT_MODE_TAG
 
-RENDER_BEHAVIOR_TAG = "efficio_render_behavior"
-AI_FACING_RENDER_BEHAVIOR = "render_by_component_type"
 PROMPT_INSTRUCTION_TAG = "efficio_prompt_instruction"
 TEMPLATE_INSTRUCTION_TAG = "efficio_template_instruction"
 
 # Structural tags never copied into tag_context, independent of contract state —
 # a guard even if a contract were to (re)declare ai on them.
-_EXCLUDED_FROM_TAG_CONTEXT = frozenset({RENDER_BEHAVIOR_TAG, PROMPT_INSTRUCTION_TAG})
+_EXCLUDED_FROM_TAG_CONTEXT = frozenset({CONTENT_MODE_TAG, PROMPT_INSTRUCTION_TAG})
 
 _TAG_PREFIX = "efficio_"
 
@@ -63,15 +62,6 @@ def public_tag_alias(tag_name: str) -> str:
     return alias
 
 
-def is_ai_facing(tags: Mapping[str, str]) -> bool:
-    """True if a component renders by component type (the only AI-facing behavior).
-
-    ``preserve``, ``remove_on_render``, and missing/unknown render behavior are
-    all non-AI-facing.
-    """
-    return tags.get(RENDER_BEHAVIOR_TAG) == AI_FACING_RENDER_BEHAVIOR
-
-
 def ai_visible_tag_names(component_type: str) -> frozenset[str]:
     """The public tag aliases exposed to AI for a component type.
 
@@ -90,7 +80,7 @@ def project_component_context(component_type: str, tags: Mapping[str, str]) -> d
     ``tag_context`` carries only AI-visible tag values (per the component
     contract), keyed by public alias and typed for AI consumption (integer tags
     as numbers, object/array tags as parsed JSON values, strings/enums as
-    strings). The render-behavior and prompt-instruction tags and any tag whose
+    strings). The content-mode and prompt-instruction tags and any tag whose
     raw value is blank (empty, spaces, or only newlines) are excluded. No shape
     paths, raw tags, or PowerPoint internals are included. ``instructions`` is
     included only when ``efficio_prompt_instruction`` has a non-blank value

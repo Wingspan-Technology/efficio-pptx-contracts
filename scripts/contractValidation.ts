@@ -28,6 +28,12 @@ import {
 } from "./presentationSources.js";
 import { readJson } from "./generatorIo.js";
 import { contractsDir as defaultContractsDir, sharedDefaultsLabel, sharedTagFragmentNames } from "./generatorPaths.js";
+import {
+  loadTemplateContractMigrationCatalog,
+  validateMigrationTargetTags,
+  validateTemplateContractRevisionTag,
+  type TemplateContractMigrationCatalog,
+} from "./templateMigrationContract.js";
 
 export type ContractIssue = { contract: string; message: string };
 export type ValidationReport = { ok: boolean; checked: number; issues: ContractIssue[] };
@@ -68,6 +74,7 @@ export async function validateAllContracts(
 
   // 1. Shared tag fragments → composed shared schema (mirrors loadSharedTagContract).
   const sharedSchema: JsonObject = { tags: {} };
+  const shapeTagDefinitions: Record<string, JsonObject> = {};
   const sharedLabels: string[] = [];
   for (const fileName of sharedTagFragmentNames) {
     const label = `contracts/shared/${fileName}`;
@@ -84,6 +91,7 @@ export async function validateAllContracts(
           throw new Error(`${label}.tags.${tag} duplicates a shared tag fragment.`);
         }
         sharedTags[tag] = entity;
+        shapeTagDefinitions[tag] = entity as JsonObject;
       }
       sharedLabels.push(label);
     });
@@ -120,6 +128,7 @@ export async function validateAllContracts(
       validateTagEntityContract(schema, tagsLabel, { componentType: name });
       assertEfficioTagNames(schema, tagsLabel);
       componentSchema = schema;
+      Object.assign(shapeTagDefinitions, getRecord(schema, "tags"));
     });
 
     await check(contentLabel, async () => {
@@ -182,6 +191,7 @@ export async function validateAllContracts(
   // 4b. Presentation deck: tag contract + defaults (presentation-level tags).
   const deckTagsLabel = "contracts/presentation/deck/tags.contract.json";
   let deckSchema: JsonObject | undefined;
+  let deckDefaults: Record<string, string> | undefined;
   await check(deckTagsLabel, async () => {
     const schema = await readJson(path.join(layout.deckDir, "tags.contract.json"));
     assertObject(schema, deckTagsLabel);
@@ -196,7 +206,26 @@ export async function validateAllContracts(
     await check(deckDefaultsLabel, async () => {
       const defaults = await readJson(path.join(layout.deckDir, "tags.defaults.json"));
       assertObject(defaults, deckDefaultsLabel);
-      validateSlideDefaults(defaults, deckSchema as JsonObject, deckDefaultsLabel);
+      deckDefaults = validateSlideDefaults(defaults, deckSchema as JsonObject, deckDefaultsLabel);
+    });
+  }
+
+  let migrationCatalog: TemplateContractMigrationCatalog | undefined;
+  await check("contracts/presentation/template/migrations", async () => {
+    migrationCatalog = await loadTemplateContractMigrationCatalog(path.join(layout.templateDir, "migrations"));
+  });
+  if (migrationCatalog !== undefined && deckSchema !== undefined && deckDefaults !== undefined) {
+    await check("template contract revision", () => {
+      validateTemplateContractRevisionTag(
+        migrationCatalog as TemplateContractMigrationCatalog,
+        deckSchema as JsonObject,
+        deckDefaults as Record<string, string>,
+      );
+      validateMigrationTargetTags(migrationCatalog as TemplateContractMigrationCatalog, {
+        deck: getRecord(deckSchema as JsonObject, "tags") as Record<string, JsonObject>,
+        slide: getRecord(slideSchema ?? {}, "tags") as Record<string, JsonObject>,
+        shape: shapeTagDefinitions,
+      });
     });
   }
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -97,6 +97,100 @@ describe("validateAllContracts — structured report over an injected contracts 
         (issue) =>
           issue.contract === "presentation slide-selection groups" &&
           /must exactly match slide inclusion policies/.test(issue.message),
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects migration filenames that disagree with their revisions", async () => {
+    const dir = await copyContracts();
+    const migrations = path.join(dir, "presentation", "template", "migrations");
+    await rename(
+      path.join(migrations, "0000-to-0001.json"),
+      path.join(migrations, "0000-to-0002.json"),
+    );
+
+    const report = await validateAllContracts({ contractsDir: dir });
+
+    expect(report.ok).toBe(false);
+    expect(report.issues.some((issue) => /filename must match/.test(issue.message))).toBe(true);
+  });
+
+  it("rejects migration gaps and unknown fields or operations", async () => {
+    const dir = await copyContracts();
+    const migrations = path.join(dir, "presentation", "template", "migrations");
+    const original = path.join(migrations, "0000-to-0001.json");
+    const gap = path.join(migrations, "0001-to-0002.json");
+    await mutateJson(original, (migration) => {
+      migration.from_revision = 1;
+      migration.to_revision = 2;
+    });
+    await rename(original, gap);
+    let report = await validateAllContracts({ contractsDir: dir });
+    expect(report.issues.some((issue) => /gap or branch/.test(issue.message))).toBe(true);
+
+    await mutateJson(gap, (migration) => {
+      migration.unexpected = true;
+    });
+    report = await validateAllContracts({ contractsDir: dir });
+    expect(report.issues.some((issue) => /must contain exactly/.test(issue.message))).toBe(true);
+
+    await mutateJson(gap, (migration) => {
+      delete migration.unexpected;
+      const operations = migration.operations as Record<string, unknown>[];
+      operations[0].type = "unknown";
+    });
+    report = await validateAllContracts({ contractsDir: dir });
+    expect(report.issues.some((issue) => /must be rename_tag or set_tag_if_missing/.test(issue.message)))
+      .toBe(true);
+  });
+
+  it("rejects conflicting operations within one migration", async () => {
+    const dir = await copyContracts();
+    const migration = path.join(
+      dir,
+      "presentation",
+      "template",
+      "migrations",
+      "0000-to-0001.json",
+    );
+    await mutateJson(migration, (value) => {
+      const operations = value.operations as Record<string, unknown>[];
+      operations.push({
+        type: "set_tag_if_missing",
+        scope: "shape",
+        tag: "efficio_content_mode",
+        value: "ai_generated",
+      });
+    });
+
+    const report = await validateAllContracts({ contractsDir: dir });
+
+    expect(report.issues.some((issue) => /conflicts with another operation/.test(issue.message)))
+      .toBe(true);
+  });
+
+  it("rejects migration values that violate the target tag contract", async () => {
+    const dir = await copyContracts();
+    const migration = path.join(
+      dir,
+      "presentation",
+      "template",
+      "migrations",
+      "0000-to-0001.json",
+    );
+    await mutateJson(migration, (value) => {
+      const operations = value.operations as Record<string, unknown>[];
+      operations[0].tag = "efficio_template_id";
+      operations[0].value = "Invalid Template Id";
+    });
+
+    const report = await validateAllContracts({ contractsDir: dir });
+
+    expect(
+      report.issues.some(
+        (issue) =>
+          issue.contract === "template contract revision" &&
+          /efficio_template_id does not match its required pattern/.test(issue.message),
       ),
     ).toBe(true);
   });

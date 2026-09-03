@@ -22,6 +22,8 @@ import {
 import { buildDeckOutputs, buildSlideOutputs, copyPresentationContract } from "./presentationOutputs.js";
 import { buildAiInstructionOutputs, buildSlideSelectionInstructionOutputs } from "./aiOutputs.js";
 import { mirrorSdkResources } from "./sdkMirror.js";
+import { loadTemplateContractMigrationCatalog } from "./templateMigrationContract.js";
+import { buildTemplateMigrationOutputs } from "./templateMigrationOutput.js";
 import {
   generatedAiDir,
   generatedComponentSchemasDir,
@@ -41,6 +43,8 @@ async function main(): Promise<void> {
     const detail = report.issues.map((issue) => `  - ${issue.contract}: ${issue.message}`).join("\n");
     throw new Error(`Contract validation failed; not clearing or regenerating outputs:\n${detail}`);
   }
+
+  const migrationCatalog = await loadTemplateContractMigrationCatalog();
 
   await clearObsoleteGeneratedOutputs();
 
@@ -63,6 +67,7 @@ async function main(): Promise<void> {
   await writeFile(path.join(tsComponentsDir, "tagSchemas.ts"), buildTagSchemasSource(tagSchemas));
   await buildSlideOutputs(slideSchema, slideDefaults);
   await buildDeckOutputs(deckSchema, deckDefaults);
+  await buildTemplateMigrationOutputs(migrationCatalog);
 
   const effectiveDefaultsByType: Record<string, Record<string, string>> = {};
   for (const { componentType } of componentSources) {

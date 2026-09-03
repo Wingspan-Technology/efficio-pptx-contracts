@@ -7,20 +7,33 @@ small, stable, read-only API. Generated artifacts are produced by
 
 from __future__ import annotations
 
-from .errors import (
-    EfficioComponentsError,
-    MissingResourceError,
-    UnknownComponentTypeError,
-)
 from .ai_projection import (
-    AI_FACING_RENDER_BEHAVIOR,
     PROMPT_INSTRUCTION_TAG,
-    RENDER_BEHAVIOR_TAG,
     TEMPLATE_INSTRUCTION_TAG,
     ai_visible_tag_names,
-    is_ai_facing,
     project_component_context,
     project_deck_context,
+)
+from .content_mode import (
+    CONTENT_MODE_TAG,
+    LEGACY_RENDER_BEHAVIOR_TAG,
+    ContentMode,
+    is_ai_facing,
+    is_data_bound,
+    is_renderable,
+    resolve_content_mode,
+)
+from .data_bound_components import (
+    build_data_bound_component_contract,
+    normalize_data_bound_component_content,
+    validate_data_bound_component_contract_coherence,
+)
+from .errors import (
+    ContentModeError,
+    EfficioComponentsError,
+    MissingResourceError,
+    TemplateContractMigrationError,
+    UnknownComponentTypeError,
 )
 from .instructions import (
     build_component_instruction_block,
@@ -55,6 +68,24 @@ from .tag_validation import (
     validate_deck_tags,
     validate_slide_tags,
 )
+from .template_contract_migrations import (
+    CURRENT_TEMPLATE_CONTRACT_REVISION,
+    TEMPLATE_CONTRACT_REVISION_TAG,
+    UNVERSIONED_TEMPLATE_CONTRACT_REVISION,
+    RenameTagOperation,
+    SetTagIfMissingOperation,
+    TemplateContractMigration,
+    TemplateContractMigrationCatalog,
+    TemplateContractMigrationOperation,
+    TemplateContractMigrationPlan,
+    TemplateMigrationOperationType,
+    TemplateTagPatch,
+    TemplateTagScope,
+    TemplateTagTarget,
+    get_template_contract_migration_path,
+    load_template_contract_migration_catalog,
+    plan_template_contract_migration,
+)
 from .v2_semantic_findings import (
     V2ComponentRepairReason,
     V2ComponentSemanticFinding,
@@ -78,7 +109,9 @@ from .validation_schema import build_validation_content_schema
 
 __all__ = [
     "EfficioComponentsError",
+    "ContentModeError",
     "MissingResourceError",
+    "TemplateContractMigrationError",
     "UnknownComponentTypeError",
     "load_component_registry",
     "list_component_types",
@@ -99,11 +132,15 @@ __all__ = [
     "build_component_instruction_block",
     "load_slide_selection_instruction",
     "is_ai_facing",
+    "is_data_bound",
+    "is_renderable",
+    "resolve_content_mode",
     "ai_visible_tag_names",
     "project_component_context",
     "project_deck_context",
-    "RENDER_BEHAVIOR_TAG",
-    "AI_FACING_RENDER_BEHAVIOR",
+    "CONTENT_MODE_TAG",
+    "LEGACY_RENDER_BEHAVIOR_TAG",
+    "ContentMode",
     "PROMPT_INSTRUCTION_TAG",
     "TEMPLATE_INSTRUCTION_TAG",
     "TagValidationIssue",
@@ -129,4 +166,23 @@ __all__ = [
     "normalize_v2_component_content",
     "validate_v2_component_normalization",
     "validate_v2_component_semantics",
+    "build_data_bound_component_contract",
+    "normalize_data_bound_component_content",
+    "validate_data_bound_component_contract_coherence",
+    "CURRENT_TEMPLATE_CONTRACT_REVISION",
+    "TEMPLATE_CONTRACT_REVISION_TAG",
+    "UNVERSIONED_TEMPLATE_CONTRACT_REVISION",
+    "RenameTagOperation",
+    "SetTagIfMissingOperation",
+    "TemplateContractMigration",
+    "TemplateContractMigrationCatalog",
+    "TemplateContractMigrationOperation",
+    "TemplateContractMigrationPlan",
+    "TemplateMigrationOperationType",
+    "TemplateTagPatch",
+    "TemplateTagScope",
+    "TemplateTagTarget",
+    "get_template_contract_migration_path",
+    "load_template_contract_migration_catalog",
+    "plan_template_contract_migration",
 ]

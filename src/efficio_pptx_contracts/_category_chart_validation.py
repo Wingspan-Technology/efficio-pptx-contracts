@@ -42,7 +42,7 @@ SERIES_INSTRUCTION_TAG = "efficio_series_instruction"
 COMPONENT_TYPE_TAG = "efficio_component_type"
 
 # Every category_chart-specific flat tag. The component-agnostic shared tags
-# (render_behavior, component_id, content_role, prompt_instruction) are validated
+# (content_mode, component_id, content_role, prompt_instruction) are validated
 # elsewhere, so the per-instance content-schema builder scopes its check to these.
 CATEGORY_CHART_TAG_NAMES = frozenset(
     {

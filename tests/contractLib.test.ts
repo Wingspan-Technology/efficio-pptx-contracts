@@ -13,14 +13,14 @@ import {
 import { legacyEnum, legacyType, mergeTagSchema } from "../scripts/compatibilityTagSchema";
 
 const COMMON_LABELS = [
-  "contracts/shared/render-behavior-tags.contract.json",
+  "contracts/shared/content-mode-tags.contract.json",
   "contracts/shared/component-base-tags.contract.json",
 ];
 
 const validCommon: JsonObject = {
   description: "common",
   tags: {
-    efficio_render_behavior: { type: "string", required: true, enum: ["a", "b"] },
+    efficio_content_mode: { type: "string", required: true, enum: ["a", "b"] },
     efficio_component_id: { type: "string", required: true, min_length: 1 },
     efficio_component_type: { type: "string", required: true },
     efficio_flag: { type: "boolean", required: false },
@@ -310,7 +310,7 @@ describe("mergeTagSchema", () => {
 
   it("composes common + component required/optional tags", () => {
     expect(merged.required_tags).toEqual([
-      "efficio_render_behavior",
+      "efficio_content_mode",
       "efficio_component_id",
       "efficio_component_type",
       "efficio_text_format",
@@ -320,7 +320,7 @@ describe("mergeTagSchema", () => {
 
   it("derives enums with component_type landing in the component section", () => {
     expect(merged.enums).toEqual({
-      efficio_render_behavior: ["a", "b"],
+      efficio_content_mode: ["a", "b"],
       efficio_flag: ["true", "false"],
       efficio_component_type: ["text"],
       efficio_text_format: ["plain", "rich"],
@@ -329,7 +329,7 @@ describe("mergeTagSchema", () => {
 
   it("derives legacy types with component_type read as enum from the common section", () => {
     expect(merged.types).toEqual({
-      efficio_render_behavior: "enum",
+      efficio_content_mode: "enum",
       efficio_component_id: "non_empty_string",
       efficio_component_type: "enum",
       efficio_flag: "enum_boolean_string",

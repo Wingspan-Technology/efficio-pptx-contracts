@@ -2,6 +2,6 @@
 // Source: contracts/shared/component-default-tags.defaults.json + contracts/components/category_chart/tags.defaults.json
 
 export const categoryChartDefaults = {
-  "efficio_render_behavior": "render_by_component_type",
+  "efficio_content_mode": "ai_generated",
   "efficio_component_type": "category_chart"
 } as const;

@@ -1,0 +1,44 @@
+{
+  "generated_from": [
+    "contracts/presentation/template/migrations/0000-to-0001.json"
+  ],
+  "contract_type": "template_contract_migrations",
+  "format_version": 1,
+  "unversioned_revision": 0,
+  "current_revision": 1,
+  "revision_tag": "efficio_template_contract_revision",
+  "migrations": [
+    {
+      "format_version": 1,
+      "contract_type": "template_contract_migration",
+      "from_revision": 0,
+      "to_revision": 1,
+      "description": "Replace the legacy shape render behavior with the explicit content mode contract.",
+      "operations": [
+        {
+          "type": "set_tag_if_missing",
+          "scope": "deck",
+          "tag": "efficio_template_contract_revision",
+          "value": "1"
+        },
+        {
+          "type": "set_tag_if_missing",
+          "scope": "slide",
+          "tag": "efficio_slide_role",
+          "value": "content"
+        },
+        {
+          "type": "rename_tag",
+          "scope": "shape",
+          "source_tag": "efficio_render_behavior",
+          "target_tag": "efficio_content_mode",
+          "value_map": {
+            "render_by_component_type": "ai_generated",
+            "preserve": "preserve",
+            "remove_on_render": "remove"
+          }
+        }
+      ]
+    }
+  ]
+}

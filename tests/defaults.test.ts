@@ -28,7 +28,7 @@ function defaultsJsonFor(component: string): JsonObject {
 }
 
 const commonEffective = {
-  efficio_render_behavior: "render_by_component_type",
+  efficio_content_mode: "ai_generated",
 };
 
 describe.each(COMPONENTS)("tags.defaults.json for %s", (component) => {

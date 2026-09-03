@@ -22,6 +22,15 @@ export const deckTagSchema = {
       ],
       "description": "Marks this presentation as initialized for editing with the Efficio Template Editor. Only the editor's first-run initialization writes it."
     },
+    "efficio_template_contract_revision": {
+      "type": "integer",
+      "required": true,
+      "minimum": 1,
+      "description": "Monotonic template contract revision applied to this PowerPoint file. Stored as an integer string and maintained by migration tooling.",
+      "ui": {
+        "hidden": true
+      }
+    },
     "efficio_template_instruction": {
       "type": "string",
       "required": false,
@@ -110,11 +119,13 @@ export type DeckTagSchema = typeof deckTagSchema;
 export const deckTagKeys = [
   "efficio_template_id",
   "efficio_initialized",
+  "efficio_template_contract_revision",
   "efficio_template_instruction",
   "efficio_slide_selection_groups"
 ] as const;
 
 export const DECK_TEMPLATE_ID_TAG = "efficio_template_id";
 export const DECK_INITIALIZED_TAG = "efficio_initialized";
+export const DECK_TEMPLATE_CONTRACT_REVISION_TAG = "efficio_template_contract_revision";
 export const DECK_TEMPLATE_INSTRUCTION_TAG = "efficio_template_instruction";
 export const DECK_SLIDE_SELECTION_GROUPS_TAG = "efficio_slide_selection_groups";

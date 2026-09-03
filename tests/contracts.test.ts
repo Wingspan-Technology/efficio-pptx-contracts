@@ -14,7 +14,7 @@ const componentsDir = path.join(contractsDir, "components");
 const sharedDir = path.join(contractsDir, "shared");
 const presentationDir = path.join(contractsDir, "presentation");
 const sharedTagFragments = [
-  "render-behavior-tags.contract.json",
+  "content-mode-tags.contract.json",
   "component-base-tags.contract.json",
 ];
 
@@ -109,7 +109,7 @@ describe("shared contract fragments", () => {
     expect(files).toEqual([
       "component-base-tags.contract.json",
       "component-default-tags.defaults.json",
-      "render-behavior-tags.contract.json",
+      "content-mode-tags.contract.json",
       "tag-definition.schema.json",
     ]);
   });

@@ -196,7 +196,7 @@ export function validateTagEntity(tag: string, value: unknown, label: string): v
   if (value.ui !== undefined) {
     assertObject(value.ui, `${ctx}.ui`);
     for (const key of Object.keys(value.ui)) {
-      if (key !== "order" && key !== "multiline") {
+      if (key !== "order" && key !== "multiline" && key !== "hidden") {
         throw new Error(`${ctx}.ui.${key} is not an allowed ui field.`);
       }
     }
@@ -205,6 +205,9 @@ export function validateTagEntity(tag: string, value: unknown, label: string): v
     }
     if (value.ui.multiline !== undefined && typeof value.ui.multiline !== "boolean") {
       throw new Error(`${ctx}.ui.multiline must be a boolean.`);
+    }
+    if (value.ui.hidden !== undefined && typeof value.ui.hidden !== "boolean") {
+      throw new Error(`${ctx}.ui.hidden must be a boolean.`);
     }
   }
 

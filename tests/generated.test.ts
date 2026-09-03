@@ -15,7 +15,7 @@ const generatedTagsDir = path.join(pkgRoot, "generated", "schemas", "components"
 
 const COMPONENTS = ["category_chart", "table", "text"];
 const COMMON_REQUIRED = [
-  "efficio_render_behavior",
+  "efficio_content_mode",
   "efficio_component_id",
   "efficio_component_type",
 ];
@@ -29,7 +29,7 @@ function generatedFileFor(component: string): string {
 }
 
 const sharedLabels = [
-  "contracts/shared/render-behavior-tags.contract.json",
+  "contracts/shared/content-mode-tags.contract.json",
   "contracts/shared/component-base-tags.contract.json",
 ];
 
@@ -93,6 +93,17 @@ describe("generated presentation schemas", () => {
     expect(readJson(path.join(pkgRoot, "generated", "schemas", "presentation", "template-contract.json")).generated_from).toBe(
       "contracts/presentation/template/template.contract.json",
     );
+    expect(
+      readJson(
+        path.join(
+          pkgRoot,
+          "generated",
+          "schemas",
+          "presentation",
+          "template-contract-migrations.json",
+        ),
+      ).generated_from,
+    ).toEqual(["contracts/presentation/template/migrations/0000-to-0001.json"]);
   });
 });
 
@@ -106,6 +117,7 @@ describe("generated JSON omits the redundant `generated` marker", () => {
     "schemas/presentation/slide-tags.json",
     "schemas/presentation/slide-contract.json",
     "schemas/presentation/template-contract.json",
+    "schemas/presentation/template-contract-migrations.json",
   ];
 
   for (const relativePath of jsonArtifacts) {
@@ -144,6 +156,17 @@ describe("Python SDK generated resource mirror", () => {
 
   it("mirrors deck tag schema for Python SDK validation", () => {
     const relativePath = path.join("schemas", "presentation", "deck-tags.json");
+    expect(readJson(path.join(sdkGeneratedDir, relativePath))).toEqual(
+      readJson(path.join(pkgRoot, "generated", relativePath)),
+    );
+  });
+
+  it("mirrors the template migration catalog for Python SDK planning", () => {
+    const relativePath = path.join(
+      "schemas",
+      "presentation",
+      "template-contract-migrations.json",
+    );
     expect(readJson(path.join(sdkGeneratedDir, relativePath))).toEqual(
       readJson(path.join(pkgRoot, "generated", relativePath)),
     );

@@ -11,3 +11,11 @@ class MissingResourceError(EfficioComponentsError):
 
 class UnknownComponentTypeError(EfficioComponentsError):
     """Raised when a component type is not present in the component registry."""
+
+
+class TemplateContractMigrationError(EfficioComponentsError):
+    """Raised when a template contract revision or migration cannot be applied."""
+
+
+class ContentModeError(EfficioComponentsError):
+    """Raised when current and legacy component mode tags are invalid or conflict."""

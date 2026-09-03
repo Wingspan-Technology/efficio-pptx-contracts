@@ -44,6 +44,20 @@ node --input-type=module -e '
   if (sdk.getSlideTagDefaults().efficio_slide_role !== "content") {
     throw new Error("Slide role does not default to content.");
   }
+  if (sdk.CURRENT_TEMPLATE_CONTRACT_REVISION !== 1) {
+    throw new Error("Unexpected current template contract revision.");
+  }
+  const migration = sdk.planTemplateContractMigration([
+    { target_ref: "deck", scope: "deck", tags: {} },
+    {
+      target_ref: "shape:1",
+      scope: "shape",
+      tags: { efficio_render_behavior: "render_by_component_type" },
+    },
+  ]);
+  if (migration.patches.length !== 2) {
+    throw new Error("Template contract migration planner is unavailable.");
+  }
 '
 
 uv venv --python 3.12 "$WORK/venv" >/dev/null
@@ -52,10 +66,15 @@ uv pip install --python "$WORK/venv/bin/python" "$WHEEL" >/dev/null
 from importlib.resources import files
 
 from efficio_pptx_contracts import (
+    CURRENT_TEMPLATE_CONTRACT_REVISION,
+    ContentMode,
     SlideSelectionGroupType,
+    TemplateTagScope,
+    TemplateTagTarget,
     V2ComponentRepairReason,
     V2ComponentSemanticFinding,
     V2SemanticRule,
+    build_data_bound_component_contract,
     build_v2_component_contract,
     list_component_types,
     load_component_instructions,
@@ -63,6 +82,8 @@ from efficio_pptx_contracts import (
     normalize_v2_component_content,
     normalize_slide_selection_groups,
     parse_slide_selection_groups,
+    plan_template_contract_migration,
+    resolve_content_mode,
     validate_slide_selection_group_selection,
     validate_slide_tags,
     validate_v2_component_semantics,
@@ -112,7 +133,7 @@ assert validate_slide_selection_group_selection(selection_registry, ["slide_001"
 text_contract = build_v2_component_contract(
     "text",
     {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "release_smoke",
         "efficio_component_type": "text",
         "efficio_text_format": "plain",
@@ -139,6 +160,40 @@ finding = V2ComponentSemanticFinding(
     reason=V2ComponentRepairReason.AGGREGATE_CHARACTER_LIMIT,
 )
 assert finding.reason is V2ComponentRepairReason.AGGREGATE_CHARACTER_LIMIT
+
+assert CURRENT_TEMPLATE_CONTRACT_REVISION == 1
+assert resolve_content_mode({"efficio_content_mode": "data_bound"}) is ContentMode.DATA_BOUND
+plan = plan_template_contract_migration(
+    [
+        TemplateTagTarget("deck", TemplateTagScope.DECK, {}),
+        TemplateTagTarget(
+            "shape:1",
+            TemplateTagScope.SHAPE,
+            {"efficio_render_behavior": "render_by_component_type"},
+        ),
+    ]
+)
+assert plan.from_revision == 0 and plan.to_revision == 1 and len(plan.patches) == 2
+data_bound = build_data_bound_component_contract(
+    "text",
+    {
+        "efficio_content_mode": "data_bound",
+        "efficio_component_id": "release_smoke",
+        "efficio_component_type": "text",
+        "efficio_text_format": "plain",
+        "efficio_sizing_mode": "manual",
+        "efficio_max_chars": "2",
+        "efficio_min_items": "1",
+        "efficio_max_items": "1",
+        "efficio_min_chars_per_item": "1",
+        "efficio_max_chars_per_item": "2",
+    },
+)
+assert data_bound["submission_schema"]["properties"]["items"] == {
+    "type": "array",
+    "items": {"type": "string"},
+    "minItems": 1,
+}
 PY
 
 printf 'Release artifacts verified.\n'

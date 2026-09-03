@@ -9,8 +9,10 @@ import pytest
 import efficio_pptx_contracts as sdk
 from efficio_pptx_contracts import _resources
 from efficio_pptx_contracts.errors import (
+    ContentModeError,
     EfficioComponentsError,
     MissingResourceError,
+    TemplateContractMigrationError,
     UnknownComponentTypeError,
 )
 
@@ -21,7 +23,9 @@ def test_import_exposes_only_stable_public_names() -> None:
     assert sorted(sdk.__all__) == sorted(
         [
             "EfficioComponentsError",
+            "ContentModeError",
             "MissingResourceError",
+            "TemplateContractMigrationError",
             "UnknownComponentTypeError",
             "load_component_registry",
             "list_component_types",
@@ -49,6 +53,9 @@ def test_import_exposes_only_stable_public_names() -> None:
             "validate_slide_tags",
             "validate_deck_tags",
             "is_ai_facing",
+            "is_data_bound",
+            "is_renderable",
+            "resolve_content_mode",
             "ai_visible_tag_names",
             "project_component_context",
             "project_deck_context",
@@ -68,10 +75,30 @@ def test_import_exposes_only_stable_public_names() -> None:
             "normalize_v2_component_content",
             "validate_v2_component_normalization",
             "validate_v2_component_semantics",
-            "RENDER_BEHAVIOR_TAG",
-            "AI_FACING_RENDER_BEHAVIOR",
+            "CONTENT_MODE_TAG",
+            "LEGACY_RENDER_BEHAVIOR_TAG",
+            "ContentMode",
             "PROMPT_INSTRUCTION_TAG",
             "TEMPLATE_INSTRUCTION_TAG",
+            "build_data_bound_component_contract",
+            "normalize_data_bound_component_content",
+            "validate_data_bound_component_contract_coherence",
+            "CURRENT_TEMPLATE_CONTRACT_REVISION",
+            "TEMPLATE_CONTRACT_REVISION_TAG",
+            "UNVERSIONED_TEMPLATE_CONTRACT_REVISION",
+            "RenameTagOperation",
+            "SetTagIfMissingOperation",
+            "TemplateContractMigration",
+            "TemplateContractMigrationCatalog",
+            "TemplateContractMigrationOperation",
+            "TemplateContractMigrationPlan",
+            "TemplateMigrationOperationType",
+            "TemplateTagPatch",
+            "TemplateTagScope",
+            "TemplateTagTarget",
+            "get_template_contract_migration_path",
+            "load_template_contract_migration_catalog",
+            "plan_template_contract_migration",
         ]
     )
     for name in sdk.__all__:
@@ -82,11 +109,36 @@ def test_list_component_types_is_sorted_and_complete() -> None:
     assert sdk.list_component_types() == EXPECTED_TYPES
 
 
-def test_is_ai_facing_only_for_render_by_component_type() -> None:
-    assert sdk.is_ai_facing({"efficio_render_behavior": "render_by_component_type"}) is True
-    for behavior in ("preserve", "remove_on_render", "", "bogus"):
-        assert sdk.is_ai_facing({"efficio_render_behavior": behavior}) is False
+def test_content_mode_classifiers_and_legacy_resolution() -> None:
+    assert sdk.is_ai_facing({"efficio_content_mode": "ai_generated"}) is True
+    assert sdk.is_data_bound({"efficio_content_mode": "data_bound"}) is True
+    assert sdk.is_renderable({"efficio_content_mode": "data_bound"}) is True
+    assert sdk.is_renderable({"efficio_content_mode": "preserve"}) is False
+    assert sdk.resolve_content_mode(
+        {"efficio_render_behavior": "render_by_component_type"}
+    ) is sdk.ContentMode.AI_GENERATED
+    assert sdk.resolve_content_mode(
+        {"efficio_render_behavior": "preserve"}
+    ) is sdk.ContentMode.PRESERVE
+    assert sdk.resolve_content_mode(
+        {"efficio_render_behavior": "remove_on_render"}
+    ) is sdk.ContentMode.REMOVE
+    assert sdk.resolve_content_mode(
+        {
+            "efficio_content_mode": "preserve",
+            "efficio_render_behavior": "preserve",
+        }
+    ) is sdk.ContentMode.PRESERVE
     assert sdk.is_ai_facing({}) is False
+    with pytest.raises(ContentModeError):
+        sdk.resolve_content_mode({"efficio_content_mode": "bogus"})
+    with pytest.raises(ContentModeError, match="conflict"):
+        sdk.resolve_content_mode(
+            {
+                "efficio_content_mode": "remove",
+                "efficio_render_behavior": "render_by_component_type",
+            }
+        )
 
 
 def test_ai_visible_tag_names_are_public_aliases() -> None:
@@ -108,13 +160,13 @@ def test_ai_visible_tag_names_are_public_aliases() -> None:
     # identity/runtime tags are not AI-visible
     assert "component_id" not in names
     # structural tags never appear in tag_instructions (render filter / instructions surface)
-    assert "render_behavior" not in names
+    assert "content_mode" not in names
     assert "prompt_instruction" not in names
 
 
 def test_project_component_context_is_ai_safe() -> None:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "title_01",
         "efficio_component_type": "text",
         "efficio_prompt_instruction": "Write a title.",
@@ -131,11 +183,11 @@ def test_project_component_context_is_ai_safe() -> None:
         "text_format": "plain",
         "max_chars": 30,
     }
-    # render-behavior (filtering) and prompt-instruction (surfaced) never duplicated;
+    # content-mode (filtering) and prompt-instruction (surfaced) never duplicated;
     # identity/runtime tags never leak — under neither raw nor aliased names.
     for excluded in (
-        "efficio_render_behavior",
-        "render_behavior",
+        "efficio_content_mode",
+        "content_mode",
         "efficio_prompt_instruction",
         "prompt_instruction",
         "efficio_component_id",
@@ -146,7 +198,7 @@ def test_project_component_context_is_ai_safe() -> None:
 
 def test_project_component_context_includes_target_chars_as_integer() -> None:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "title_01",
         "efficio_component_type": "text",
         "efficio_text_format": "plain",
@@ -162,7 +214,7 @@ def test_project_component_context_includes_target_chars_as_integer() -> None:
 
 def test_project_component_context_omits_missing_instructions() -> None:
     context = sdk.project_component_context(
-        "text", {"efficio_render_behavior": "render_by_component_type"}
+        "text", {"efficio_content_mode": "ai_generated"}
     )
     assert "instructions" not in context
     assert context["tag_context"] == {}
@@ -173,7 +225,7 @@ def test_project_component_context_omits_blank_instruction_variants() -> None:
         context = sdk.project_component_context(
             "text",
             {
-                "efficio_render_behavior": "render_by_component_type",
+                "efficio_content_mode": "ai_generated",
                 "efficio_prompt_instruction": blank,
             },
         )
@@ -184,7 +236,7 @@ def test_project_component_context_trims_nonblank_instruction() -> None:
     context = sdk.project_component_context(
         "text",
         {
-            "efficio_render_behavior": "render_by_component_type",
+            "efficio_content_mode": "ai_generated",
             "efficio_prompt_instruction": "  Write a title.  ",
         },
     )
@@ -193,7 +245,7 @@ def test_project_component_context_trims_nonblank_instruction() -> None:
 
 def test_project_component_context_omits_blank_tag_values() -> None:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_text_format": "plain",
         "efficio_max_chars": "   ",  # blank -> omitted
         "efficio_min_items": "\n",  # blank -> omitted
@@ -208,7 +260,7 @@ def test_project_component_context_omits_blank_tag_values() -> None:
 
 def test_project_component_context_parses_json_object_tags() -> None:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_table_config": '{"cells":[{"row":0,"col":0,"render_action":"render"}]}',
     }
     context = sdk.project_component_context("table", tags)
@@ -219,7 +271,7 @@ def test_project_component_context_parses_json_object_tags() -> None:
 
 def test_project_component_context_rejects_non_integer_value() -> None:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_max_chars": "thirty",
     }
     with pytest.raises(ValueError, match="efficio_max_chars"):
@@ -228,7 +280,7 @@ def test_project_component_context_rejects_non_integer_value() -> None:
 
 def test_project_component_context_rejects_invalid_json_value() -> None:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_table_config": "{not valid json",
     }
     with pytest.raises(ValueError, match="efficio_table_config"):
@@ -237,7 +289,7 @@ def test_project_component_context_rejects_invalid_json_value() -> None:
 
 def test_project_component_context_ignores_non_efficio_tags() -> None:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_text_format": "plain",
         "text_format": "bullets",  # foreign non-efficio tag never leaks in
     }
@@ -335,7 +387,7 @@ def test_slide_selection_schema_is_strict_object_items() -> None:
 
 def valid_text_tags(**overrides: str) -> dict[str, str]:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "title",
         "efficio_component_type": "text",
         "efficio_text_format": "plain",
@@ -531,7 +583,7 @@ def test_validate_text_plain_forbids_target_items() -> None:
 
 def valid_table_tags(**overrides: str) -> dict[str, str]:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "grid_1",
         "efficio_component_type": "table",
         "efficio_table_config": '{"cells":[{"row":0,"col":0,"render_action":"render"}]}',
@@ -752,7 +804,7 @@ def _category_chart_config(**overrides: object) -> dict:
 def valid_category_chart_tags(**config_overrides: object) -> dict[str, str]:
     config = _category_chart_config(**config_overrides)
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "revenue_chart",
         "efficio_component_type": "category_chart",
         "efficio_chart_type": config["chart_type"],
@@ -907,7 +959,10 @@ def test_validate_slide_tags_rejects_too_long_slide_name() -> None:
 
 
 def valid_deck_tags(**overrides: str) -> dict[str, str]:
-    tags = {"efficio_template_id": "acme_quarterly"}
+    tags = {
+        "efficio_template_id": "acme_quarterly",
+        "efficio_template_contract_revision": "1",
+    }
     tags.update(overrides)
     return tags
 
@@ -1009,3 +1064,5 @@ def test_missing_resource_raises_missing_resource_error() -> None:
 def test_error_hierarchy() -> None:
     assert issubclass(MissingResourceError, EfficioComponentsError)
     assert issubclass(UnknownComponentTypeError, EfficioComponentsError)
+    assert issubclass(ContentModeError, EfficioComponentsError)
+    assert issubclass(TemplateContractMigrationError, EfficioComponentsError)

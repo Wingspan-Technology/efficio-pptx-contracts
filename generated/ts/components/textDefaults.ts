@@ -2,7 +2,7 @@
 // Source: contracts/shared/component-default-tags.defaults.json + contracts/components/text/tags.defaults.json
 
 export const textDefaults = {
-  "efficio_render_behavior": "render_by_component_type",
+  "efficio_content_mode": "ai_generated",
   "efficio_component_type": "text",
   "efficio_text_format": "plain",
   "efficio_sizing_mode": "auto"

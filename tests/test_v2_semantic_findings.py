@@ -21,7 +21,7 @@ from efficio_pptx_contracts import (
 
 def _text_tags(*, max_chars: int = 10) -> dict[str, str]:
     return {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "summary",
         "efficio_component_type": "text",
         "efficio_text_format": "bullets",
@@ -64,7 +64,7 @@ def _table_tags() -> dict[str, str]:
         ],
     }
     return {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "facts",
         "efficio_component_type": "table",
         "efficio_table_config": json.dumps(config),

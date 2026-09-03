@@ -3,14 +3,14 @@ import type { ComponentType } from "./componentTypes.js";
 export const tagSchemas = {
   "category_chart": {
     "generated_from": [
-      "contracts/shared/render-behavior-tags.contract.json",
+      "contracts/shared/content-mode-tags.contract.json",
       "contracts/shared/component-base-tags.contract.json",
       "contracts/components/category_chart/tags.contract.json"
     ],
     "component_type": "category_chart",
     "description": "Category chart component tag contract. Flat tags define the chart to generate: its chart type, whether categories and series are fixed (labels/names supplied here) or AI-generated, count boundaries and targets, value formatting, and optional per-axis authoring guidance. There is no config object tag. Chart-shape validation, workbook data, and rendering are out of scope for this contract.",
     "required_tags": [
-      "efficio_render_behavior",
+      "efficio_content_mode",
       "efficio_component_id",
       "efficio_component_type",
       "efficio_chart_type",
@@ -36,10 +36,11 @@ export const tagSchemas = {
       "efficio_value_unit"
     ],
     "enums": {
-      "efficio_render_behavior": [
-        "render_by_component_type",
+      "efficio_content_mode": [
+        "ai_generated",
+        "data_bound",
         "preserve",
-        "remove_on_render"
+        "remove"
       ],
       "efficio_component_type": [
         "category_chart"
@@ -73,7 +74,7 @@ export const tagSchemas = {
       ]
     },
     "types": {
-      "efficio_render_behavior": "enum",
+      "efficio_content_mode": "enum",
       "efficio_component_id": "non_empty_string",
       "efficio_component_type": "enum",
       "efficio_content_role": "string",
@@ -117,7 +118,7 @@ export const tagSchemas = {
       }
     },
     "example": {
-      "efficio_render_behavior": "render_by_component_type",
+      "efficio_content_mode": "ai_generated",
       "efficio_component_id": "revenue_chart",
       "efficio_component_type": "category_chart",
       "efficio_content_role": "revenue_by_quarter",
@@ -139,14 +140,14 @@ export const tagSchemas = {
   },
   "table": {
     "generated_from": [
-      "contracts/shared/render-behavior-tags.contract.json",
+      "contracts/shared/content-mode-tags.contract.json",
       "contracts/shared/component-base-tags.contract.json",
       "contracts/components/table/tags.contract.json"
     ],
     "component_type": "table",
     "description": "Generic table component tag contract. Table-shape-level metadata only: a single object tag describing the table's cells and optional row/column policies. No nested child components.",
     "required_tags": [
-      "efficio_render_behavior",
+      "efficio_content_mode",
       "efficio_component_id",
       "efficio_component_type",
       "efficio_table_config"
@@ -156,17 +157,18 @@ export const tagSchemas = {
       "efficio_prompt_instruction"
     ],
     "enums": {
-      "efficio_render_behavior": [
-        "render_by_component_type",
+      "efficio_content_mode": [
+        "ai_generated",
+        "data_bound",
         "preserve",
-        "remove_on_render"
+        "remove"
       ],
       "efficio_component_type": [
         "table"
       ]
     },
     "types": {
-      "efficio_render_behavior": "enum",
+      "efficio_content_mode": "enum",
       "efficio_component_id": "non_empty_string",
       "efficio_component_type": "enum",
       "efficio_content_role": "string",
@@ -339,7 +341,7 @@ export const tagSchemas = {
       }
     },
     "example": {
-      "efficio_render_behavior": "render_by_component_type",
+      "efficio_content_mode": "ai_generated",
       "efficio_component_id": "comparison_table",
       "efficio_component_type": "table",
       "efficio_content_role": "comparison_table",
@@ -349,14 +351,14 @@ export const tagSchemas = {
   },
   "text": {
     "generated_from": [
-      "contracts/shared/render-behavior-tags.contract.json",
+      "contracts/shared/content-mode-tags.contract.json",
       "contracts/shared/component-base-tags.contract.json",
       "contracts/components/text/tags.contract.json"
     ],
     "component_type": "text",
     "description": "Text component tag contract.",
     "required_tags": [
-      "efficio_render_behavior",
+      "efficio_content_mode",
       "efficio_component_id",
       "efficio_component_type",
       "efficio_text_format",
@@ -375,10 +377,11 @@ export const tagSchemas = {
       "efficio_target_chars_per_item"
     ],
     "enums": {
-      "efficio_render_behavior": [
-        "render_by_component_type",
+      "efficio_content_mode": [
+        "ai_generated",
+        "data_bound",
         "preserve",
-        "remove_on_render"
+        "remove"
       ],
       "efficio_component_type": [
         "text"
@@ -395,7 +398,7 @@ export const tagSchemas = {
       ]
     },
     "types": {
-      "efficio_render_behavior": "enum",
+      "efficio_content_mode": "enum",
       "efficio_component_id": "non_empty_string",
       "efficio_component_type": "enum",
       "efficio_content_role": "string",
@@ -413,7 +416,7 @@ export const tagSchemas = {
     },
     "json_schemas": {},
     "example": {
-      "efficio_render_behavior": "render_by_component_type",
+      "efficio_content_mode": "ai_generated",
       "efficio_component_id": "title",
       "efficio_component_type": "text",
       "efficio_content_role": "slide_title",

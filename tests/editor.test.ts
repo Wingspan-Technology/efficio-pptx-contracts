@@ -11,7 +11,7 @@ import {
   getCompatibilityTagSchemaMap,
   getDeckTagContract,
   getDeckTagDefaults,
-  getRenderBehaviorValues,
+  getContentModeValues,
   getSlideTagContract,
   getSlideTagDefaults,
   getTagEnumValues,
@@ -22,6 +22,7 @@ import {
   validateTextSizingSemantics,
   DECK_TEMPLATE_ID_TAG,
   DECK_INITIALIZED_TAG,
+  DECK_TEMPLATE_CONTRACT_REVISION_TAG,
   DECK_SLIDE_SELECTION_GROUPS_TAG,
   SLIDE_ID_TAG,
   SLIDE_ROLE_TAG,
@@ -93,13 +94,18 @@ describe("editor SDK component metadata", () => {
     expect(freshProperties.cells).not.toBe("mutated");
   });
 
-  it("derives common tags, all known tags, and render behavior values", () => {
+  it("derives common tags, all known tags, and content mode values", () => {
     const common = getCommonComponentTags();
     expect(common.has("efficio_component_type")).toBe(true);
-    expect(common.has("efficio_render_behavior")).toBe(true);
+    expect(common.has("efficio_content_mode")).toBe(true);
     const all = getAllKnownComponentTags();
     expect(all.has("efficio_text_format")).toBe(true);
-    expect(getRenderBehaviorValues()).toContain("render_by_component_type");
+    expect(getContentModeValues()).toEqual([
+      "ai_generated",
+      "data_bound",
+      "preserve",
+      "remove",
+    ]);
   });
 
   it("derives enum values for boolean and enum tags", () => {
@@ -114,7 +120,7 @@ describe("editor SDK compatibility tag schemas", () => {
     const schema = getComponentCompatibilityTagSchema("text");
     expect(schema.component_type).toBe("text");
     expect(schema.required_tags).toContain("efficio_component_type");
-    expect(schema.enums.efficio_render_behavior).toContain("preserve");
+    expect(schema.enums.efficio_content_mode).toContain("preserve");
   });
 
   it("throws for unknown compatibility schema", () => {
@@ -130,14 +136,14 @@ describe("editor SDK compatibility tag schemas", () => {
     schema.component_type = "mutated";
     schema.types.efficio_component_type = "mutated";
     (schema.required_tags as string[])[0] = "mutated";
-    (schema.enums.efficio_render_behavior as string[])[0] = "mutated";
+    (schema.enums.efficio_content_mode as string[])[0] = "mutated";
 
     expect(getComponentCompatibilityTagSchema("text").component_type).toBe("text");
     expect(getComponentCompatibilityTagSchema("text").types.efficio_component_type).not.toBe(
       "mutated"
     );
     expect(getComponentCompatibilityTagSchema("text").required_tags[0]).not.toBe("mutated");
-    expect(getComponentCompatibilityTagSchema("text").enums.efficio_render_behavior[0]).not.toBe(
+    expect(getComponentCompatibilityTagSchema("text").enums.efficio_content_mode[0]).not.toBe(
       "mutated"
     );
 
@@ -178,6 +184,9 @@ describe("editor SDK deck surface", () => {
   it("re-exports the deck tag constants", () => {
     expect(DECK_TEMPLATE_ID_TAG).toBe("efficio_template_id");
     expect(DECK_INITIALIZED_TAG).toBe("efficio_initialized");
+    expect(DECK_TEMPLATE_CONTRACT_REVISION_TAG).toBe(
+      "efficio_template_contract_revision",
+    );
     expect(DECK_SLIDE_SELECTION_GROUPS_TAG).toBe("efficio_slide_selection_groups");
   });
 
@@ -202,6 +211,15 @@ describe("editor SDK deck surface", () => {
     expect(entity.type).toBe("array");
     expect(entity.required).toBe(false);
     expect(entity.schema.type).toBe("array");
+  });
+
+  it("exposes the hidden current template contract revision", () => {
+    const entity = getDeckTagContract().tags.efficio_template_contract_revision;
+    expect(entity.type).toBe("integer");
+    expect(entity.required).toBe(true);
+    expect(entity.minimum).toBe(1);
+    expect(entity.ui.hidden).toBe(true);
+    expect(getDeckTagDefaults().efficio_template_contract_revision).toBe("1");
   });
 
   it("exposes the deck tag contract as a defensive copy", () => {

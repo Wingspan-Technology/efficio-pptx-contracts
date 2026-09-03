@@ -11,6 +11,7 @@ import {
 } from "./contractLib.js";
 import { readJson } from "./generatorIo.js";
 import { presentationDeckDir, presentationSlideDir } from "./generatorPaths.js";
+import { validateStoredTagValue } from "./storedTagValueContractLib.js";
 
 export async function loadSlideTagSchema(): Promise<JsonObject> {
   const label = "contracts/presentation/slide/tags.contract.json";
@@ -30,9 +31,8 @@ export async function loadSlideDefaults(slideSchema: JsonObject): Promise<Record
   return validateSlideDefaults(defaults, slideSchema, label);
 }
 
-// Pure slide-defaults validation against the slide tag schema: every key must be
-// a known slide tag, every value a string, and enum values must match. Shared by
-// the loader (above) and the standalone contract validation.
+// Pure presentation-defaults validation against the native tag contract. Shared
+// by the slide/deck loaders and the standalone contract validation.
 export function validateSlideDefaults(
   defaults: JsonObject,
   slideSchema: JsonObject,
@@ -43,11 +43,7 @@ export function validateSlideDefaults(
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(defaults)) {
     if (!knownTags.has(key)) throw new Error(`${label}.${key} is not a known slide tag.`);
-    if (typeof value !== "string") throw new Error(`${label}.${key} must be a string value.`);
-    const enumValues = getRecord(tags, key).enum;
-    if (Array.isArray(enumValues) && !enumValues.includes(value)) {
-      throw new Error(`${label}.${key} must be one of ${JSON.stringify(enumValues)}.`);
-    }
+    validateStoredTagValue(key, value, getRecord(tags, key), label);
     result[key] = value;
   }
 

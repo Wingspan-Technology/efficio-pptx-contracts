@@ -7,8 +7,7 @@ import { componentMetadata } from "../../generated/ts/components/componentMetada
 import { componentTypes } from "../../generated/ts/components/componentTypes.js";
 import { tagSchemas } from "../../generated/ts/components/tagSchemas.js";
 import { copyContractValue } from "./contract-copy.js";
-
-const RENDER_BEHAVIOR_TAG = "efficio_render_behavior";
+import { CONTENT_MODE_TAG } from "./content-mode.js";
 
 // ---- Component metadata types (SDK is the type authority) ----
 
@@ -29,6 +28,7 @@ export type TagEntity = {
   ui?: {
     order?: number;
     multiline?: boolean;
+    hidden?: boolean;
   };
 };
 
@@ -145,7 +145,7 @@ export function getOrderedComponentTags(componentType: string): string[] {
   });
 }
 
-// Tags present in every component (e.g. render behavior, component id/type).
+// Tags present in every component (e.g. content mode, component id/type).
 export function getCommonComponentTags(): Set<string> {
   const [first, ...rest] = listComponentTypes();
   if (!first) {
@@ -216,12 +216,12 @@ export function getTagEnumValues(entity: TagEntity): string[] | undefined {
   return undefined;
 }
 
-export function getRenderBehaviorValues(): string[] {
+export function getContentModeValues(): string[] {
   const first = listComponentTypes()[0];
   if (!first) {
     return [];
   }
-  const entity = getComponentTagContract(first)[RENDER_BEHAVIOR_TAG];
+  const entity = getComponentTagContract(first)[CONTENT_MODE_TAG];
   return entity ? getTagEnumValues(entity) ?? [] : [];
 }
 

@@ -183,7 +183,7 @@
     }
   },
   "example": {
-    "efficio_render_behavior": "render_by_component_type",
+    "efficio_content_mode": "ai_generated",
     "efficio_component_id": "revenue_chart",
     "efficio_component_type": "category_chart",
     "efficio_content_role": "revenue_by_quarter",

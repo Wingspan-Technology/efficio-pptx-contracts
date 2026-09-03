@@ -19,6 +19,15 @@
       ],
       "description": "Marks this presentation as initialized for editing with the Efficio Template Editor. Only the editor's first-run initialization writes it."
     },
+    "efficio_template_contract_revision": {
+      "type": "integer",
+      "required": true,
+      "minimum": 1,
+      "description": "Monotonic template contract revision applied to this PowerPoint file. Stored as an integer string and maintained by migration tooling.",
+      "ui": {
+        "hidden": true
+      }
+    },
     "efficio_template_instruction": {
       "type": "string",
       "required": false,

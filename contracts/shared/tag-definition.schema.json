@@ -24,7 +24,8 @@
       "additionalProperties": false,
       "properties": {
         "order": { "type": "number" },
-        "multiline": { "type": "boolean" }
+        "multiline": { "type": "boolean" },
+        "hidden": { "type": "boolean" }
       }
     },
     "ai": {

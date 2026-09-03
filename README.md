@@ -54,8 +54,9 @@ ordinary standalone slides.
 Every slide requires `efficio_slide_role`: `content` identifies a normal
 presentation slide, while `separator` identifies a section divider. Role is
 descriptive metadata only and does not control inclusion, placement, ordering,
-or grouping; bundle groups remain responsible for all-or-none selection.
-Templates must set the role before their consumers adopt contracts 0.4.0.
+or grouping; bundle groups remain responsible for all-or-none selection. The
+revision-0 template migration assigns `content` when an existing slide has no
+role.
 
 Generated TypeScript modules and bundled Python JSON resources are package
 internals. Consumers must use the public SDK entrypoints instead of importing
@@ -78,6 +79,22 @@ validation APIs are applied.
 
 All public TypeScript metadata accessors return independent values. Consumers
 may modify a returned object locally without changing subsequent SDK results.
+
+Every component uses `efficio_content_mode`: `ai_generated`, `data_bound`,
+`preserve`, or `remove`. The Python data-bound contract API keeps the renderer's
+required structure while deliberately omitting AI sizing, count, sign, target,
+and formatting limits from submitted content validation. The current component
+configuration tags remain required; removing or hiding AI-only authoring fields
+for data-bound components belongs to the later Template Editor integration.
+
+Template file compatibility is tracked independently from the package version by
+the required deck tag `efficio_template_contract_revision`. Append-only adjacent
+migrations are authored under `contracts/presentation/template/migrations/`.
+Both SDKs expose the derived current revision, immutable migration catalog data,
+and a pure planner that returns explicit tag set/remove patches over opaque
+deck, slide, and shape target references. Consumers apply patches to a copy,
+then run normal contract validation and template import. A current-revision
+template that still contains a retired source tag is rejected.
 
 ## Development
 

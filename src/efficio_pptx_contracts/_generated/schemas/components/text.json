@@ -1,13 +1,13 @@
 {
   "generated_from": [
-    "contracts/shared/render-behavior-tags.contract.json",
+    "contracts/shared/content-mode-tags.contract.json",
     "contracts/shared/component-base-tags.contract.json",
     "contracts/components/text/tags.contract.json"
   ],
   "component_type": "text",
   "description": "Text component tag contract.",
   "required_tags": [
-    "efficio_render_behavior",
+    "efficio_content_mode",
     "efficio_component_id",
     "efficio_component_type",
     "efficio_text_format",
@@ -26,10 +26,11 @@
     "efficio_target_chars_per_item"
   ],
   "enums": {
-    "efficio_render_behavior": [
-      "render_by_component_type",
+    "efficio_content_mode": [
+      "ai_generated",
+      "data_bound",
       "preserve",
-      "remove_on_render"
+      "remove"
     ],
     "efficio_component_type": [
       "text"
@@ -46,7 +47,7 @@
     ]
   },
   "types": {
-    "efficio_render_behavior": "enum",
+    "efficio_content_mode": "enum",
     "efficio_component_id": "non_empty_string",
     "efficio_component_type": "enum",
     "efficio_content_role": "string",
@@ -64,7 +65,7 @@
   },
   "json_schemas": {},
   "example": {
-    "efficio_render_behavior": "render_by_component_type",
+    "efficio_content_mode": "ai_generated",
     "efficio_component_id": "title",
     "efficio_component_type": "text",
     "efficio_content_role": "slide_title",

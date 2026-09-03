@@ -16,7 +16,7 @@ from efficio_pptx_contracts import (
 
 def _text_tags(**overrides: str) -> dict[str, str]:
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "title_1",
         "efficio_component_type": "text",
         "efficio_text_format": "plain",
@@ -33,7 +33,7 @@ def _text_tags(**overrides: str) -> dict[str, str]:
 
 def _table_tags(config: dict) -> dict[str, str]:
     return {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "table_1",
         "efficio_component_type": "table",
         "efficio_table_config": json.dumps(config),
@@ -407,7 +407,7 @@ def _chart_config(**overrides: object) -> dict:
 def _chart_flat_tags(**overrides: object) -> dict[str, str]:
     config = _chart_config(**overrides)
     tags = {
-        "efficio_render_behavior": "render_by_component_type",
+        "efficio_content_mode": "ai_generated",
         "efficio_component_id": "chart_1",
         "efficio_component_type": "category_chart",
         "efficio_chart_type": config["chart_type"],
