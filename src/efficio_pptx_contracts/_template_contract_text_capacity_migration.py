@@ -99,16 +99,19 @@ def _migrate_text_tags(tags: dict[str, str]) -> None:
     text_format = tags.get("efficio_text_format", "plain")
     if text_format not in _TEXT_FORMATS:
         raise _error("text component text format is invalid")
-    min_items = values[_MIN_ITEMS] or 1
-    max_items = 1 if text_format == "plain" else values[_MAX_ITEMS] or max_lines
-    target_items = values[_TARGET_ITEMS]
+    is_plain = text_format == "plain"
+    min_items = 1 if is_plain else values[_MIN_ITEMS] or 1
+    max_items = 1 if is_plain else values[_MAX_ITEMS] or max_lines
+    target_items = None if is_plain else values[_TARGET_ITEMS]
     _validate_item_limits(text_format, min_items, max_items, target_items, max_lines, "text component")
 
     tags[_MAX_LINES] = str(max_lines)
     tags[_CHARS_PER_LINE] = str(chars_per_line)
     tags[_MIN_ITEMS] = str(min_items)
     tags[_MAX_ITEMS] = str(max_items)
-    if target_items is not None:
+    if target_items is None:
+        tags.pop(_TARGET_ITEMS, None)
+    else:
         tags[_TARGET_ITEMS] = str(target_items)
     for field in _RETIRED_TEXT_FIELDS:
         tags.pop(field, None)
@@ -156,13 +159,14 @@ def _migrate_table_cell(cell: dict[str, object], index: int) -> None:
         raise _error(f"table cell {index} text_format is invalid")
 
     line_capacity = _resolve_table_line_capacity(values, text_format, index)
-    min_items = values["min_items"] or 1
+    is_plain = text_format == "plain"
+    min_items = 1 if is_plain else values["min_items"] or 1
     max_items = (
         1
-        if text_format == "plain"
+        if is_plain
         else values["max_items"] or (line_capacity[0] if line_capacity else None)
     )
-    target_items = values["target_items"]
+    target_items = None if is_plain else values["target_items"]
     _validate_item_limits(
         text_format,
         min_items,
@@ -173,8 +177,11 @@ def _migrate_table_cell(cell: dict[str, object], index: int) -> None:
     )
 
     _remove_retired_table_fields(cell)
+    if is_plain:
+        cell.pop("target_items", None)
     if line_capacity is not None:
         cell["max_lines"], cell["estimated_chars_per_line"] = line_capacity
+    if line_capacity is not None or is_plain:
         cell["min_items"] = min_items
         assert max_items is not None
         cell["max_items"] = max_items
