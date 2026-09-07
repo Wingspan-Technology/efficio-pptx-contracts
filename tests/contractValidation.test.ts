@@ -144,6 +144,44 @@ describe("validateAllContracts — structured report over an injected contracts 
       .toBe(true);
   });
 
+  it("accepts an empty operations array but still requires the field", async () => {
+    const dir = await copyContracts();
+    const revisionOnly = path.join(
+      dir,
+      "presentation",
+      "template",
+      "migrations",
+      "0002-to-0003.json",
+    );
+
+    // A revision-only migration is authored with operations: [].
+    let report = await validateAllContracts({ contractsDir: dir });
+    expect(report.ok).toBe(true);
+
+    await mutateJson(revisionOnly, (migration) => {
+      delete migration.operations;
+    });
+    report = await validateAllContracts({ contractsDir: dir });
+    expect(report.issues.some((issue) => /must contain exactly/.test(issue.message))).toBe(true);
+
+    await mutateJson(revisionOnly, (migration) => {
+      migration.operations = {};
+    });
+    report = await validateAllContracts({ contractsDir: dir });
+    expect(report.issues.some((issue) => /operations must be an array/.test(issue.message)))
+      .toBe(true);
+
+    await mutateJson(revisionOnly, (migration) => {
+      migration.operations = [{ type: "unknown", scope: "deck" }];
+    });
+    report = await validateAllContracts({ contractsDir: dir });
+    expect(
+      report.issues.some((issue) =>
+        /must be migrate_text_capacity, rename_tag, or set_tag_if_missing/.test(issue.message),
+      ),
+    ).toBe(true);
+  });
+
   it("rejects conflicting operations within one migration", async () => {
     const dir = await copyContracts();
     const migration = path.join(

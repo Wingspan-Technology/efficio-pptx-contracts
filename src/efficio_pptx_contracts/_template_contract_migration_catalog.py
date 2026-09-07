@@ -67,6 +67,9 @@ TemplateContractMigrationOperation: TypeAlias = (
 
 @dataclass(frozen=True, slots=True)
 class TemplateContractMigration:
+    """One adjacent revision step. ``operations`` is empty for a revision-only
+    migration that introduces optional authored metadata without rewriting tags."""
+
     from_revision: int
     to_revision: int
     description: str
@@ -167,7 +170,7 @@ def _parse_migration(raw: object) -> TemplateContractMigration:
     if (
         not _is_revision(source) or not _is_revision(target) or target != source + 1
         or not isinstance(description, str) or not description.strip()
-        or not isinstance(operations_raw, list) or not operations_raw
+        or not isinstance(operations_raw, list)
     ):
         raise TemplateContractMigrationError("template migration content is invalid")
     operations = tuple(_parse_operation(value) for value in operations_raw)

@@ -169,8 +169,11 @@ export function validateTemplateContractMigration(
   if (typeof migration.description !== "string" || migration.description.trim() === "") {
     throw new Error(`${label}.description must be a non-empty string`);
   }
-  if (!Array.isArray(migration.operations) || migration.operations.length === 0) {
-    throw new Error(`${label}.operations must be a non-empty array`);
+  // A revision-only migration (e.g. one that adds optional authored metadata with
+  // no tag rewrites) is expressed as an empty operations array; the field itself
+  // stays required so a missing or malformed value is still rejected.
+  if (!Array.isArray(migration.operations)) {
+    throw new Error(`${label}.operations must be an array`);
   }
   const touched = new Set<string>();
   migration.operations.forEach((operation, index) => {

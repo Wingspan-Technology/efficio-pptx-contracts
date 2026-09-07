@@ -14,4 +14,5 @@ export * from "./editor/table-config-semantics.js";
 export * from "./editor/slide-deck-contracts.js";
 export * from "./editor/content-mode.js";
 export * from "./editor/classification-schemes.js";
+export * from "./editor/slide-archetypes.js";
 export * from "./editor/template-contract-migrations.js";

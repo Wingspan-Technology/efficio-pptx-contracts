@@ -34,5 +34,6 @@ authored or generated internals directly.
 
 ## Releases
 
+- [0.7.0 — template-authored slide archetypes](2026-09-07-1703-v0.7.0-slide-archetypes.md)
 - [0.6.1 — plain-text capacity migration correction](2026-09-07-1053-v0.6.1-plain-text-capacity-migration.md)
 - [0.6.0 — text capacity and categorical fill](2026-09-06-1859-v0.6.0-text-capacity-and-categorical-fill.md)

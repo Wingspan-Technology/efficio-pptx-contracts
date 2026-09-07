@@ -22,7 +22,39 @@ from efficio_pptx_contracts import (
     plan_template_contract_migration,
 )
 
+from efficio_pptx_contracts._template_contract_migration_catalog import _parse_migration
+
 FIXTURE = Path(__file__).parent / "fixtures" / "template-contract-migration-cases.json"
+
+
+def _revision_only_migration(**overrides: object) -> dict[str, object]:
+    migration: dict[str, object] = {
+        "format_version": 1,
+        "contract_type": "template_contract_migration",
+        "from_revision": 2,
+        "to_revision": 3,
+        "description": "Revision only.",
+        "operations": [],
+    }
+    migration.update(overrides)
+    return migration
+
+
+def test_catalog_parser_accepts_empty_operations_but_still_requires_the_field() -> None:
+    assert _parse_migration(_revision_only_migration()).operations == ()
+
+    missing = _revision_only_migration()
+    del missing["operations"]
+    invalid: list[dict[str, object]] = [
+        missing,
+        _revision_only_migration(operations={}),
+        _revision_only_migration(operations="[]"),
+        _revision_only_migration(operations=None),
+        _revision_only_migration(operations=[{"type": "unknown", "scope": "deck"}]),
+    ]
+    for candidate in invalid:
+        with pytest.raises(TemplateContractMigrationError):
+            _parse_migration(candidate)
 
 
 def _targets(raw: list[dict[str, object]]) -> list[TemplateTagTarget]:
@@ -54,11 +86,12 @@ def _plan_dict(plan: TemplateContractMigrationPlan) -> dict[str, object]:
 
 def test_catalog_is_contiguous_immutable_and_derived() -> None:
     catalog = load_template_contract_migration_catalog()
-    assert catalog.current_revision == CURRENT_TEMPLATE_CONTRACT_REVISION == 2
+    assert catalog.current_revision == CURRENT_TEMPLATE_CONTRACT_REVISION == 3
     assert catalog.revision_tag == TEMPLATE_CONTRACT_REVISION_TAG
     assert [(item.from_revision, item.to_revision) for item in catalog.migrations] == [
         (0, 1),
         (1, 2),
+        (2, 3),
     ]
     assert get_template_contract_migration_path(0) == catalog.migrations
     rename = catalog.migrations[0].operations[2]
@@ -66,6 +99,15 @@ def test_catalog_is_contiguous_immutable_and_derived() -> None:
     assert isinstance(catalog.migrations[1].operations[0], MigrateTextCapacityOperation)
     with pytest.raises(TypeError):
         rename.value_map["x"] = "y"  # type: ignore[index]
+
+
+def test_revision_only_migration_carries_no_operations() -> None:
+    catalog = load_template_contract_migration_catalog()
+    revision_only = catalog.migrations[2]
+    assert (revision_only.from_revision, revision_only.to_revision) == (2, 3)
+    assert revision_only.operations == ()
+    assert get_template_contract_migration_path(2) == (revision_only,)
+    assert get_template_contract_migration_path(3) == ()
 
 
 def test_python_planner_matches_shared_success_fixtures_without_mutation() -> None:
@@ -106,7 +148,7 @@ def test_planner_rejects_future_revision_and_duplicate_targets() -> None:
                 TemplateTagTarget(
                     "deck",
                     TemplateTagScope.DECK,
-                    {TEMPLATE_CONTRACT_REVISION_TAG: "3"},
+                    {TEMPLATE_CONTRACT_REVISION_TAG: "4"},
                 )
             ]
         )
