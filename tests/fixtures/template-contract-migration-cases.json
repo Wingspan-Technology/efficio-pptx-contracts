@@ -202,6 +202,59 @@
       }
     },
     {
+      "name": "plain text keeps its format and sizing mode while stale item counts are normalized",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:slide_001/plain-body",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "text",
+            "efficio_text_format": "plain",
+            "efficio_sizing_mode": "auto",
+            "efficio_max_chars": "120",
+            "efficio_min_items": "2",
+            "efficio_max_items": "3",
+            "efficio_target_items": "2",
+            "efficio_min_chars_per_item": "1",
+            "efficio_max_chars_per_item": "40"
+          }
+        }
+      ],
+      "expected": {
+        "from_revision": 1,
+        "to_revision": 2,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "2" },
+            "remove_tags": []
+          },
+          {
+            "target_ref": "shape:slide_001/plain-body",
+            "scope": "shape",
+            "set_tags": {
+              "efficio_estimated_chars_per_line": "40",
+              "efficio_max_items": "1",
+              "efficio_max_lines": "3",
+              "efficio_min_items": "1"
+            },
+            "remove_tags": [
+              "efficio_max_chars",
+              "efficio_max_chars_per_item",
+              "efficio_min_chars_per_item",
+              "efficio_target_items"
+            ]
+          }
+        ]
+      }
+    },
+    {
       "name": "legacy line-based text capacity is retained exactly",
       "targets": [
         {
@@ -268,6 +321,44 @@
             "target_ref": "deck",
             "scope": "deck",
             "set_tags": { "efficio_template_contract_revision": "2" },
+            "remove_tags": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "plain table cells keep their format while stale item counts are normalized",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:slide_001/plain-table",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "table",
+            "efficio_table_config": "{\"cells\":[{\"col\":0,\"max_items\":3,\"min_items\":2,\"render_action\":\"render\",\"row\":0,\"target_items\":2,\"text_format\":\"plain\"}]}"
+          }
+        }
+      ],
+      "expected": {
+        "from_revision": 1,
+        "to_revision": 2,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "2" },
+            "remove_tags": []
+          },
+          {
+            "target_ref": "shape:slide_001/plain-table",
+            "scope": "shape",
+            "set_tags": {
+              "efficio_table_config": "{\"cells\":[{\"col\":0,\"max_items\":1,\"min_items\":1,\"render_action\":\"render\",\"row\":0,\"text_format\":\"plain\"}]}"
+            },
             "remove_tags": []
           }
         ]

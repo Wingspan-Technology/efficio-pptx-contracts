@@ -72,16 +72,18 @@ function migrateTextTags(tags: Record<string, string>): void {
   });
   const textFormat = tags.efficio_text_format ?? "plain";
   if (!TEXT_FORMATS.has(textFormat)) fail("text component text format is invalid");
-  const minItems = values[MIN_ITEMS] ?? 1;
-  const maxItems = textFormat === "plain" ? 1 : values[MAX_ITEMS] ?? maxLines;
-  const targetItems = values[TARGET_ITEMS];
+  const isPlain = textFormat === "plain";
+  const minItems = isPlain ? 1 : values[MIN_ITEMS] ?? 1;
+  const maxItems = isPlain ? 1 : values[MAX_ITEMS] ?? maxLines;
+  const targetItems = isPlain ? undefined : values[TARGET_ITEMS];
   validateItemLimits(textFormat, minItems, maxItems, targetItems, maxLines, "text component");
 
   tags[MAX_LINES] = String(maxLines);
   tags[CHARS_PER_LINE] = String(charsPerLine);
   tags[MIN_ITEMS] = String(minItems);
   tags[MAX_ITEMS] = String(maxItems);
-  if (targetItems !== undefined) tags[TARGET_ITEMS] = String(targetItems);
+  if (targetItems === undefined) delete tags[TARGET_ITEMS];
+  else tags[TARGET_ITEMS] = String(targetItems);
   for (const field of RETIRED_TEXT_FIELDS) delete tags[field];
 }
 
@@ -125,9 +127,10 @@ function migrateTableCell(cell: JsonObject, index: number): void {
     fail(`table cell ${index} text_format is invalid`);
   }
   const lineCapacity = resolveTableLineCapacity(values, textFormat, index);
-  const minItems = values.min_items ?? 1;
-  const maxItems = textFormat === "plain" ? 1 : values.max_items ?? lineCapacity?.maxLines;
-  const targetItems = values.target_items;
+  const isPlain = textFormat === "plain";
+  const minItems = isPlain ? 1 : values.min_items ?? 1;
+  const maxItems = isPlain ? 1 : values.max_items ?? lineCapacity?.maxLines;
+  const targetItems = isPlain ? undefined : values.target_items;
   validateItemLimits(
     textFormat,
     minItems,
@@ -138,9 +141,12 @@ function migrateTableCell(cell: JsonObject, index: number): void {
   );
 
   removeRetiredTableFields(cell);
+  if (isPlain) delete cell.target_items;
   if (lineCapacity !== undefined) {
     cell.max_lines = lineCapacity.maxLines;
     cell.estimated_chars_per_line = lineCapacity.charsPerLine;
+  }
+  if (lineCapacity !== undefined || isPlain) {
     cell.min_items = minItems;
     cell.max_items = maxItems;
   }
