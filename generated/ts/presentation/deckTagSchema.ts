@@ -200,6 +200,43 @@ export const deckTagSchema = {
           "additionalProperties": false
         }
       }
+    },
+    "efficio_slide_archetypes": {
+      "type": "array",
+      "required": false,
+      "description": "Optional deck-wide registry of slide archetype definitions. Stored as a JSON array; absent, blank, or an empty array means the template declares no archetype restrictions and every slide stays applicable.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "archetype_id",
+            "name"
+          ],
+          "properties": {
+            "archetype_id": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+              "description": "Stable lower-snake-case identifier referenced by slide archetype assignments."
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "\\S",
+              "description": "Short human-readable archetype name. Names need not be unique."
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 1000,
+              "pattern": "\\S",
+              "description": "Optional human-readable explanation of when this archetype applies."
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     }
   }
 } as const;
@@ -212,7 +249,8 @@ export const deckTagKeys = [
   "efficio_template_contract_revision",
   "efficio_template_instruction",
   "efficio_classification_schemes",
-  "efficio_slide_selection_groups"
+  "efficio_slide_selection_groups",
+  "efficio_slide_archetypes"
 ] as const;
 
 export const DECK_TEMPLATE_ID_TAG = "efficio_template_id";
@@ -221,3 +259,4 @@ export const DECK_TEMPLATE_CONTRACT_REVISION_TAG = "efficio_template_contract_re
 export const DECK_TEMPLATE_INSTRUCTION_TAG = "efficio_template_instruction";
 export const DECK_CLASSIFICATION_SCHEMES_TAG = "efficio_classification_schemes";
 export const DECK_SLIDE_SELECTION_GROUPS_TAG = "efficio_slide_selection_groups";
+export const DECK_SLIDE_ARCHETYPES_TAG = "efficio_slide_archetypes";

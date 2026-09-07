@@ -1,0 +1,669 @@
+{
+  "comment": "Shared TypeScript/Python slide-archetype cases. `null` stands for an absent tag value; a string is stored PowerPoint tag text; an array is an already-decoded value.",
+  "registry_cases": [
+    {
+      "name": "missing registry declares no archetypes",
+      "raw": null,
+      "expected": []
+    },
+    {
+      "name": "blank registry declares no archetypes",
+      "raw": "   ",
+      "expected": []
+    },
+    {
+      "name": "empty stored array declares no archetypes",
+      "raw": "[]",
+      "expected": []
+    },
+    {
+      "name": "empty decoded array declares no archetypes",
+      "raw": [],
+      "expected": []
+    },
+    {
+      "name": "one definition with an optional description",
+      "raw": "[{\"archetype_id\":\"pitch_deck\",\"name\":\"Pitch deck\",\"description\":\"Investor narrative.\"}]",
+      "expected": [
+        {
+          "archetype_id": "pitch_deck",
+          "name": "Pitch deck",
+          "description": "Investor narrative."
+        }
+      ]
+    },
+    {
+      "name": "one definition without a description",
+      "raw": "[{\"archetype_id\":\"pitch_deck\",\"name\":\"Pitch deck\"}]",
+      "expected": [
+        {
+          "archetype_id": "pitch_deck",
+          "name": "Pitch deck"
+        }
+      ]
+    },
+    {
+      "name": "multiple definitions keep authored order",
+      "raw": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]",
+      "expected": [
+        {
+          "archetype_id": "pitch_deck",
+          "name": "Pitch deck",
+          "description": "Investor narrative."
+        },
+        {
+          "archetype_id": "quarterly_review",
+          "name": "Quarterly review"
+        },
+        {
+          "archetype_id": "training",
+          "name": "Training"
+        }
+      ]
+    },
+    {
+      "name": "an already-decoded array is accepted",
+      "raw": [
+        {
+          "archetype_id": "pitch_deck",
+          "name": "Pitch deck",
+          "description": "Investor narrative."
+        },
+        {
+          "archetype_id": "quarterly_review",
+          "name": "Quarterly review"
+        },
+        {
+          "archetype_id": "training",
+          "name": "Training"
+        }
+      ],
+      "expected": [
+        {
+          "archetype_id": "pitch_deck",
+          "name": "Pitch deck",
+          "description": "Investor narrative."
+        },
+        {
+          "archetype_id": "quarterly_review",
+          "name": "Quarterly review"
+        },
+        {
+          "archetype_id": "training",
+          "name": "Training"
+        }
+      ]
+    },
+    {
+      "name": "names may repeat when archetype IDs are unique",
+      "raw": "[{\"archetype_id\":\"pitch_deck\",\"name\":\"Deck\"},{\"archetype_id\":\"training\",\"name\":\"Deck\"}]",
+      "expected": [
+        {
+          "archetype_id": "pitch_deck",
+          "name": "Deck"
+        },
+        {
+          "archetype_id": "training",
+          "name": "Deck"
+        }
+      ]
+    },
+    {
+      "name": "names and descriptions are trimmed while IDs stay exact",
+      "raw": "[{\"archetype_id\":\"pitch_deck\",\"name\":\"  Pitch deck  \",\"description\":\"  Investor narrative.  \"}]",
+      "expected": [
+        {
+          "archetype_id": "pitch_deck",
+          "name": "Pitch deck",
+          "description": "Investor narrative."
+        }
+      ]
+    },
+    {
+      "name": "maximum-length fields are accepted",
+      "raw": "[{\"archetype_id\": \"abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"name\": \"nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn\", \"description\": \"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\"}]",
+      "expected": [
+        {
+          "archetype_id": "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "name": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "description": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        }
+      ]
+    },
+    {
+      "name": "single-segment and multi-segment IDs are accepted",
+      "raw": "[{\"archetype_id\":\"a\",\"name\":\"A\"},{\"archetype_id\":\"a1_b2_c3\",\"name\":\"B\"}]",
+      "expected": [
+        {
+          "archetype_id": "a",
+          "name": "A"
+        },
+        {
+          "archetype_id": "a1_b2_c3",
+          "name": "B"
+        }
+      ]
+    }
+  ],
+  "invalid_registry_cases": [
+    {
+      "name": "duplicate archetype IDs even when other fields differ",
+      "raw": "[{\"archetype_id\":\"pitch_deck\",\"name\":\"One\"},{\"archetype_id\":\"pitch_deck\",\"name\":\"Two\",\"description\":\"Other.\"}]"
+    },
+    {
+      "name": "upper-case ID",
+      "raw": "[{\"archetype_id\":\"Pitch_deck\",\"name\":\"A\"}]"
+    },
+    {
+      "name": "leading digit in ID",
+      "raw": "[{\"archetype_id\":\"1pitch\",\"name\":\"A\"}]"
+    },
+    {
+      "name": "double underscore in ID",
+      "raw": "[{\"archetype_id\":\"pitch__deck\",\"name\":\"A\"}]"
+    },
+    {
+      "name": "trailing underscore in ID",
+      "raw": "[{\"archetype_id\":\"pitch_\",\"name\":\"A\"}]"
+    },
+    {
+      "name": "leading underscore in ID",
+      "raw": "[{\"archetype_id\":\"_pitch\",\"name\":\"A\"}]"
+    },
+    {
+      "name": "hyphen in ID",
+      "raw": "[{\"archetype_id\":\"pitch-deck\",\"name\":\"A\"}]"
+    },
+    {
+      "name": "blank ID",
+      "raw": "[{\"archetype_id\":\"\",\"name\":\"A\"}]"
+    },
+    {
+      "name": "blank name",
+      "raw": "[{\"archetype_id\":\"pitch_deck\",\"name\":\"   \"}]"
+    },
+    {
+      "name": "blank description",
+      "raw": "[{\"archetype_id\":\"pitch_deck\",\"name\":\"A\",\"description\":\"   \"}]"
+    },
+    {
+      "name": "oversized ID",
+      "raw": "[{\"archetype_id\": \"abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"name\": \"A\"}]"
+    },
+    {
+      "name": "oversized name",
+      "raw": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn\"}]"
+    },
+    {
+      "name": "oversized description",
+      "raw": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"A\", \"description\": \"ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\"}]"
+    },
+    {
+      "name": "missing archetype_id",
+      "raw": "[{\"name\":\"A\"}]"
+    },
+    {
+      "name": "missing name",
+      "raw": "[{\"archetype_id\":\"pitch_deck\"}]"
+    },
+    {
+      "name": "extra property",
+      "raw": "[{\"archetype_id\":\"pitch_deck\",\"name\":\"A\",\"weight\":1}]"
+    },
+    {
+      "name": "malformed JSON text",
+      "raw": "[{\"archetype_id\":"
+    },
+    {
+      "name": "non-array JSON object",
+      "raw": "{\"archetype_id\":\"pitch_deck\",\"name\":\"A\"}"
+    },
+    {
+      "name": "non-object entry",
+      "raw": "[\"pitch_deck\"]"
+    },
+    {
+      "name": "null description",
+      "raw": "[{\"archetype_id\":\"pitch_deck\",\"name\":\"A\",\"description\":null}]"
+    },
+    {
+      "name": "non-string name",
+      "raw": "[{\"archetype_id\":\"pitch_deck\",\"name\":7}]"
+    },
+    {
+      "name": "archetype ID with a trailing line feed",
+      "raw": "[{\"archetype_id\": \"pitch_deck\\n\", \"name\": \"A\"}]"
+    },
+    {
+      "name": "archetype ID with an embedded line feed",
+      "raw": "[{\"archetype_id\": \"pitch\\ndeck\", \"name\": \"A\"}]"
+    }
+  ],
+  "assignment_cases": [
+    {
+      "name": "missing assignment is generic",
+      "raw": null,
+      "expected": []
+    },
+    {
+      "name": "one archetype ID",
+      "raw": "[\"pitch_deck\"]",
+      "expected": [
+        "pitch_deck"
+      ]
+    },
+    {
+      "name": "multiple archetype IDs keep assignment order",
+      "raw": "[\"training\",\"pitch_deck\"]",
+      "expected": [
+        "training",
+        "pitch_deck"
+      ]
+    },
+    {
+      "name": "an already-decoded array is accepted",
+      "raw": [
+        "pitch_deck",
+        "training"
+      ],
+      "expected": [
+        "pitch_deck",
+        "training"
+      ]
+    }
+  ],
+  "invalid_assignment_cases": [
+    {
+      "name": "blank assignment",
+      "raw": "   "
+    },
+    {
+      "name": "malformed JSON text",
+      "raw": "[\"pitch_deck\""
+    },
+    {
+      "name": "non-array JSON object",
+      "raw": "{\"archetype_id\":\"pitch_deck\"}"
+    },
+    {
+      "name": "empty stored array",
+      "raw": "[]"
+    },
+    {
+      "name": "empty decoded array",
+      "raw": []
+    },
+    {
+      "name": "duplicate IDs",
+      "raw": "[\"pitch_deck\",\"pitch_deck\"]"
+    },
+    {
+      "name": "upper-case ID",
+      "raw": "[\"Pitch_deck\"]"
+    },
+    {
+      "name": "leading digit in ID",
+      "raw": "[\"1pitch\"]"
+    },
+    {
+      "name": "blank ID entry",
+      "raw": "[\"\"]"
+    },
+    {
+      "name": "non-string entry",
+      "raw": "[1]"
+    },
+    {
+      "name": "oversized ID",
+      "raw": "[\"abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"]"
+    },
+    {
+      "name": "assigned ID with a trailing line feed",
+      "raw": "[\"pitch_deck\\n\"]"
+    },
+    {
+      "name": "assigned ID with an embedded line feed",
+      "raw": "[\"pitch\\ndeck\"]"
+    }
+  ],
+  "resolution_cases": [
+    {
+      "name": "generic slide against a populated registry",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "expected": []
+    },
+    {
+      "name": "generic slide against a missing registry",
+      "deck_tags": {},
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "expected": []
+    },
+    {
+      "name": "generic slide against an empty registry",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "expected": []
+    },
+    {
+      "name": "one assigned archetype resolves to its definition",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"quarterly_review\"]"
+      },
+      "expected": [
+        {
+          "archetype_id": "quarterly_review",
+          "name": "Quarterly review"
+        }
+      ]
+    },
+    {
+      "name": "assignment order wins over registry order",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"training\",\"pitch_deck\"]"
+      },
+      "expected": [
+        {
+          "archetype_id": "training",
+          "name": "Training"
+        },
+        {
+          "archetype_id": "pitch_deck",
+          "name": "Pitch deck",
+          "description": "Investor narrative."
+        }
+      ]
+    }
+  ],
+  "resolution_error_cases": [
+    {
+      "name": "unknown archetype reference",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"board_update\"]"
+      }
+    },
+    {
+      "name": "assignment against a missing registry",
+      "deck_tags": {},
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"pitch_deck\"]"
+      }
+    },
+    {
+      "name": "assignment against an empty registry",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"pitch_deck\"]"
+      }
+    },
+    {
+      "name": "assignment against an invalid registry",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\":\"Pitch\",\"name\":\"A\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"pitch_deck\"]"
+      }
+    },
+    {
+      "name": "blank assignment",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "  "
+      }
+    }
+  ],
+  "applicability_cases": [
+    {
+      "name": "generic slide applies to the first declared archetype",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "pitch_deck",
+      "expected": true
+    },
+    {
+      "name": "generic slide applies to the second declared archetype",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "quarterly_review",
+      "expected": true
+    },
+    {
+      "name": "generic slide applies to the third declared archetype",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "training",
+      "expected": true
+    },
+    {
+      "name": "generic slide stays applicable with a missing registry",
+      "deck_tags": {},
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "pitch_deck",
+      "expected": true
+    },
+    {
+      "name": "generic slide stays applicable with a blank registry",
+      "deck_tags": {
+        "efficio_slide_archetypes": "   "
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "pitch_deck",
+      "expected": true
+    },
+    {
+      "name": "generic slide stays applicable with an empty registry",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "pitch_deck",
+      "expected": true
+    },
+    {
+      "name": "multi-archetype slide matches its first assigned archetype",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"pitch_deck\",\"training\"]"
+      },
+      "archetype_id": "pitch_deck",
+      "expected": true
+    },
+    {
+      "name": "multi-archetype slide matches its second assigned archetype",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"pitch_deck\",\"training\"]"
+      },
+      "archetype_id": "training",
+      "expected": true
+    },
+    {
+      "name": "multi-archetype slide rejects a declared non-member",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"pitch_deck\",\"training\"]"
+      },
+      "archetype_id": "quarterly_review",
+      "expected": false
+    },
+    {
+      "name": "single-archetype slide rejects a declared non-member",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"quarterly_review\"]"
+      },
+      "archetype_id": "training",
+      "expected": false
+    }
+  ],
+  "applicability_error_cases": [
+    {
+      "name": "assigned slide against an empty registry",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"pitch_deck\"]"
+      },
+      "archetype_id": "pitch_deck"
+    },
+    {
+      "name": "assigned slide against a missing registry",
+      "deck_tags": {},
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"pitch_deck\"]"
+      },
+      "archetype_id": "pitch_deck"
+    },
+    {
+      "name": "unknown slide reference",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"board_update\"]"
+      },
+      "archetype_id": "pitch_deck"
+    },
+    {
+      "name": "unsupported requested archetype against a populated registry",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "board_update"
+    },
+    {
+      "name": "malformed requested archetype casing",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "Pitch_deck"
+    },
+    {
+      "name": "blank requested archetype",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "   "
+    },
+    {
+      "name": "empty requested archetype",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": ""
+    },
+    {
+      "name": "malformed requested archetype against an empty registry",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "1pitch"
+    },
+    {
+      "name": "invalid registry",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\":\"Pitch\",\"name\":\"A\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "pitch_deck"
+    },
+    {
+      "name": "invalid slide assignment",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_archetype_ids": "[\"pitch_deck\",\"pitch_deck\"]"
+      },
+      "archetype_id": "pitch_deck"
+    },
+    {
+      "name": "requested archetype with a trailing line feed",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[{\"archetype_id\": \"pitch_deck\", \"name\": \"Pitch deck\", \"description\": \"Investor narrative.\"}, {\"archetype_id\": \"quarterly_review\", \"name\": \"Quarterly review\"}, {\"archetype_id\": \"training\", \"name\": \"Training\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "pitch_deck\n"
+    },
+    {
+      "name": "requested archetype with a trailing line feed against an empty registry",
+      "deck_tags": {
+        "efficio_slide_archetypes": "[]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "archetype_id": "training\n"
+    }
+  ]
+}

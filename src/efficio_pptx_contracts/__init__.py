@@ -58,6 +58,16 @@ from .registry import (
     load_component_registry,
 )
 from .render_metadata import build_component_render_metadata
+from .slide_archetypes import (
+    SLIDE_ARCHETYPES_TAG,
+    SLIDE_ARCHETYPE_IDS_TAG,
+    SlideArchetype,
+    SlideArchetypeContractError,
+    is_slide_applicable_to_archetype,
+    parse_slide_archetype_ids,
+    parse_slide_archetypes,
+    resolve_slide_archetype_assignment,
+)
 from .slide_selection_groups import (
     SLIDE_SELECTION_GROUPS_TAG,
     SlideSelectionGroup,
@@ -137,6 +147,14 @@ __all__ = [
     "list_component_types",
     "has_component_type",
     "assert_component_type",
+    "SLIDE_ARCHETYPES_TAG",
+    "SLIDE_ARCHETYPE_IDS_TAG",
+    "SlideArchetype",
+    "SlideArchetypeContractError",
+    "is_slide_applicable_to_archetype",
+    "parse_slide_archetype_ids",
+    "parse_slide_archetypes",
+    "resolve_slide_archetype_assignment",
     "SLIDE_SELECTION_GROUPS_TAG",
     "SlideSelectionGroup",
     "SlideSelectionGroupContractError",

@@ -235,7 +235,7 @@ describe("editor SDK deck surface", () => {
     expect(entity.required).toBe(true);
     expect(entity.minimum).toBe(1);
     expect(entity.ui.hidden).toBe(true);
-    expect(getDeckTagDefaults().efficio_template_contract_revision).toBe("2");
+    expect(getDeckTagDefaults().efficio_template_contract_revision).toBe("3");
   });
 
   it("exposes the deck tag contract as a defensive copy", () => {

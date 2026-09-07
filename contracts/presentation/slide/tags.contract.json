@@ -74,6 +74,22 @@
           "never": "Never include this slide."
         }
       }
+    },
+    "efficio_slide_archetype_ids": {
+      "type": "array",
+      "required": false,
+      "description": "Optional archetype assignment restricting this slide to specific deck archetypes. Stored as a non-empty JSON array of archetype IDs declared by the deck registry; absent means the slide is generic and applicable to every archetype. Reference validity against efficio_slide_archetypes is enforced by the SDK, which JSON Schema cannot express across tags. Pre-selection metadata only (no ai block): it filters the slide catalog before AI selection and never controls inclusion, placement, ordering, or grouping.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "maxLength": 120,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+        }
+      }
     }
   }
 }

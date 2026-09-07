@@ -58,6 +58,29 @@ to build the validated graph, then call
 Valid root wrappers containing one direct slide are normalized away and remain
 ordinary standalone slides.
 
+Optional slide archetypes let one template serve several presentation shapes.
+A deck authors the registry in `efficio_slide_archetypes` as a direct JSON array
+of `{archetype_id, name, description?}` objects; `archetype_id` is
+lower-snake-case and unique, while names may repeat. A slide narrows itself with
+`efficio_slide_archetype_ids`, a non-empty JSON array of unique IDs the registry
+defines. A slide without that tag is generic and applies to every archetype, and
+a slide may list several archetypes at once. Editor consumers use
+`parseSlideArchetypes()`, `parseSlideArchetypeIds()`,
+`resolveSlideArchetypeAssignment()`, and `isSlideApplicableToArchetype()`; Python
+consumers use the equivalent `parse_slide_archetypes()`,
+`parse_slide_archetype_ids()`, `resolve_slide_archetype_assignment()`, and
+`is_slide_applicable_to_archetype()`, and pass `deck_tags` to
+`validate_slide_tags()` whenever a slide carries an assignment.
+
+Archetypes affect applicability only. A client filters its own slide catalog with
+the applicability predicate *before* AI slide selection runs; inclusion policy,
+choice/bundle group structure, slide role, placement, and ordering remain
+independent and unchanged. Neither tag declares an `ai` block, so neither reaches
+the generated slide-selection instruction. An empty or missing deck registry is
+the legacy, unrestricted case: every slide stays applicable, and migration never
+backfills archetype metadata into an existing template. Contract-wide archetype
+enums do not exist — the vocabulary belongs to each template.
+
 Every slide requires `efficio_slide_role`: `content` identifies a normal
 presentation slide, while `separator` identifies a section divider. Role is
 descriptive metadata only and does not control inclusion, placement, ordering,
@@ -112,7 +135,9 @@ then run normal contract validation and template import. A current-revision
 template that still contains a retired source tag is rejected.
 Revision 2 replaces independent aggregate and per-item character limits with
 the shared estimated line-capacity fields, including capacity settings nested in
-`efficio_table_config`.
+`efficio_table_config`. Revision 3 introduces the optional slide archetype tags;
+it is a revision-only migration that advances the deck revision and writes no
+archetype tags, so a migrated legacy template keeps its unrestricted behavior.
 
 Detailed, timestamped consumer handoffs are recorded under
 [`docs/releases/`](docs/releases/README.md). These notes explain what changed and

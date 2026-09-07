@@ -91,6 +91,22 @@ export const slideTagSchema = {
           "never": "Never include this slide."
         }
       }
+    },
+    "efficio_slide_archetype_ids": {
+      "type": "array",
+      "required": false,
+      "description": "Optional archetype assignment restricting this slide to specific deck archetypes. Stored as a non-empty JSON array of archetype IDs declared by the deck registry; absent means the slide is generic and applicable to every archetype. Reference validity against efficio_slide_archetypes is enforced by the SDK, which JSON Schema cannot express across tags. Pre-selection metadata only (no ai block): it filters the slide catalog before AI selection and never controls inclusion, placement, ordering, or grouping.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "maxLength": 120,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+        }
+      }
     }
   }
 } as const;
@@ -105,7 +121,8 @@ export const slideTagKeys = [
   "efficio_slide_group_order",
   "efficio_slide_purpose",
   "efficio_slide_content_description",
-  "efficio_slide_inclusion_policy"
+  "efficio_slide_inclusion_policy",
+  "efficio_slide_archetype_ids"
 ] as const;
 
 export const SLIDE_ID_TAG = "efficio_slide_id";
@@ -116,6 +133,7 @@ export const SLIDE_GROUP_ORDER_TAG = "efficio_slide_group_order";
 export const SLIDE_PURPOSE_TAG = "efficio_slide_purpose";
 export const SLIDE_CONTENT_DESCRIPTION_TAG = "efficio_slide_content_description";
 export const SLIDE_INCLUSION_POLICY_TAG = "efficio_slide_inclusion_policy";
+export const SLIDE_ARCHETYPE_IDS_TAG = "efficio_slide_archetype_ids";
 
 export const SLIDE_ROLES = slideTagSchema.tags["efficio_slide_role"].enum;
 export type SlideRole = (typeof SLIDE_ROLES)[number];

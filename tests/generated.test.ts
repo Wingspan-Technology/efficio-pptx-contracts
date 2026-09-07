@@ -130,6 +130,7 @@ describe("generated presentation schemas", () => {
     ).toEqual([
       "contracts/presentation/template/migrations/0000-to-0001.json",
       "contracts/presentation/template/migrations/0001-to-0002.json",
+      "contracts/presentation/template/migrations/0002-to-0003.json",
     ]);
   });
 });
@@ -239,6 +240,42 @@ describe("deck template instruction tag", () => {
     expect(item.required).toEqual(["group_id", "name", "type", "members"]);
     expect(item.additionalProperties).toBe(false);
   });
+
+  it("generates the optional slide archetype registry with no ai block", () => {
+    const tag = (deckSchema.tags as JsonObject).efficio_slide_archetypes as JsonObject;
+    expect(tag.type).toBe("array");
+    expect(tag.required).toBe(false);
+    // Pre-selection metadata: never projected into AI instructions.
+    expect(tag).not.toHaveProperty("ai");
+    const schema = tag.schema as JsonObject;
+    expect(schema.type).toBe("array");
+    const item = schema.items as JsonObject;
+    expect(item.required).toEqual(["archetype_id", "name"]);
+    expect(item.additionalProperties).toBe(false);
+    const properties = item.properties as JsonObject;
+    expect(Object.keys(properties)).toEqual(["archetype_id", "name", "description"]);
+    // No hardcoded business archetypes: the registry is authored per template.
+    expect(properties).not.toHaveProperty("enum");
+    expect(schema).not.toHaveProperty("enum");
+  });
+
+  it("carries no archetype value enum anywhere in the generated contracts", () => {
+    const serialized = JSON.stringify(deckSchema);
+    expect(serialized).not.toContain("SLIDE_ARCHETYPES");
+    const archetypeTag = (deckSchema.tags as JsonObject).efficio_slide_archetypes as JsonObject;
+    expect(JSON.stringify(archetypeTag)).not.toMatch(/"enum"/);
+  });
+
+  it("changes only the contract revision in the generated deck defaults", () => {
+    const deckDefaults = readJson(
+      path.join(contractsDir, "presentation", "deck", "tags.defaults.json"),
+    );
+    expect(deckDefaults).toEqual({
+      efficio_template_id: "default_template",
+      efficio_template_contract_revision: "3",
+    });
+    expect(deckDefaults).not.toHaveProperty("efficio_slide_archetypes");
+  });
 });
 
 describe("slide display name tag", () => {
@@ -255,6 +292,31 @@ describe("slide display name tag", () => {
     // A display label only — no AI instruction metadata, so it never reaches
     // slide_tag_instructions.
     expect(tag).not.toHaveProperty("ai");
+  });
+
+  it("generates the optional efficio_slide_archetype_ids slide tag with no ai block", () => {
+    const tag = (slideSchema.tags as JsonObject).efficio_slide_archetype_ids as JsonObject;
+    expect(tag).toBeDefined();
+    expect(tag.type).toBe("array");
+    expect(tag.required).toBe(false);
+    expect(tag).not.toHaveProperty("ai");
+    const schema = tag.schema as JsonObject;
+    expect(schema.minItems).toBe(1);
+    expect(schema.uniqueItems).toBe(true);
+    expect((schema.items as JsonObject).type).toBe("string");
+    expect(schema).not.toHaveProperty("enum");
+    expect(schema.items).not.toHaveProperty("enum");
+  });
+
+  it("leaves the slide defaults untouched by archetype metadata", () => {
+    const authored = readJson(
+      path.join(contractsDir, "presentation", "slide", "tags.defaults.json"),
+    );
+    expect(authored).toEqual({
+      efficio_slide_role: "content",
+      efficio_slide_placement: "body",
+      efficio_slide_inclusion_policy: "when_relevant",
+    });
   });
 });
 
@@ -726,6 +788,15 @@ describe("generated slide-selection AI instructions", () => {
     );
   });
 
+  it("never mentions slide archetypes anywhere in the prompt artifact", () => {
+    expect(JSON.stringify(artifact)).not.toContain("archetype");
+    const tsSource = readFileSync(
+      path.join(pkgRoot, "generated", "ts", "ai", "slideSelectionInstructions.ts"),
+      "utf8",
+    );
+    expect(tsSource).not.toContain("efficio_slide_archetype_ids");
+  });
+
   it("slide_tag_instructions includes ai-bearing slide tags and excludes the rest", () => {
     const tags = artifact.slide_tag_instructions as JsonObject;
     const slideTags = readJson(path.join(slideDir, "tags.contract.json"));
@@ -738,6 +809,8 @@ describe("generated slide-selection AI instructions", () => {
     expect(tags).not.toHaveProperty("efficio_slide_purpose");
     // The display-name tag has no ai block, so it is never an AI instruction.
     expect(tags).not.toHaveProperty("efficio_slide_name");
+    // Archetypes filter the catalog before selection; they are not AI guidance.
+    expect(tags).not.toHaveProperty("efficio_slide_archetype_ids");
   });
 
   it("expected_slide_selection_schema equals the authored slide-selection schema", () => {

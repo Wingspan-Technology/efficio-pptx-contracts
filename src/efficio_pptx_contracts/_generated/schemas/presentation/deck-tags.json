@@ -197,6 +197,43 @@
           "additionalProperties": false
         }
       }
+    },
+    "efficio_slide_archetypes": {
+      "type": "array",
+      "required": false,
+      "description": "Optional deck-wide registry of slide archetype definitions. Stored as a JSON array; absent, blank, or an empty array means the template declares no archetype restrictions and every slide stays applicable.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "archetype_id",
+            "name"
+          ],
+          "properties": {
+            "archetype_id": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+              "description": "Stable lower-snake-case identifier referenced by slide archetype assignments."
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "\\S",
+              "description": "Short human-readable archetype name. Names need not be unique."
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 1000,
+              "pattern": "\\S",
+              "description": "Optional human-readable explanation of when this archetype applies."
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     }
   }
 }

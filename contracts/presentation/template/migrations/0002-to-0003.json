@@ -1,0 +1,8 @@
+{
+  "format_version": 1,
+  "contract_type": "template_contract_migration",
+  "from_revision": 2,
+  "to_revision": 3,
+  "description": "Introduce optional template-authored slide archetypes. Existing templates only advance their revision; archetype metadata is authored, never backfilled.",
+  "operations": []
+}
