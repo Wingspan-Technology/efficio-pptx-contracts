@@ -37,10 +37,13 @@ const fixture = JSON.parse(
 describe("template contract migration catalog", () => {
   it("derives the current revision from one contiguous adjacent migration", () => {
     const catalog = getTemplateContractMigrationCatalog();
-    expect(CURRENT_TEMPLATE_CONTRACT_REVISION).toBe(1);
+    expect(CURRENT_TEMPLATE_CONTRACT_REVISION).toBe(2);
     expect(catalog.revision_tag).toBe(TEMPLATE_CONTRACT_REVISION_TAG);
     expect(catalog.migrations.map(({ from_revision, to_revision }) => [from_revision, to_revision]))
-      .toEqual([[0, 1]]);
+      .toEqual([[0, 1], [1, 2]]);
+    expect(catalog.migrations[1].operations).toEqual([
+      { type: "migrate_text_capacity", scope: "shape" },
+    ]);
     expect(getTemplateContractMigrationPath(0)).toEqual(catalog.migrations);
   });
 
@@ -91,7 +94,7 @@ describe("template contract migration planner parity", () => {
         {
           target_ref: "deck",
           scope: "deck",
-          tags: { [TEMPLATE_CONTRACT_REVISION_TAG]: "2" },
+          tags: { [TEMPLATE_CONTRACT_REVISION_TAG]: "3" },
         },
       ]),
     ).toThrow("newer than supported");

@@ -16,6 +16,7 @@ const presentationDir = path.join(contractsDir, "presentation");
 const sharedTagFragments = [
   "content-mode-tags.contract.json",
   "component-base-tags.contract.json",
+  "text-capacity-tags.contract.json",
 ];
 
 function readJson(filePath: string): JsonObject {
@@ -56,7 +57,7 @@ describe("component discovery", () => {
   });
 
   it("discovers the expected components deterministically", () => {
-    expect(components).toEqual(["category_chart", "table", "text"]);
+    expect(components).toEqual(["categorical_fill", "category_chart", "table", "text"]);
   });
 });
 
@@ -111,6 +112,7 @@ describe("shared contract fragments", () => {
       "component-default-tags.defaults.json",
       "content-mode-tags.contract.json",
       "tag-definition.schema.json",
+      "text-capacity-tags.contract.json",
     ]);
   });
 });
@@ -141,7 +143,7 @@ describe("presentation contracts", () => {
     expect(existsSync(path.join(presentationDir, "slide", "tags.defaults.json"))).toBe(true);
     expect(existsSync(path.join(presentationDir, "slide", "slide.contract.json"))).toBe(true);
     expect(existsSync(path.join(presentationDir, "template", "template.contract.json"))).toBe(true);
-    expect(components).toEqual(["category_chart", "table", "text"]);
+    expect(components).toEqual(["categorical_fill", "category_chart", "table", "text"]);
   });
 
   it("slide tags.contract.json uses the Tag Entity shape and validates as a slide contract", () => {

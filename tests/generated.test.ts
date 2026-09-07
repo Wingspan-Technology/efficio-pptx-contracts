@@ -5,6 +5,10 @@ import { fileURLToPath } from "node:url";
 
 import { publicTagAlias, type JsonObject } from "../scripts/contractLib";
 import { mergeTagSchema } from "../scripts/compatibilityTagSchema";
+import {
+  composeTextCapacityContract,
+  textCapacityContractLabel,
+} from "../scripts/textCapacityContract";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pkgRoot = path.resolve(here, "..");
@@ -13,7 +17,7 @@ const contractsDir = path.join(pkgRoot, "contracts");
 const componentsDir = path.join(contractsDir, "components");
 const generatedTagsDir = path.join(pkgRoot, "generated", "schemas", "components");
 
-const COMPONENTS = ["category_chart", "table", "text"];
+const COMPONENTS = ["categorical_fill", "category_chart", "table", "text"];
 const COMMON_REQUIRED = [
   "efficio_content_mode",
   "efficio_component_id",
@@ -43,6 +47,25 @@ function mergeShared(): JsonObject {
 }
 
 const common = mergeShared();
+const textCapacity = readJson(path.join(pkgRoot, textCapacityContractLabel));
+
+function componentSourceLabels(component: string): string[] {
+  return [
+    ...sharedLabels,
+    ...(component === "text" || component === "table" ? [textCapacityContractLabel] : []),
+    `contracts/components/${component}/tags.contract.json`,
+  ];
+}
+
+function composedComponentContract(component: string): JsonObject {
+  const label = `contracts/components/${component}/tags.contract.json`;
+  return composeTextCapacityContract(
+    component,
+    readJson(path.join(componentsDir, component, "tags.contract.json")),
+    textCapacity,
+    label,
+  );
+}
 
 describe.each(COMPONENTS)("generated tag schema for %s", (component) => {
   const file = generatedFileFor(component);
@@ -57,10 +80,7 @@ describe.each(COMPONENTS)("generated tag schema for %s", (component) => {
 
   it("records generated_from pointing back to authored sources", () => {
     const schema = readJson(file);
-    expect(schema.generated_from).toEqual([
-      ...sharedLabels,
-      `contracts/components/${component}/tags.contract.json`,
-    ]);
+    expect(schema.generated_from).toEqual(componentSourceLabels(component));
   });
 
   it("composes the common required tags into the output", () => {
@@ -75,8 +95,12 @@ describe.each(COMPONENTS)("generated tag schema for %s", (component) => {
 
   it("is reproducible byte-for-byte from authored sources via mergeTagSchema", () => {
     const label = `contracts/components/${component}/tags.contract.json`;
-    const componentContract = readJson(path.join(componentsDir, component, "tags.contract.json"));
-    const rebuilt = mergeTagSchema(common, componentContract, label, sharedLabels);
+    const rebuilt = mergeTagSchema(
+      common,
+      composedComponentContract(component),
+      label,
+      componentSourceLabels(component).slice(0, -1),
+    );
     const expected = `${JSON.stringify(rebuilt, null, 2)}\n`;
     expect(readFileSync(file, "utf8")).toBe(expected);
   });
@@ -103,7 +127,10 @@ describe("generated presentation schemas", () => {
           "template-contract-migrations.json",
         ),
       ).generated_from,
-    ).toEqual(["contracts/presentation/template/migrations/0000-to-0001.json"]);
+    ).toEqual([
+      "contracts/presentation/template/migrations/0000-to-0001.json",
+      "contracts/presentation/template/migrations/0001-to-0002.json",
+    ]);
   });
 });
 
@@ -252,24 +279,27 @@ describe("slide role tag", () => {
 });
 
 describe("text sizing tags", () => {
-  it("generates sizing fields as normal required tags", () => {
+  it("generates the shared item and estimated-line capacity tags", () => {
     const schema = readJson(generatedFileFor("text"));
     expect(schema).not.toHaveProperty("conditional_required_tags");
-    // The strict sizing limits are required; the target_* guidance tags are optional.
     expect(schema.required_tags).toEqual(expect.arrayContaining([
-      "efficio_max_chars",
+      "efficio_max_lines",
+      "efficio_estimated_chars_per_line",
       "efficio_min_items",
       "efficio_max_items",
+    ]));
+    expect(schema.optional_tags).toContain("efficio_target_items");
+    for (const retired of [
+      "efficio_max_chars",
+      "efficio_target_chars",
       "efficio_min_chars_per_item",
       "efficio_max_chars_per_item",
-    ]));
-    expect(schema.optional_tags).toEqual(expect.arrayContaining([
-      "efficio_target_chars",
       "efficio_target_chars_per_item",
-    ]));
-    expect(schema.required_tags).not.toEqual(
-      expect.arrayContaining(["efficio_target_chars", "efficio_target_chars_per_item"])
-    );
+      "efficio_max_chars_per_line",
+    ]) {
+      expect(schema.required_tags).not.toContain(retired);
+      expect(schema.optional_tags).not.toContain(retired);
+    }
   });
 
   it("adds efficio_target_items as an optional integer sizing tag (never required)", () => {
@@ -290,9 +320,9 @@ describe("generated json_schemas for object/array tags", () => {
     expect((schema.types as JsonObject).efficio_table_config).toBe("json_object");
     const jsonSchemas = schema.json_schemas as JsonObject;
     expect(jsonSchemas).toHaveProperty("efficio_table_config");
-    const authored = readJson(path.join(componentsDir, "table", "tags.contract.json"));
-    const authoredConfigSchema = ((authored.tags as JsonObject).efficio_table_config as JsonObject).schema;
-    expect(jsonSchemas.efficio_table_config).toEqual(authoredConfigSchema);
+    const composed = composedComponentContract("table");
+    const composedConfigSchema = ((composed.tags as JsonObject).efficio_table_config as JsonObject).schema;
+    expect(jsonSchemas.efficio_table_config).toEqual(composedConfigSchema);
   });
 
   it("table cells require only row + col; render_action is optional and defaults to preserve", () => {
@@ -444,12 +474,13 @@ describe("generated AI component instructions", () => {
   it("text includes its ai-bearing component tags but not sizing mode", () => {
     const tags = aggregateComponents.text.tag_instructions as JsonObject;
     expect(tags).toHaveProperty("text_format");
-    expect(tags).toHaveProperty("max_chars");
+    expect(tags).toHaveProperty("max_lines");
+    expect(tags).toHaveProperty("estimated_chars_per_line");
     expect(tags).toHaveProperty("min_items");
     expect(tags).toHaveProperty("max_items");
     expect(tags).toHaveProperty("target_items");
-    expect(tags).toHaveProperty("max_chars_per_item");
-    expect(tags).toHaveProperty("target_chars_per_item");
+    expect(tags).not.toHaveProperty("max_chars");
+    expect(tags).not.toHaveProperty("max_chars_per_item");
     // sizing mode is a required editor/runtime tag but is no longer AI-visible
     expect(tags).not.toHaveProperty("sizing_mode");
   });
@@ -480,11 +511,10 @@ describe("generated AI component instructions", () => {
   it("text exposes the sizing limit tags as AI-visible instructions", () => {
     const tags = aggregateComponents.text.tag_instructions as JsonObject;
     for (const tag of [
-      "max_chars",
+      "max_lines",
+      "estimated_chars_per_line",
       "min_items",
       "max_items",
-      "min_chars_per_item",
-      "max_chars_per_item",
     ]) {
       expect(tags).toHaveProperty(tag);
       expect((tags[tag] as JsonObject).purpose).toBeTypeOf("string");
@@ -552,9 +582,8 @@ describe("strict sizing instruction wording", () => {
   });
 
   it.each([
-    ["text", "max_chars"],
+    ["text", "max_lines"],
     ["text", "max_items"],
-    ["text", "max_chars_per_item"],
     ["table", "table_config"],
   ])("%s %s purpose demands strict, never-exceeded sizing", (component, tag) => {
     const purpose = purposeOf(component, tag).toLowerCase();
@@ -609,17 +638,14 @@ describe("table content generation instructions", () => {
   });
 
   it("cell sizing is item-based, strict where present, with target guidance", () => {
-    expect(tablePurpose).toContain("Cell sizing fields are optional");
-    // strict item vocabulary shared with the text component, not lines
+    expect(tablePurpose).toContain("Cell capacity fields are optional");
     expect(tablePurpose).toContain("min_items and max_items");
-    expect(tablePurpose).toContain("min_chars_per_item and max_chars_per_item");
+    expect(tablePurpose).toContain("max_lines");
+    expect(tablePurpose).toContain("estimated_chars_per_line");
     expect(tablePurpose).toContain("must never exceed");
     expect(tablePurpose).toMatch(/shorten or compact/);
-    // max_chars is the aggregate budget; target_* are guidance only
-    expect(tablePurpose).toContain("max_chars is the strict total character budget");
-    expect(tablePurpose).toContain("guidance only, not limits");
-    // the removed line-based vocabulary must be gone
-    expect(tablePurpose).not.toContain("max_lines");
+    expect(tablePurpose).toContain("target_items is preferred guidance only, never a limit");
+    expect(tablePurpose).not.toContain("max_chars_per_item");
     expect(tablePurpose).not.toContain("max_chars_per_line");
   });
 
@@ -656,7 +682,9 @@ describe("table content generation instructions", () => {
     expect(cells.description as string).toContain("must match a render cell configured");
     const items = ((cells.additionalProperties as JsonObject).properties as JsonObject)
       .items as JsonObject;
-    expect(items.description as string).toContain("never exceed the cell's strict limits");
+    expect(items.description as string).toContain(
+      "keep the estimated total within max_lines using estimated_chars_per_line",
+    );
   });
 });
 

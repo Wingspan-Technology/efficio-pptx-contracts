@@ -1,0 +1,55 @@
+{
+  "description": "Shared estimated text-capacity fields used by text components and rendered table cells.",
+  "tags": {
+    "efficio_max_lines": {
+      "type": "integer",
+      "required": true,
+      "minimum": 1,
+      "description": "Estimated maximum number of rendered text lines available for all items combined.",
+      "ui": { "order": 70 },
+      "ai": {
+        "purpose": "Strict estimated maximum number of rendered lines available for all generated items combined. Generated content must never exceed this capacity; shorten or compact it until it fits."
+      }
+    },
+    "efficio_estimated_chars_per_line": {
+      "type": "integer",
+      "required": true,
+      "minimum": 1,
+      "description": "Estimated number of characters that fit on one rendered line.",
+      "ui": { "order": 72 },
+      "ai": {
+        "purpose": "Estimated number of characters that fit on one rendered line. Use it together with max_lines to keep generated content within the available space."
+      }
+    },
+    "efficio_min_items": {
+      "type": "integer",
+      "required": true,
+      "minimum": 1,
+      "description": "Minimum number of semantic items in the generated items array.",
+      "ui": { "order": 80 },
+      "ai": {
+        "purpose": "Minimum number of semantic items the generated items array must contain."
+      }
+    },
+    "efficio_max_items": {
+      "type": "integer",
+      "required": true,
+      "minimum": 1,
+      "description": "Maximum number of semantic items in the generated items array; it must not exceed max_lines.",
+      "ui": { "order": 82 },
+      "ai": {
+        "purpose": "Strict maximum number of semantic items the generated items array may contain. Generated content must never exceed it; shorten or compact the item list until it fits. Items may wrap across estimated lines."
+      }
+    },
+    "efficio_target_items": {
+      "type": "integer",
+      "required": false,
+      "minimum": 1,
+      "description": "Preferred number of semantic items; guidance only, within min_items and max_items.",
+      "ui": { "order": 84 },
+      "ai": {
+        "purpose": "Preferred number of semantic items. Treat this as guidance while always respecting min_items, max_items, and the shared line capacity."
+      }
+    }
+  }
+}

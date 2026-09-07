@@ -2,12 +2,13 @@
 
 export const templateContractMigrationCatalog = {
   "generated_from": [
-    "contracts/presentation/template/migrations/0000-to-0001.json"
+    "contracts/presentation/template/migrations/0000-to-0001.json",
+    "contracts/presentation/template/migrations/0001-to-0002.json"
   ],
   "contract_type": "template_contract_migrations",
   "format_version": 1,
   "unversioned_revision": 0,
-  "current_revision": 1,
+  "current_revision": 2,
   "revision_tag": "efficio_template_contract_revision",
   "migrations": [
     {
@@ -39,6 +40,19 @@ export const templateContractMigrationCatalog = {
             "preserve": "preserve",
             "remove_on_render": "remove"
           }
+        }
+      ]
+    },
+    {
+      "format_version": 1,
+      "contract_type": "template_contract_migration",
+      "from_revision": 1,
+      "to_revision": 2,
+      "description": "Replace independent text character limits with the shared estimated line-capacity contract.",
+      "operations": [
+        {
+          "type": "migrate_text_capacity",
+          "scope": "shape"
         }
       ]
     }

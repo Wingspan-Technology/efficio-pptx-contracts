@@ -68,23 +68,6 @@ def validate_prompt_json_schema(
     )
 
 
-def ensure_aggregate_character_budget_is_feasible(
-    *,
-    minimum_items: int,
-    minimum_chars_per_item: int,
-    maximum_chars: int,
-    subject: str,
-) -> None:
-    """Reject a V2 item contract whose aggregate character cap is impossible."""
-    required_characters = minimum_items * minimum_chars_per_item
-    if maximum_chars < required_characters:
-        raise ValueError(
-            f"{subject} cannot satisfy max_chars {maximum_chars}: "
-            f"at least {minimum_items} item(s) with {minimum_chars_per_item} "
-            f"characters require {required_characters} characters"
-        )
-
-
 def _validate_schema_node(
     schema: Mapping[str, Any], *, path: str, allow_schema_declaration: bool = False
 ) -> None:

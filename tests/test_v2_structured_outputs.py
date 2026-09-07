@@ -27,11 +27,10 @@ def _text_tags(**overrides: str) -> dict[str, str]:
         "efficio_component_type": "text",
         "efficio_text_format": "bullets",
         "efficio_sizing_mode": "auto",
-        "efficio_max_chars": "120",
+        "efficio_max_lines": "4",
+        "efficio_estimated_chars_per_line": "30",
         "efficio_min_items": "2",
         "efficio_max_items": "4",
-        "efficio_min_chars_per_item": "5",
-        "efficio_max_chars_per_item": "40",
     }
     tags.update(overrides)
     return tags
@@ -102,14 +101,12 @@ def test_named_profile_is_stable() -> None:
     assert JSON_SCHEMA_DRAFT_2020_12_PROFILE == "json-schema-draft-2020-12"
 
 
-def test_text_schema_contains_hard_bounds_and_ordered_guidance() -> None:
+def test_text_schema_contains_item_bounds_and_estimated_capacity_guidance() -> None:
     base = build_v2_component_contract("text", _text_tags())
     targeted = build_v2_component_contract(
         "text",
         _text_tags(
-            efficio_target_chars="90",
             efficio_target_items="3",
-            efficio_target_chars_per_item="30",
             efficio_prompt_instruction="Summarize verified savings",
         ),
     )
@@ -118,24 +115,24 @@ def test_text_schema_contains_hard_bounds_and_ordered_guidance() -> None:
     assert item == {
         "type": "string",
         "description": "One bullet content item.",
-        "minLength": 5,
-        "maxLength": 40,
+        "minLength": 1,
     }
     items = targeted["output_schema"]["properties"]["items"]
     assert items["minItems"] == 2
     assert items["maxItems"] == 4
     assert "EUR" not in json.dumps(targeted["output_schema"])
     description = targeted["output_schema"]["description"]
-    assert "5–40 characters" in description
+    assert "estimated maximum of 4 rendered lines" in description
+    assert "approximately 30 characters per line" in description
     assert "approximately 3 items" in description
     assert description.startswith("Summarize verified savings.")
-    assert description.rfind("Aim for approximately") > description.index(
-        "combined item length"
-    )
+    assert description.rfind("Aim for approximately") > description.index("rendered lines")
     assert _without_descriptions(targeted["output_schema"]) == _without_descriptions(
         base["output_schema"]
     )
-    assert targeted["normalization"] == {"max_chars": 120}
+    assert targeted["normalization"] == {
+        "text_capacity": {"max_lines": 4, "estimated_chars_per_line": 30}
+    }
     assert "target_" not in json.dumps(targeted)
 
 
@@ -150,7 +147,7 @@ def test_plain_text_schema_requires_exactly_one_item() -> None:
     )
     items = contract["output_schema"]["properties"]["items"]
     assert items["minItems"] == items["maxItems"] == 1
-    assert "Return exactly 1 plain-text item" in contract["output_schema"]["description"]
+    assert "Return exactly 1 semantic item" in contract["output_schema"]["description"]
 
     two_items = {"items": ["first", "second"]}
     assert not _valid(contract["output_schema"], two_items)
@@ -165,34 +162,40 @@ def test_plain_text_schema_requires_exactly_one_item() -> None:
     assert not _valid(canonical, two_items)
 
 
-def test_text_semantics_enforce_aggregate_budget() -> None:
-    contract = build_v2_component_contract("text", _text_tags(efficio_max_chars="10"))
+def test_text_semantics_enforce_estimated_line_capacity() -> None:
+    contract = build_v2_component_contract(
+        "text",
+        _text_tags(
+            efficio_max_lines="2",
+            efficio_estimated_chars_per_line="5",
+            efficio_max_items="2",
+        ),
+    )
     content = {"items": ["abcdef", "ghijk"]}
-    with pytest.raises(ValueError, match="uses 11 characters"):
+    with pytest.raises(ValueError, match="uses an estimated 3 lines"):
         validate_v2_component_semantics("text", content, contract["normalization"])
     validate_v2_component_semantics(
         "text", {"items": ["abcde", "fghij"]}, contract["normalization"]
     )
 
 
-def test_text_rejects_impossible_v2_aggregate_budget_without_changing_v1() -> None:
-    tags = _text_tags(efficio_max_chars="9")
-
-    build_validation_content_schema("text", tags)
-
-    with pytest.raises(
-        ValueError,
-        match=r"text V2 contract cannot satisfy max_chars 9.*require 10 characters",
-    ):
-        build_v2_component_contract("text", tags)
+def test_text_rejects_more_items_than_estimated_lines() -> None:
+    tags = _text_tags(efficio_max_lines="3", efficio_max_items="4")
+    with pytest.raises(ValueError, match="max_items must not exceed max_lines"):
+        build_validation_content_schema("text", tags)
 
 
 @pytest.mark.parametrize(
     "metadata",
-    [{}, {"max_chars": 10, "extra": True}, {"max_chars": 0}, {"max_chars": True}],
+    [
+        {},
+        {"text_capacity": {"max_lines": 2, "estimated_chars_per_line": 10}, "extra": True},
+        {"text_capacity": {"max_lines": 0, "estimated_chars_per_line": 10}},
+        {"text_capacity": {"max_lines": 2, "estimated_chars_per_line": True}},
+    ],
 )
 def test_text_rejects_malformed_normalization(metadata: dict) -> None:
-    with pytest.raises(ValueError, match="normalization"):
+    with pytest.raises(ValueError, match="normalization|positive integers"):
         normalize_v2_component_content("text", {"items": ["valid"]}, metadata)
 
 
@@ -210,11 +213,10 @@ def test_table_optional_cells_are_required_but_nullable() -> None:
                 "col": 0,
                 "render_action": "render",
                 "text_format": "bullets",
+                "max_lines": 2,
+                "estimated_chars_per_line": 10,
                 "max_items": 2,
-                "min_chars_per_item": 3,
-                "max_chars_per_item": 10,
-                "max_chars": 20,
-                "target_chars": 15,
+                "target_items": 1,
             },
             {"row": 2, "col": 0, "render_action": "preserve"},
         ],
@@ -240,15 +242,18 @@ def test_table_optional_cells_are_required_but_nullable() -> None:
     optional_items = optional_schema["anyOf"][0]["properties"]["items"]
     assert optional_items["minItems"] == 1
     assert optional_items["maxItems"] == 2
-    assert optional_items["items"]["minLength"] == 3
-    assert optional_items["items"]["maxLength"] == 10
+    assert optional_items["items"] == {
+        "type": "string",
+        "description": "One generated table-cell text item.",
+        "minLength": 1,
+    }
     assert "nullable because its row is optional" in optional_description
     assert "Return null for every render cell in this row" in optional_description
     assert "meaningful non-whitespace generated text" in optional_description
     assert "original first row remains" in optional_description
     assert "do not invent filler or placeholder content" in optional_description
     assert "authored content" not in optional_description
-    assert optional_description.rfind("Aim for approximately") > optional_description.index(
+    assert optional_description.rfind("Aim for approximately") < optional_description.index(
         "nullable because its row is optional"
     )
     component_description = contract["output_schema"]["description"]
@@ -297,7 +302,7 @@ def test_table_normalization_removes_only_optional_null_without_mutation() -> No
         )
 
 
-def test_table_semantics_enforce_per_cell_aggregate_budget() -> None:
+def test_table_semantics_enforce_per_cell_estimated_line_capacity() -> None:
     config = {
         "cells": [
             {
@@ -305,12 +310,13 @@ def test_table_semantics_enforce_per_cell_aggregate_budget() -> None:
                 "col": 0,
                 "render_action": "render",
                 "text_format": "bullets",
-                "max_chars": 5,
+                "max_lines": 1,
+                "estimated_chars_per_line": 5,
             }
         ]
     }
     contract = build_v2_component_contract("table", _table_tags(config))
-    with pytest.raises(ValueError, match="maximum is 5"):
+    with pytest.raises(ValueError, match="uses an estimated 2 lines; maximum is 1"):
         validate_v2_component_semantics(
             "table", {"cells": {"0,0": {"items": ["abc", "def"]}}}, contract["normalization"]
         )
@@ -327,13 +333,11 @@ def test_table_with_no_render_cells_has_an_exact_empty_cells_object() -> None:
     assert cells["properties"] == {}
     assert cells["required"] == []
     assert _valid(contract["output_schema"], {"cells": {}})
-    assert contract["normalization"] == {"optional_cells": [], "max_chars": {}}
+    assert contract["normalization"] == {"optional_cells": [], "text_capacity": {}}
 
 
 @pytest.mark.parametrize("optional", [False, True])
-def test_table_rejects_impossible_non_null_cell_budget_without_changing_v1(
-    optional: bool,
-) -> None:
+def test_table_rejects_more_items_than_cell_lines(optional: bool) -> None:
     config = {
         "rows": [{"row": 0, "content_policy": "optional" if optional else "required"}],
         "cells": [
@@ -344,36 +348,30 @@ def test_table_rejects_impossible_non_null_cell_budget_without_changing_v1(
                 "text_format": "bullets",
                 "min_items": 2,
                 "max_items": 3,
-                "min_chars_per_item": 5,
-                "max_chars_per_item": 20,
-                "max_chars": 9,
+                "max_lines": 2,
+                "estimated_chars_per_line": 20,
             }
         ],
     }
     tags = _table_tags(config)
 
-    build_validation_content_schema("table", tags)
-
-    with pytest.raises(
-        ValueError,
-        match=r"table V2 cell '0,0' non-null contract.*max_chars 9.*require 10",
-    ):
-        build_v2_component_contract("table", tags)
+    with pytest.raises(ValueError, match="max_items must not exceed max_lines"):
+        build_validation_content_schema("table", tags)
 
 
 @pytest.mark.parametrize(
     "metadata",
     [
         {},
-        {"optional_cells": [], "max_chars": {}, "extra": True},
-        {"optional_cells": ["0,0", "0,0"], "max_chars": {}},
-        {"optional_cells": ["01,0"], "max_chars": {}},
-        {"optional_cells": [], "max_chars": {"bad": 10}},
-        {"optional_cells": [], "max_chars": {"0,0": 0}},
+        {"optional_cells": [], "text_capacity": {}, "extra": True},
+        {"optional_cells": ["0,0", "0,0"], "text_capacity": {}},
+        {"optional_cells": ["01,0"], "text_capacity": {}},
+        {"optional_cells": [], "text_capacity": {"bad": {"max_lines": 1, "estimated_chars_per_line": 10}}},
+        {"optional_cells": [], "text_capacity": {"0,0": {"max_lines": 0, "estimated_chars_per_line": 10}}},
     ],
 )
 def test_table_rejects_malformed_normalization(metadata: dict) -> None:
-    with pytest.raises(ValueError, match="normalization"):
+    with pytest.raises(ValueError, match="normalization|positive integers"):
         normalize_v2_component_content("table", {"cells": {}}, metadata)
 
 
@@ -487,8 +485,19 @@ def test_chart_rejects_malformed_normalization(metadata: dict) -> None:
 @pytest.mark.parametrize(
     ("component_type", "metadata"),
     [
-        ("text", {"max_chars": 20}),
-        ("table", {"optional_cells": ["0,0"], "max_chars": {"0,0": 20}}),
+        (
+            "text",
+            {"text_capacity": {"max_lines": 2, "estimated_chars_per_line": 20}},
+        ),
+        (
+            "table",
+            {
+                "optional_cells": ["0,0"],
+                "text_capacity": {
+                    "0,0": {"max_lines": 2, "estimated_chars_per_line": 20}
+                },
+            },
+        ),
         (
             "category_chart",
             {
@@ -507,7 +516,7 @@ def test_public_normalization_validator_dispatches_valid_metadata(
 
 
 def test_public_normalization_validator_rejects_invalid_metadata() -> None:
-    with pytest.raises(ValueError, match="exactly max_chars"):
+    with pytest.raises(ValueError, match="exactly text_capacity"):
         validate_v2_component_normalization("text", {})
 
 
@@ -618,7 +627,7 @@ def test_every_registered_component_has_v2_support() -> None:
         "table": _table_tags({"cells": []}),
         "category_chart": _chart_tags(),
     }
-    assert set(fixtures) == set(list_component_types())
+    assert set(fixtures) | {"categorical_fill"} == set(list_component_types())
     for component_type, tags in fixtures.items():
         assert build_v2_component_contract(component_type, tags)["component_type"] == component_type
 
@@ -626,7 +635,7 @@ def test_every_registered_component_has_v2_support() -> None:
 @pytest.mark.parametrize(
     ("component_type", "tags"),
     [
-        ("text", _text_tags(efficio_target_chars="90")),
+        ("text", _text_tags(efficio_target_items="3")),
         ("table", _table_tags({"cells": []})),
         ("category_chart", _chart_tags()),
     ],
@@ -660,7 +669,8 @@ def test_unknown_component_fails_fast() -> None:
                             "row": 0,
                             "col": 0,
                             "render_action": "render",
-                            "max_chars": 20,
+                            "max_lines": 2,
+                            "estimated_chars_per_line": 20,
                         }
                     ],
                 }
@@ -701,7 +711,13 @@ def test_table_contract_coherence_requires_nullable_metadata_alignment() -> None
             {
                 "rows": [{"row": 0, "content_policy": "optional"}],
                 "cells": [
-                    {"row": 0, "col": 0, "render_action": "render", "max_chars": 20}
+                    {
+                        "row": 0,
+                        "col": 0,
+                        "render_action": "render",
+                        "max_lines": 2,
+                        "estimated_chars_per_line": 20,
+                    }
                 ],
             }
         ),
@@ -714,8 +730,11 @@ def test_table_contract_coherence_requires_nullable_metadata_alignment() -> None
         )
 
     normalization = copy.deepcopy(contract["normalization"])
-    normalization["max_chars"]["9,9"] = 10
-    with pytest.raises(ValueError, match="max_chars metadata.*declared"):
+    normalization["text_capacity"]["9,9"] = {
+        "max_lines": 2,
+        "estimated_chars_per_line": 10,
+    }
+    with pytest.raises(ValueError, match="text_capacity metadata.*declared"):
         validate_v2_component_contract_coherence(
             "table", contract["output_schema"], normalization
         )

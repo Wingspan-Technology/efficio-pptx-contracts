@@ -19,23 +19,25 @@ from efficio_pptx_contracts import (
 )
 
 
-def _text_tags(*, max_chars: int = 10) -> dict[str, str]:
+def _text_tags(*, max_lines: int = 2, chars_per_line: int = 5) -> dict[str, str]:
     return {
         "efficio_content_mode": "ai_generated",
         "efficio_component_id": "summary",
         "efficio_component_type": "text",
         "efficio_text_format": "bullets",
         "efficio_sizing_mode": "auto",
-        "efficio_max_chars": str(max_chars),
+        "efficio_max_lines": str(max_lines),
+        "efficio_estimated_chars_per_line": str(chars_per_line),
         "efficio_min_items": "2",
-        "efficio_max_items": "4",
-        "efficio_min_chars_per_item": "1",
-        "efficio_max_chars_per_item": "20",
+        "efficio_max_items": "2",
     }
 
 
-def _text_contract(*, max_chars: int = 10) -> dict[str, object]:
-    return build_v2_component_contract("text", _text_tags(max_chars=max_chars))
+def _text_contract(*, max_lines: int = 2, chars_per_line: int = 5) -> dict[str, object]:
+    return build_v2_component_contract(
+        "text",
+        _text_tags(max_lines=max_lines, chars_per_line=chars_per_line),
+    )
 
 
 def _table_tags() -> dict[str, str]:
@@ -48,8 +50,9 @@ def _table_tags() -> dict[str, str]:
                 "render_action": "render",
                 "text_format": "bullets",
                 "min_items": 1,
-                "max_items": 3,
-                "max_chars": 5,
+                "max_items": 1,
+                "max_lines": 1,
+                "estimated_chars_per_line": 5,
             },
             {
                 "row": 0,
@@ -57,8 +60,9 @@ def _table_tags() -> dict[str, str]:
                 "render_action": "render",
                 "text_format": "bullets",
                 "min_items": 1,
-                "max_items": 2,
-                "max_chars": 4,
+                "max_items": 1,
+                "max_lines": 1,
+                "estimated_chars_per_line": 4,
             },
             {"row": 0, "col": 1, "render_action": "render"},
         ],
@@ -79,13 +83,13 @@ def test_finding_contract_is_immutable_and_bounded() -> None:
     finding = V2ComponentSemanticFinding(
         path=("items",),
         cell=None,
-        rule=V2SemanticRule.AGGREGATE_CHARACTER_LIMIT,
-        reason=V2ComponentRepairReason.AGGREGATE_CHARACTER_LIMIT,
+        rule=V2SemanticRule.ESTIMATED_LINE_LIMIT,
+        reason=V2ComponentRepairReason.ESTIMATED_LINE_LIMIT,
     )
     with pytest.raises(FrozenInstanceError):
         finding.cell = "0,0"  # type: ignore[misc]
 
-    assert [rule.value for rule in V2SemanticRule] == ["aggregate_character_limit"]
+    assert [rule.value for rule in V2SemanticRule] == ["estimated_line_limit"]
     assert {reason.value for reason in V2ComponentRepairReason} == {
         "type",
         "required",
@@ -93,12 +97,12 @@ def test_finding_contract_is_immutable_and_bounded() -> None:
         "item_count",
         "item_length",
         "numeric_constraint",
-        "aggregate_character_limit",
+        "estimated_line_limit",
         "other",
     }
 
 
-def test_text_returns_one_content_free_aggregate_finding() -> None:
+def test_text_returns_one_content_free_estimated_line_finding() -> None:
     contract = _text_contract()
     findings = collect_v2_component_semantic_findings(
         "text",
@@ -110,8 +114,8 @@ def test_text_returns_one_content_free_aggregate_finding() -> None:
         V2ComponentSemanticFinding(
             path=("items",),
             cell=None,
-            rule=V2SemanticRule.AGGREGATE_CHARACTER_LIMIT,
-            reason=V2ComponentRepairReason.AGGREGATE_CHARACTER_LIMIT,
+            rule=V2SemanticRule.ESTIMATED_LINE_LIMIT,
+            reason=V2ComponentRepairReason.ESTIMATED_LINE_LIMIT,
         ),
     )
     assert "secret-value" not in repr(findings)
@@ -171,34 +175,42 @@ def test_chart_has_no_component_owned_semantic_rule() -> None:
 
 
 def test_repair_instructions_use_only_reason_and_trusted_limits() -> None:
-    text = _text_contract(max_chars=10)
+    text = _text_contract(max_lines=2, chars_per_line=5)
     table = _table_contract()
-    text_schema = build_validation_content_schema("text", _text_tags(max_chars=10))
+    text_schema = build_validation_content_schema(
+        "text", _text_tags(max_lines=2, chars_per_line=5)
+    )
     text_normalization = text["normalization"]
     table_schema = build_validation_content_schema("table", _table_tags())
     table_normalization = table["normalization"]
 
     assert format_v2_component_repair_instruction(
         "text",
-        V2ComponentRepairReason.AGGREGATE_CHARACTER_LIMIT,
+        V2ComponentRepairReason.ESTIMATED_LINE_LIMIT,
         text_schema,  # type: ignore[arg-type]
         text_normalization,  # type: ignore[arg-type]
         cell=None,
-    ) == "The combined item length must not exceed 10 characters."
+    ) == (
+        "Keep all items within an estimated 2 rendered lines at approximately "
+        "5 characters per line. Explicit line breaks consume lines."
+    )
     assert format_v2_component_repair_instruction(
         "table",
-        V2ComponentRepairReason.AGGREGATE_CHARACTER_LIMIT,
+        V2ComponentRepairReason.ESTIMATED_LINE_LIMIT,
         table_schema,  # type: ignore[arg-type]
         table_normalization,  # type: ignore[arg-type]
         cell="1,0",
-    ) == "The combined item length must not exceed 5 characters."
+    ) == (
+        "Keep all items within an estimated 1 rendered lines at approximately "
+        "5 characters per line. Explicit line breaks consume lines."
+    )
     assert format_v2_component_repair_instruction(
         "text",
         V2ComponentRepairReason.ITEM_COUNT,
         text_schema,  # type: ignore[arg-type]
         text_normalization,  # type: ignore[arg-type]
         cell=None,
-    ) == "Return 2–4 items."
+    ) == "Return exactly 2 items."
 
     for reason in V2ComponentRepairReason:
         instruction = format_v2_component_repair_instruction(
@@ -213,10 +225,10 @@ def test_repair_instructions_use_only_reason_and_trusted_limits() -> None:
 
 
 def test_existing_exception_validator_keeps_its_contract() -> None:
-    text = _text_contract(max_chars=10)
+    text = _text_contract(max_lines=2, chars_per_line=5)
     with pytest.raises(
         ValueError,
-        match=r"text V2 content at /items uses 11 characters; maximum is 10",
+        match=r"text V2 content at /items uses an estimated 3 lines; maximum is 2",
     ):
         validate_v2_component_semantics(
             "text",
@@ -227,7 +239,7 @@ def test_existing_exception_validator_keeps_its_contract() -> None:
     table = _table_contract()
     with pytest.raises(
         ValueError,
-        match=r"table V2 content at /cells/1,0/items uses 6 characters; maximum is 5",
+        match=r"table V2 content at /cells/1,0/items uses an estimated 2 lines; maximum is 1",
     ):
         validate_v2_component_semantics(
             "table",

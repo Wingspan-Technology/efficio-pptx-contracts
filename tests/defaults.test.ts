@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { categoryChartDefaults } from "../generated/ts/components/categoryChartDefaults";
+import { categoricalFillDefaults } from "../generated/ts/components/categoricalFillDefaults";
 import { tableDefaults } from "../generated/ts/components/tableDefaults";
 import { textDefaults } from "../generated/ts/components/textDefaults";
 import { slideDefaults } from "../generated/ts/presentation/slideDefaults";
@@ -13,7 +14,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const pkgRoot = path.resolve(here, "..");
 const componentsDir = path.join(pkgRoot, "contracts", "components");
 
-const COMPONENTS = ["category_chart", "table", "text"];
+const COMPONENTS = ["categorical_fill", "category_chart", "table", "text"];
 
 function readJson(filePath: string): JsonObject {
   return JSON.parse(readFileSync(filePath, "utf8")) as JsonObject;
@@ -58,6 +59,7 @@ describe("generated defaults preserve effective behavior", () => {
     expect(textDefaults).toEqual({
       ...commonEffective,
       efficio_component_type: "text",
+      efficio_min_items: "1",
       efficio_text_format: "plain",
       efficio_sizing_mode: "auto",
     });
@@ -81,8 +83,21 @@ describe("generated defaults preserve effective behavior", () => {
     expect(categoryChartDefaults).not.toHaveProperty("efficio_category_chart_config");
   });
 
+  it("categorical_fill (the author must select a presentation scheme)", () => {
+    expect(categoricalFillDefaults).toEqual({
+      ...commonEffective,
+      efficio_component_type: "categorical_fill",
+    });
+    expect(categoricalFillDefaults).not.toHaveProperty("efficio_classification_scheme_id");
+  });
+
   it("none include efficio_component_id", () => {
-    for (const defaults of [textDefaults, tableDefaults, categoryChartDefaults]) {
+    for (const defaults of [
+      textDefaults,
+      tableDefaults,
+      categoryChartDefaults,
+      categoricalFillDefaults,
+    ]) {
       expect(defaults).not.toHaveProperty("efficio_component_id");
     }
   });

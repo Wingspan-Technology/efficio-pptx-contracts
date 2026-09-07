@@ -1,9 +1,9 @@
 """Table component per-instance validation schema.
 
 Emits ``cells`` as an object keyed by ``"row,col"`` — one property per render
-cell, each carrying its own item-count and length limits. Optional row or column
-policies make a cell optional; preserved and unconfigured cells are rejected by
-``additionalProperties: false``.
+cell, each carrying its own item-count and estimated line-capacity limits.
+Optional row or column policies make a cell optional; preserved and unconfigured
+cells are rejected by ``additionalProperties: false``.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from ._text_capacity import build_text_items_schema
 from ._table_config import (
     TABLE_CONFIG_TAG,
     TableCell,
@@ -74,24 +75,11 @@ def _cell_is_required(config: TableConfig, cell: TableCell) -> bool:
 
 def _cell_value_schema(cell: TableCell) -> dict[str, Any]:
     """Build the canonical content value schema for one render cell."""
-    items: dict[str, Any] = {"type": "array", "minItems": 1}
-    if cell.plain:
-        items["maxItems"] = 1
-    else:
-        if cell.min_items is not None:
-            items["minItems"] = cell.min_items
-        if cell.max_items is not None:
-            items["maxItems"] = cell.max_items
-
-    item: dict[str, Any] = {"type": "string"}
-    if cell.min_chars_per_item is not None:
-        item["minLength"] = cell.min_chars_per_item
-    if cell.max_chars_per_item is not None:
-        item["maxLength"] = cell.max_chars_per_item
-    items["items"] = item
     return {
         "type": "object",
         "additionalProperties": False,
         "required": ["items"],
-        "properties": {"items": items},
+        "properties": {
+            "items": build_text_items_schema(cell.capacity, plain=cell.plain)
+        },
     }

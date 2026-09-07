@@ -16,7 +16,7 @@ from efficio_pptx_contracts.errors import (
     UnknownComponentTypeError,
 )
 
-EXPECTED_TYPES = ["category_chart", "table", "text"]
+EXPECTED_TYPES = ["categorical_fill", "category_chart", "table", "text"]
 
 
 def test_import_exposes_only_stable_public_names() -> None:
@@ -27,6 +27,14 @@ def test_import_exposes_only_stable_public_names() -> None:
             "MissingResourceError",
             "TemplateContractMigrationError",
             "UnknownComponentTypeError",
+            "CLASSIFICATION_SCHEMES_TAG",
+            "CLASSIFICATION_SCHEME_ID_TAG",
+            "ClassificationCase",
+            "ClassificationFill",
+            "ClassificationPaletteMode",
+            "ClassificationScheme",
+            "parse_classification_schemes",
+            "resolve_categorical_fill_scheme",
             "load_component_registry",
             "list_component_types",
             "has_component_type",
@@ -60,6 +68,7 @@ def test_import_exposes_only_stable_public_names() -> None:
             "project_component_context",
             "project_deck_context",
             "build_validation_content_schema",
+            "build_component_render_metadata",
             "V2ComponentRepairReason",
             "V2ComponentSemanticFinding",
             "V2SemanticRule",
@@ -86,6 +95,7 @@ def test_import_exposes_only_stable_public_names() -> None:
             "CURRENT_TEMPLATE_CONTRACT_REVISION",
             "TEMPLATE_CONTRACT_REVISION_TAG",
             "UNVERSIONED_TEMPLATE_CONTRACT_REVISION",
+            "MigrateTextCapacityOperation",
             "RenameTagOperation",
             "SetTagIfMissingOperation",
             "TemplateContractMigration",
@@ -145,13 +155,11 @@ def test_ai_visible_tag_names_are_public_aliases() -> None:
     names = sdk.ai_visible_tag_names("text")
     assert {
         "text_format",
-        "max_chars",
-        "target_chars",
+        "max_lines",
+        "estimated_chars_per_line",
         "min_items",
         "max_items",
-        "min_chars_per_item",
-        "max_chars_per_item",
-        "target_chars_per_item",
+        "target_items",
     } <= names
     # raw efficio_* names never appear in the AI-facing contract
     assert not any(name.startswith("efficio_") for name in names)
@@ -172,7 +180,10 @@ def test_project_component_context_is_ai_safe() -> None:
         "efficio_prompt_instruction": "Write a title.",
         "efficio_text_format": "plain",
         "efficio_sizing_mode": "auto",
-        "efficio_max_chars": "30",
+        "efficio_max_lines": "2",
+        "efficio_estimated_chars_per_line": "30",
+        "efficio_min_items": "1",
+        "efficio_max_items": "1",
     }
     context = sdk.project_component_context("text", tags)
     assert context["component_type"] == "text"
@@ -181,7 +192,10 @@ def test_project_component_context_is_ai_safe() -> None:
     # efficio_sizing_mode is present on the shape but no longer AI-visible, so it is filtered out.
     assert context["tag_context"] == {
         "text_format": "plain",
-        "max_chars": 30,
+        "max_lines": 2,
+        "estimated_chars_per_line": 30,
+        "min_items": 1,
+        "max_items": 1,
     }
     # content-mode (filtering) and prompt-instruction (surfaced) never duplicated;
     # identity/runtime tags never leak — under neither raw nor aliased names.
@@ -196,20 +210,21 @@ def test_project_component_context_is_ai_safe() -> None:
         assert excluded not in context["tag_context"]
 
 
-def test_project_component_context_includes_target_chars_as_integer() -> None:
+def test_project_component_context_includes_capacity_as_integers() -> None:
     tags = {
         "efficio_content_mode": "ai_generated",
         "efficio_component_id": "title_01",
         "efficio_component_type": "text",
         "efficio_text_format": "plain",
         "efficio_sizing_mode": "auto",
-        "efficio_max_chars": "40",
-        "efficio_target_chars": "30",
+        "efficio_max_lines": "2",
+        "efficio_estimated_chars_per_line": "40",
+        "efficio_min_items": "1",
+        "efficio_max_items": "1",
     }
     context = sdk.project_component_context("text", tags)
-    # target_chars is AI-visible sizing guidance; the integer tag becomes a JSON number.
-    assert context["tag_context"]["target_chars"] == 30
-    assert context["tag_context"]["max_chars"] == 40
+    assert context["tag_context"]["max_lines"] == 2
+    assert context["tag_context"]["estimated_chars_per_line"] == 40
 
 
 def test_project_component_context_omits_missing_instructions() -> None:
@@ -247,14 +262,14 @@ def test_project_component_context_omits_blank_tag_values() -> None:
     tags = {
         "efficio_content_mode": "ai_generated",
         "efficio_text_format": "plain",
-        "efficio_max_chars": "   ",  # blank -> omitted
+        "efficio_max_lines": "   ",  # blank -> omitted
         "efficio_min_items": "\n",  # blank -> omitted
-        "efficio_max_chars_per_item": "40",  # non-blank -> kept
+        "efficio_estimated_chars_per_line": "40",  # non-blank -> kept
     }
     context = sdk.project_component_context("text", tags)
     assert context["tag_context"] == {
         "text_format": "plain",
-        "max_chars_per_item": 40,
+        "estimated_chars_per_line": 40,
     }
 
 
@@ -272,9 +287,9 @@ def test_project_component_context_parses_json_object_tags() -> None:
 def test_project_component_context_rejects_non_integer_value() -> None:
     tags = {
         "efficio_content_mode": "ai_generated",
-        "efficio_max_chars": "thirty",
+        "efficio_max_lines": "many",
     }
-    with pytest.raises(ValueError, match="efficio_max_chars"):
+    with pytest.raises(ValueError, match="efficio_max_lines"):
         sdk.project_component_context("text", tags)
 
 
@@ -392,12 +407,10 @@ def valid_text_tags(**overrides: str) -> dict[str, str]:
         "efficio_component_type": "text",
         "efficio_text_format": "plain",
         "efficio_sizing_mode": "auto",
-        "efficio_max_chars": "30",
-        "efficio_target_chars": "30",
+        "efficio_max_lines": "2",
+        "efficio_estimated_chars_per_line": "30",
         "efficio_min_items": "1",
         "efficio_max_items": "1",
-        "efficio_min_chars_per_item": "1",
-        "efficio_max_chars_per_item": "30",
     }
     tags.update(overrides)
     return tags
@@ -424,7 +437,7 @@ def test_validate_component_tags_accepts_valid_text_tags() -> None:
 def test_validate_component_tags_reports_required_and_enum_errors() -> None:
     issues = sdk.validate_component_tags(
         "text",
-        valid_text_tags(efficio_text_format="wrong", efficio_max_chars="0"),
+        valid_text_tags(efficio_text_format="wrong", efficio_max_lines="0"),
     )
     codes = {issue.code for issue in issues}
     assert "invalid_enum" in codes
@@ -440,46 +453,56 @@ def test_validate_component_tags_reports_missing_required_tag() -> None:
     ]
 
 
-def test_validate_text_accepts_target_chars_within_max() -> None:
-    # target_chars <= max_chars is valid (below or equal).
-    assert sdk.validate_component_tags("text", valid_text_tags(efficio_target_chars="20")) == []
-
-
-def test_validate_text_accepts_missing_target_chars() -> None:
-    # target_chars is optional guidance; omitting it is valid.
+def test_validate_text_accepts_missing_target_items() -> None:
+    # target_items is optional guidance; omitting it is valid.
     tags = valid_text_tags()
-    del tags["efficio_target_chars"]
+    assert "efficio_target_items" not in tags
     assert sdk.validate_component_tags("text", tags) == []
 
 
-def test_validate_text_rejects_target_chars_exceeding_max() -> None:
-    # target_chars > max_chars is a single semantic issue on efficio_target_chars:
-    # target is AI sizing guidance, max_chars is the strict bound it must fit within.
+def test_validate_text_rejects_max_items_exceeding_max_lines() -> None:
     issues = sdk.validate_component_tags(
-        "text", valid_text_tags(efficio_max_chars="30", efficio_target_chars="45")
+        "text",
+        valid_text_tags(
+            efficio_text_format="bullets",
+            efficio_max_lines="2",
+            efficio_max_items="3",
+        ),
     )
     assert [(i.code, i.tag_name) for i in issues] == [
-        ("target_exceeds_max", "efficio_target_chars")
+        ("items_exceed_line_capacity", "efficio_max_items")
     ]
 
 
-def test_validate_text_target_chars_non_integer_is_structural() -> None:
-    # A zero/non-integer target is caught by structural (positive-integer) validation,
-    # not the semantic comparison.
-    issues = sdk.validate_component_tags("text", valid_text_tags(efficio_target_chars="0"))
-    codes = {(i.code, i.tag_name) for i in issues}
-    assert ("invalid_positive_integer", "efficio_target_chars") in codes
-    assert all(i.code != "target_exceeds_max" for i in issues)
-
-
-def test_validate_text_skips_target_semantic_when_max_structurally_invalid() -> None:
-    # When max_chars is structurally invalid the target<=max comparison is skipped, so
-    # only the structural error is reported (no noisy follow-on).
+def test_validate_text_line_capacity_values_must_be_positive_integers() -> None:
     issues = sdk.validate_component_tags(
-        "text", valid_text_tags(efficio_max_chars="oops", efficio_target_chars="45")
+        "text", valid_text_tags(efficio_estimated_chars_per_line="0")
     )
-    assert any(i.tag_name == "efficio_max_chars" for i in issues)
-    assert all(i.code != "target_exceeds_max" for i in issues)
+    codes = {(i.code, i.tag_name) for i in issues}
+    assert ("invalid_positive_integer", "efficio_estimated_chars_per_line") in codes
+    assert all(i.code != "items_exceed_line_capacity" for i in issues)
+
+
+def test_validate_text_line_capacity_rejects_non_ascii_digits() -> None:
+    issues = sdk.validate_component_tags(
+        "text", valid_text_tags(efficio_estimated_chars_per_line="٢٠")
+    )
+    assert ("invalid_positive_integer", "efficio_estimated_chars_per_line") in {
+        (issue.code, issue.tag_name) for issue in issues
+    }
+
+
+def test_validate_text_skips_capacity_semantics_when_line_limit_is_invalid() -> None:
+    issues = sdk.validate_component_tags(
+        "text",
+        valid_text_tags(
+            efficio_text_format="bullets",
+            efficio_max_lines="oops",
+            efficio_max_items="5",
+        ),
+    )
+    assert any(i.tag_name == "efficio_max_lines" for i in issues)
+    assert all(i.code != "items_exceed_line_capacity" for i in issues)
 
 
 def test_validate_text_rejects_min_items_over_max_items() -> None:
@@ -491,42 +514,13 @@ def test_validate_text_rejects_min_items_over_max_items() -> None:
     assert ("min_exceeds_max", "efficio_min_items") in [(i.code, i.tag_name) for i in issues]
 
 
-def test_validate_text_rejects_min_chars_per_item_over_max() -> None:
-    issues = sdk.validate_component_tags(
-        "text",
-        valid_text_tags(efficio_min_chars_per_item="40", efficio_max_chars_per_item="20"),
-    )
-    assert ("min_exceeds_max", "efficio_min_chars_per_item") in [
+def test_validate_text_reports_missing_required_line_capacity_tag() -> None:
+    tags = valid_text_tags()
+    del tags["efficio_estimated_chars_per_line"]
+    issues = sdk.validate_component_tags("text", tags)
+    assert ("missing_required_tag", "efficio_estimated_chars_per_line") in [
         (i.code, i.tag_name) for i in issues
     ]
-
-
-def test_validate_text_rejects_target_per_item_outside_bounds() -> None:
-    over = sdk.validate_component_tags(
-        "text",
-        valid_text_tags(efficio_max_chars_per_item="20", efficio_target_chars_per_item="45"),
-    )
-    assert ("target_exceeds_max", "efficio_target_chars_per_item") in [
-        (i.code, i.tag_name) for i in over
-    ]
-    under = sdk.validate_component_tags(
-        "text",
-        valid_text_tags(
-            efficio_min_chars_per_item="10",
-            efficio_max_chars_per_item="30",
-            efficio_target_chars_per_item="5",
-        ),
-    )
-    assert ("target_below_min", "efficio_target_chars_per_item") in [
-        (i.code, i.tag_name) for i in under
-    ]
-
-
-def test_validate_text_accepts_missing_target_per_item() -> None:
-    # target_chars_per_item is optional; omitting it is valid.
-    tags = valid_text_tags(efficio_min_chars_per_item="1", efficio_max_chars_per_item="30")
-    assert "efficio_target_chars_per_item" not in tags
-    assert sdk.validate_component_tags("text", tags) == []
 
 
 def test_validate_text_plain_requires_single_item() -> None:
@@ -543,6 +537,7 @@ def test_validate_text_accepts_target_items_within_bounds() -> None:
     # A preferred item count is valid guidance when it sits within [min_items, max_items].
     tags = valid_text_tags(
         efficio_text_format="bullets",
+        efficio_max_lines="5",
         efficio_min_items="1",
         efficio_max_items="5",
         efficio_target_items="3",
@@ -565,6 +560,7 @@ def test_validate_text_rejects_target_items_outside_bounds() -> None:
         "text",
         valid_text_tags(
             efficio_text_format="bullets",
+            efficio_max_lines="5",
             efficio_min_items="3",
             efficio_max_items="5",
             efficio_target_items="1",
@@ -633,12 +629,22 @@ def test_validate_table_rejects_min_items_over_max_items() -> None:
     assert ("min_exceeds_max", "efficio_table_config") in [(i.code, i.tag_name) for i in issues]
 
 
-def test_validate_table_rejects_min_chars_per_item_over_max() -> None:
+def test_validate_table_rejects_max_items_exceeding_max_lines() -> None:
     issues = sdk.validate_component_tags(
         "table",
-        valid_table_tags(efficio_table_config=_table_cfg(min_chars_per_item=40, max_chars_per_item=20)),
+        valid_table_tags(
+            efficio_table_config=_table_cfg(
+                text_format="bullets",
+                max_lines=2,
+                estimated_chars_per_line=20,
+                min_items=1,
+                max_items=3,
+            )
+        ),
     )
-    assert ("min_exceeds_max", "efficio_table_config") in [(i.code, i.tag_name) for i in issues]
+    assert ("items_exceed_line_capacity", "efficio_table_config") in [
+        (i.code, i.tag_name) for i in issues
+    ]
 
 
 def test_validate_table_rejects_target_items_outside_bounds() -> None:
@@ -712,32 +718,33 @@ def test_validate_table_plain_cell_forbids_target_items() -> None:
 
 
 def test_validate_table_accepts_valid_sizing() -> None:
-    # A consistent bullets cell with strict bounds and in-range guidance is clean.
+    # A consistent bullets cell with line capacity, item bounds, and guidance is clean.
     tags = valid_table_tags(
         efficio_table_config=_table_cfg(
             text_format="bullets",
+            max_lines=3,
+            estimated_chars_per_line=40,
             min_items=1,
             max_items=3,
             target_items=2,
-            min_chars_per_item=5,
-            max_chars_per_item=40,
-            target_chars_per_item=20,
-            max_chars=120,
-            target_chars=90,
         )
     )
     assert sdk.validate_component_tags("table", tags) == []
 
 
 def test_validate_table_skips_semantics_when_structurally_broken() -> None:
-    # min_chars_per_item=0 is a structural violation (below the schema minimum), so the
-    # tag is skipped for cross-field checks: the otherwise-present min_items>max_items is
+    # estimated_chars_per_line=0 is a structural violation, so the tag is skipped for
+    # cross-field checks: the otherwise-present min_items>max_items is
     # not double-reported.
     issues = sdk.validate_component_tags(
         "table",
         valid_table_tags(
             efficio_table_config=_table_cfg(
-                text_format="bullets", min_items=5, max_items=2, min_chars_per_item=0
+                text_format="bullets",
+                max_lines=5,
+                estimated_chars_per_line=0,
+                min_items=5,
+                max_items=2,
             )
         ),
     )
@@ -746,14 +753,16 @@ def test_validate_table_skips_semantics_when_structurally_broken() -> None:
     assert all(code != "min_exceeds_max" for code, _ in codes)
 
 
-def test_validate_table_rejects_target_chars_over_max_chars() -> None:
+def test_validate_table_rejects_incomplete_line_capacity() -> None:
     issues = sdk.validate_component_tags(
         "table",
         valid_table_tags(
-            efficio_table_config=_table_cfg(text_format="bullets", max_chars=100, target_chars=150)
+            efficio_table_config=_table_cfg(text_format="bullets", max_lines=4)
         ),
     )
-    assert ("target_exceeds_max", "efficio_table_config") in [(i.code, i.tag_name) for i in issues]
+    assert ("incomplete_line_capacity", "efficio_table_config") in [
+        (i.code, i.tag_name) for i in issues
+    ]
 
 
 def test_validate_table_ignores_sizing_on_preserve_cells() -> None:

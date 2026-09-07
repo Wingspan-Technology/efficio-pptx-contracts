@@ -5,5 +5,6 @@ export const textDefaults = {
   "efficio_content_mode": "ai_generated",
   "efficio_component_type": "text",
   "efficio_text_format": "plain",
-  "efficio_sizing_mode": "auto"
+  "efficio_sizing_mode": "auto",
+  "efficio_min_items": "1"
 } as const;

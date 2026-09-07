@@ -12,6 +12,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import cast
 
+from ._text_capacity import TextCapacity
+
 TABLE_CONFIG_TAG = "efficio_table_config"
 
 _ROOT_FIELDS = frozenset({"rows", "columns", "cells"})
@@ -22,28 +24,22 @@ _CELL_FIELDS = frozenset(
         "render_action",
         "text_format",
         "instruction",
-        "max_chars",
-        "target_chars",
+        "max_lines",
+        "estimated_chars_per_line",
         "min_items",
         "target_items",
         "max_items",
-        "min_chars_per_item",
-        "max_chars_per_item",
-        "target_chars_per_item",
     }
 )
 _CONTENT_POLICIES = frozenset({"required", "optional"})
 _RENDER_ACTIONS = frozenset({"render", "preserve"})
 _TEXT_FORMATS = frozenset({"plain", "paragraph", "bullets", "numbered_list"})
 _SIZING_FIELDS = (
-    "max_chars",
-    "target_chars",
+    "max_lines",
+    "estimated_chars_per_line",
     "min_items",
     "target_items",
     "max_items",
-    "min_chars_per_item",
-    "max_chars_per_item",
-    "target_chars_per_item",
 )
 
 
@@ -73,14 +69,7 @@ class TableCell:
     render_action: str
     text_format: str
     instruction: str
-    max_chars: int | None
-    target_chars: int | None
-    min_items: int | None
-    target_items: int | None
-    max_items: int | None
-    min_chars_per_item: int | None
-    max_chars_per_item: int | None
-    target_chars_per_item: int | None
+    capacity: TextCapacity
 
     @property
     def coordinate(self) -> tuple[int, int]:
@@ -196,14 +185,13 @@ def _parse_cell(raw: object) -> TableCell:
         render_action=render_action,
         text_format=text_format,
         instruction=_instruction(entry, f"cell ({row},{col})"),
-        max_chars=sizing["max_chars"],
-        target_chars=sizing["target_chars"],
-        min_items=sizing["min_items"],
-        target_items=sizing["target_items"],
-        max_items=sizing["max_items"],
-        min_chars_per_item=sizing["min_chars_per_item"],
-        max_chars_per_item=sizing["max_chars_per_item"],
-        target_chars_per_item=sizing["target_chars_per_item"],
+        capacity=TextCapacity(
+            max_lines=sizing["max_lines"],
+            estimated_chars_per_line=sizing["estimated_chars_per_line"],
+            min_items=sizing["min_items"] or 1,
+            max_items=sizing["max_items"],
+            target_items=sizing["target_items"],
+        ),
     )
 
 

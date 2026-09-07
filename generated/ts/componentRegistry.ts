@@ -2,6 +2,11 @@
 
 export const componentRegistry = {
   "components": {
+    "categorical_fill": {
+      "tags_contract": "contracts/components/categorical_fill/tags.contract.json",
+      "content_contract": "contracts/components/categorical_fill/content.contract.json",
+      "tags_defaults": "contracts/components/categorical_fill/tags.defaults.json"
+    },
     "category_chart": {
       "tags_contract": "contracts/components/category_chart/tags.contract.json",
       "content_contract": "contracts/components/category_chart/content.contract.json",

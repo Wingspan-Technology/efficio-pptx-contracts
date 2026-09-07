@@ -10,6 +10,7 @@ import pytest
 
 from efficio_pptx_contracts import (
     CURRENT_TEMPLATE_CONTRACT_REVISION,
+    MigrateTextCapacityOperation,
     RenameTagOperation,
     TEMPLATE_CONTRACT_REVISION_TAG,
     TemplateContractMigrationPlan,
@@ -53,14 +54,16 @@ def _plan_dict(plan: TemplateContractMigrationPlan) -> dict[str, object]:
 
 def test_catalog_is_contiguous_immutable_and_derived() -> None:
     catalog = load_template_contract_migration_catalog()
-    assert catalog.current_revision == CURRENT_TEMPLATE_CONTRACT_REVISION == 1
+    assert catalog.current_revision == CURRENT_TEMPLATE_CONTRACT_REVISION == 2
     assert catalog.revision_tag == TEMPLATE_CONTRACT_REVISION_TAG
     assert [(item.from_revision, item.to_revision) for item in catalog.migrations] == [
-        (0, 1)
+        (0, 1),
+        (1, 2),
     ]
     assert get_template_contract_migration_path(0) == catalog.migrations
     rename = catalog.migrations[0].operations[2]
     assert isinstance(rename, RenameTagOperation)
+    assert isinstance(catalog.migrations[1].operations[0], MigrateTextCapacityOperation)
     with pytest.raises(TypeError):
         rename.value_map["x"] = "y"  # type: ignore[index]
 
@@ -103,7 +106,7 @@ def test_planner_rejects_future_revision_and_duplicate_targets() -> None:
                 TemplateTagTarget(
                     "deck",
                     TemplateTagScope.DECK,
-                    {TEMPLATE_CONTRACT_REVISION_TAG: "2"},
+                    {TEMPLATE_CONTRACT_REVISION_TAG: "3"},
                 )
             ]
         )

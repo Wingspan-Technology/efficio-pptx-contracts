@@ -9,7 +9,7 @@ must not maintain their own AI tag allowlists; they go through these helpers.
 
 The AI-facing projection speaks the public alias contract, never raw tag names:
 every ``tag_context`` key is the tag name with the ``efficio_`` prefix stripped
-(``efficio_max_chars`` -> ``max_chars``), matching the aliased
+(``efficio_max_lines`` -> ``max_lines``), matching the aliased
 ``tag_instructions`` keys in the generated component instructions. Values are
 typed for AI consumption: integer tags become ``int``, object/array tags are
 parsed into real JSON values, strings/enums stay strings. Internal artifacts,
@@ -23,7 +23,9 @@ Two structural tags are consumed by dedicated paths and appear in neither
   ``instructions`` field.
 
 The projection never includes shape paths, raw tag maps, table/cell coordinates,
-PowerPoint object ids, or any tag without ``ai``.
+PowerPoint object ids, or private styling. Categorical-fill context additionally
+projects its referenced presentation scheme as semantic-only data; this derived
+context never exposes the scheme's trusted colors.
 """
 
 from __future__ import annotations
@@ -32,6 +34,10 @@ import json
 from collections.abc import Mapping
 from typing import Any
 
+from .classification_schemes import (
+    classification_scheme_public_context,
+    resolve_categorical_fill_scheme,
+)
 from .instructions import load_component_instruction
 from .tag_validation import load_component_tag_schema
 from .content_mode import CONTENT_MODE_TAG
@@ -74,14 +80,21 @@ def ai_visible_tag_names(component_type: str) -> frozenset[str]:
     return frozenset(instruction.get("tag_instructions") or {})
 
 
-def project_component_context(component_type: str, tags: Mapping[str, str]) -> dict[str, Any]:
+def project_component_context(
+    component_type: str,
+    tags: Mapping[str, str],
+    *,
+    deck_tags: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
     """AI-safe per-instance context: ``component_type``, optional ``instructions``, ``tag_context``.
 
-    ``tag_context`` carries only AI-visible tag values (per the component
+    ``tag_context`` carries AI-visible tag values (per the component
     contract), keyed by public alias and typed for AI consumption (integer tags
     as numbers, object/array tags as parsed JSON values, strings/enums as
     strings). The content-mode and prompt-instruction tags and any tag whose
-    raw value is blank (empty, spaces, or only newlines) are excluded. No shape
+    raw value is blank (empty, spaces, or only newlines) are excluded. A
+    categorical-fill component also receives semantic scheme context resolved
+    from ``deck_tags``; fill values remain private. No shape
     paths, raw tags, or PowerPoint internals are included. ``instructions`` is
     included only when ``efficio_prompt_instruction`` has a non-blank value
     (trimmed); a missing or blank prompt omits the field entirely.
@@ -106,6 +119,16 @@ def project_component_context(component_type: str, tags: Mapping[str, str]) -> d
     prompt = tags.get(PROMPT_INSTRUCTION_TAG, "").strip()
     if prompt != "":
         context["instructions"] = prompt
+    if component_type == "categorical_fill":
+        if deck_tags is None:
+            raise ValueError("categorical-fill AI context requires deck_tags")
+        content_role = tags.get("efficio_content_role", "").strip()
+        if content_role:
+            tag_context["content_role"] = content_role
+        scheme = resolve_categorical_fill_scheme(tags, deck_tags)
+        tag_context["classification_scheme"] = classification_scheme_public_context(
+            scheme
+        )
     context["tag_context"] = tag_context
     return context
 
@@ -130,7 +153,7 @@ def project_deck_context(tags: Mapping[str, str]) -> dict[str, Any]:
 def _typed_tag_value(tag_name: str, value: str, tag_type: str | None) -> Any:
     """Convert a raw tag string to its AI-facing value per the contract tag type."""
     if tag_type == _INTEGER_TAG_TYPE:
-        if not value.isdecimal():
+        if not value.isascii() or not value.isdecimal():
             raise ValueError(f"tag {tag_name!r} must be a positive integer string")
         return int(value)
     if tag_type in _JSON_TAG_TYPES:

@@ -25,12 +25,12 @@
       ],
       "expected": {
         "from_revision": 0,
-        "to_revision": 1,
+        "to_revision": 2,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "1" },
+            "set_tags": { "efficio_template_contract_revision": "2" },
             "remove_tags": []
           },
           {
@@ -63,12 +63,12 @@
       ],
       "expected": {
         "from_revision": 0,
-        "to_revision": 1,
+        "to_revision": 2,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "1" },
+            "set_tags": { "efficio_template_contract_revision": "2" },
             "remove_tags": []
           },
           {
@@ -86,7 +86,7 @@
         {
           "target_ref": "deck",
           "scope": "deck",
-          "tags": { "efficio_template_contract_revision": "1" }
+          "tags": { "efficio_template_contract_revision": "2" }
         },
         {
           "target_ref": "shape:slide_001/title",
@@ -95,9 +95,258 @@
         }
       ],
       "expected": {
-        "from_revision": 1,
-        "to_revision": 1,
+        "from_revision": 2,
+        "to_revision": 2,
         "patches": []
+      }
+    },
+    {
+      "name": "current multi-item text capacity",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:slide_001/body",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "text",
+            "efficio_text_format": "bullets",
+            "efficio_max_chars": "80",
+            "efficio_target_chars": "60",
+            "efficio_min_items": "1",
+            "efficio_max_items": "4",
+            "efficio_target_items": "2",
+            "efficio_min_chars_per_item": "1",
+            "efficio_max_chars_per_item": "40",
+            "efficio_target_chars_per_item": "30"
+          }
+        }
+      ],
+      "expected": {
+        "from_revision": 1,
+        "to_revision": 2,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "2" },
+            "remove_tags": []
+          },
+          {
+            "target_ref": "shape:slide_001/body",
+            "scope": "shape",
+            "set_tags": {
+              "efficio_estimated_chars_per_line": "20",
+              "efficio_max_lines": "4"
+            },
+            "remove_tags": [
+              "efficio_max_chars",
+              "efficio_max_chars_per_item",
+              "efficio_min_chars_per_item",
+              "efficio_target_chars",
+              "efficio_target_chars_per_item"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "plain text uses an equivalent one-line capacity when legacy lines are absent",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:slide_001/title",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "text",
+            "efficio_text_format": "plain",
+            "efficio_max_chars": "120",
+            "efficio_min_items": "1",
+            "efficio_max_items": "1",
+            "efficio_min_chars_per_item": "1",
+            "efficio_max_chars_per_item": "120"
+          }
+        }
+      ],
+      "expected": {
+        "from_revision": 1,
+        "to_revision": 2,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "2" },
+            "remove_tags": []
+          },
+          {
+            "target_ref": "shape:slide_001/title",
+            "scope": "shape",
+            "set_tags": {
+              "efficio_estimated_chars_per_line": "120",
+              "efficio_max_lines": "1"
+            },
+            "remove_tags": [
+              "efficio_max_chars",
+              "efficio_max_chars_per_item",
+              "efficio_min_chars_per_item"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "legacy line-based text capacity is retained exactly",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:slide_001/list",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "text",
+            "efficio_text_format": "bullets",
+            "efficio_max_lines": "4",
+            "efficio_max_chars_per_line": "20"
+          }
+        }
+      ],
+      "expected": {
+        "from_revision": 1,
+        "to_revision": 2,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "2" },
+            "remove_tags": []
+          },
+          {
+            "target_ref": "shape:slide_001/list",
+            "scope": "shape",
+            "set_tags": {
+              "efficio_estimated_chars_per_line": "20",
+              "efficio_max_items": "4",
+              "efficio_min_items": "1"
+            },
+            "remove_tags": ["efficio_max_chars_per_line"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "item-only table limits remain item-only",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:slide_001/table",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "table",
+            "efficio_table_config": "{\"cells\":[{\"col\":0,\"max_items\":3,\"min_items\":1,\"render_action\":\"render\",\"row\":0,\"target_items\":2,\"text_format\":\"bullets\"}]}"
+          }
+        }
+      ],
+      "expected": {
+        "from_revision": 1,
+        "to_revision": 2,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "2" },
+            "remove_tags": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "preserved table cells discard retired capacity fields",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:slide_001/table",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "table",
+            "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"preserve\",\"min_items\":5,\"max_chars\":80}]}"
+          }
+        }
+      ],
+      "expected": {
+        "from_revision": 1,
+        "to_revision": 2,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "2" },
+            "remove_tags": []
+          },
+          {
+            "target_ref": "shape:slide_001/table",
+            "scope": "shape",
+            "set_tags": {
+              "efficio_table_config": "{\"cells\":[{\"col\":0,\"min_items\":5,\"render_action\":\"preserve\",\"row\":0}]}"
+            },
+            "remove_tags": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "table cells migrate independently and serialize deterministically",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:slide_001/table",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "table",
+            "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"preserve\"},{\"row\":1,\"col\":0,\"render_action\":\"render\",\"text_format\":\"bullets\",\"max_chars\":80,\"min_items\":1,\"max_items\":4,\"target_items\":2,\"max_chars_per_item\":40},{\"row\":2,\"col\":0,\"render_action\":\"render\",\"text_format\":\"plain\",\"max_chars\":30}]}"
+          }
+        }
+      ],
+      "expected": {
+        "from_revision": 1,
+        "to_revision": 2,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "2" },
+            "remove_tags": []
+          },
+          {
+            "target_ref": "shape:slide_001/table",
+            "scope": "shape",
+            "set_tags": {
+              "efficio_table_config": "{\"cells\":[{\"col\":0,\"render_action\":\"preserve\",\"row\":0},{\"col\":0,\"estimated_chars_per_line\":20,\"max_items\":4,\"max_lines\":4,\"min_items\":1,\"render_action\":\"render\",\"row\":1,\"target_items\":2,\"text_format\":\"bullets\"},{\"col\":0,\"estimated_chars_per_line\":30,\"max_items\":1,\"max_lines\":1,\"min_items\":1,\"render_action\":\"render\",\"row\":2,\"text_format\":\"plain\"}]}"
+            },
+            "remove_tags": []
+          }
+        ]
       }
     }
   ],
@@ -135,7 +384,7 @@
         {
           "target_ref": "deck",
           "scope": "deck",
-          "tags": { "efficio_template_contract_revision": "1" }
+          "tags": { "efficio_template_contract_revision": "2" }
         },
         {
           "target_ref": "shape:1",
@@ -151,7 +400,7 @@
         {
           "target_ref": "deck",
           "scope": "deck",
-          "tags": { "efficio_template_contract_revision": "1" }
+          "tags": { "efficio_template_contract_revision": "2" }
         },
         {
           "target_ref": "shape:1",
@@ -163,6 +412,105 @@
         }
       ],
       "error_contains": "retired tag"
+    },
+    {
+      "name": "current revision rejects retired text capacity tags",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "2" }
+        },
+        {
+          "target_ref": "shape:text",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "text",
+            "efficio_max_chars": "80"
+          }
+        }
+      ],
+      "error_contains": "retired tag"
+    },
+    {
+      "name": "current revision rejects retired table cell capacity fields",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "2" }
+        },
+        {
+          "target_ref": "shape:table",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "table",
+            "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"render\",\"max_chars\":80}]}"
+          }
+        }
+      ],
+      "error_contains": "retired tag"
+    },
+    {
+      "name": "partial table line capacity is rejected",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:table",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "table",
+            "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"render\",\"text_format\":\"bullets\",\"max_lines\":3}]}"
+          }
+        }
+      ],
+      "error_contains": "estimated_chars_per_line"
+    },
+    {
+      "name": "table character capacity without a line count is rejected",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:table",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "table",
+            "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"render\",\"text_format\":\"bullets\",\"max_chars\":80}]}"
+          }
+        }
+      ],
+      "error_contains": "character capacity without max_lines"
+    },
+    {
+      "name": "item count cannot exceed migrated line capacity",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "1" }
+        },
+        {
+          "target_ref": "shape:text",
+          "scope": "shape",
+          "tags": {
+            "efficio_component_type": "text",
+            "efficio_text_format": "bullets",
+            "efficio_max_lines": "2",
+            "efficio_estimated_chars_per_line": "20",
+            "efficio_min_items": "1",
+            "efficio_max_items": "3"
+          }
+        }
+      ],
+      "error_contains": "max_items must not exceed max_lines"
     }
   ]
 }

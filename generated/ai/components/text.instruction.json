@@ -10,29 +10,20 @@
         "numbered_list": "An ordered numbered list."
       }
     },
-    "max_chars": {
-      "purpose": "Strict limit on the total number of characters the generated text may use. The generated content must never exceed it; shorten or compact the text until it fits."
+    "max_lines": {
+      "purpose": "Strict estimated maximum number of rendered lines available for all generated items combined. Generated content must never exceed this capacity; shorten or compact it until it fits."
     },
-    "target_chars": {
-      "purpose": "The preferred (target) total character count for the whole generated text — aim for approximately this length. Guidance only, not a hard bound: the strict limits are max_chars, the min/max item count, and the min/max characters per item. Stay near target_chars while always fitting within those limits."
+    "estimated_chars_per_line": {
+      "purpose": "Estimated number of characters that fit on one rendered line. Use it together with max_lines to keep generated content within the available space."
     },
     "min_items": {
-      "purpose": "Strict minimum number of items (strings in items[]) the generated text must include. Produce at least this many items; never fewer."
-    },
-    "target_items": {
-      "purpose": "The preferred (target) number of items (strings in items[]) — aim for approximately this many items. Guidance only, not a hard bound: the strict limits are the min/max item count and the per-item character limits. Stay near target_items while always fitting within the min and max item count. Not applicable to plain text, which is always exactly one item."
+      "purpose": "Minimum number of semantic items the generated items array must contain."
     },
     "max_items": {
-      "purpose": "Strict maximum number of items (strings in items[]) the generated text may include. The content must never exceed it; shorten or compact it (use fewer items) until it fits."
+      "purpose": "Strict maximum number of semantic items the generated items array may contain. Generated content must never exceed it; shorten or compact the item list until it fits. Items may wrap across estimated lines."
     },
-    "min_chars_per_item": {
-      "purpose": "Strict minimum number of characters for each item (each string in items[]). Every item must be at least this long."
-    },
-    "max_chars_per_item": {
-      "purpose": "Strict maximum number of characters for any single item (string in items[]). Each item must never exceed it; shorten or compact each item until it fits."
-    },
-    "target_chars_per_item": {
-      "purpose": "The preferred (target) character count for each item (string in items[]) — aim for approximately this length per item. Guidance only, not a hard bound: stay within the strict min_chars_per_item and max_chars_per_item."
+    "target_items": {
+      "purpose": "Preferred number of semantic items. Treat this as guidance while always respecting min_items, max_items, and the shared line capacity."
     }
   },
   "expected_content_schema": {

@@ -15,6 +15,12 @@ from typing import Any, cast
 from jsonschema import Draft202012Validator
 
 from ._category_chart_validation import category_chart_issues
+from .classification_schemes import (
+    CLASSIFICATION_SCHEMES_TAG,
+    CLASSIFICATION_SCHEME_ID_TAG,
+    parse_classification_schemes,
+    resolve_categorical_fill_scheme,
+)
 from ._resources import load_json
 from ._table_config_validation import table_config_issues
 from ._text_sizing_validation import text_sizing_issues
@@ -49,7 +55,12 @@ def load_deck_tag_contract() -> dict[str, Any]:
     return load_json("schemas", "presentation", "deck-tags.json")
 
 
-def validate_component_tags(component_type: str, tags: dict[str, str]) -> list[TagValidationIssue]:
+def validate_component_tags(
+    component_type: str,
+    tags: dict[str, str],
+    *,
+    deck_tags: dict[str, str] | None = None,
+) -> list[TagValidationIssue]:
     """Validate component tags against the generated component tag schema."""
     try:
         schema = load_component_tag_schema(component_type)
@@ -85,6 +96,24 @@ def validate_component_tags(component_type: str, tags: dict[str, str]) -> list[T
         )
 
     issues.extend(_component_semantic_issues(component_type, tags, issues))
+    if component_type == "categorical_fill" and deck_tags is not None:
+        prior_tags = {
+            issue.tag_name for issue in issues if issue.tag_name is not None
+        }
+        if CLASSIFICATION_SCHEME_ID_TAG not in prior_tags:
+            try:
+                resolve_categorical_fill_scheme(tags, deck_tags)
+            except ValueError:
+                issues.append(
+                    TagValidationIssue(
+                        code="invalid_classification_scheme_reference",
+                        tag_name=CLASSIFICATION_SCHEME_ID_TAG,
+                        message=(
+                            "The categorical-fill component must reference one "
+                            "valid presentation classification scheme."
+                        ),
+                    )
+                )
     return issues
 
 
@@ -125,7 +154,22 @@ def validate_deck_tags(tags: dict[str, str]) -> list[TagValidationIssue]:
     generic rules as slide tags. ``efficio_template_instruction`` is optional and
     only length-bounded, so a template with no deck instruction validates cleanly.
     """
-    return _validate_presentation_tags(load_deck_tag_contract(), tags, "deck")
+    issues = _validate_presentation_tags(load_deck_tag_contract(), tags, "deck")
+    if not any(issue.tag_name == CLASSIFICATION_SCHEMES_TAG for issue in issues):
+        try:
+            parse_classification_schemes(tags.get(CLASSIFICATION_SCHEMES_TAG))
+        except ValueError:
+            issues.append(
+                TagValidationIssue(
+                    code="invalid_classification_schemes",
+                    tag_name=CLASSIFICATION_SCHEMES_TAG,
+                    message=(
+                        "Classification schemes must have unique scheme and case IDs "
+                        "and match the presentation contract."
+                    ),
+                )
+            )
+    return issues
 
 
 def _validate_presentation_tags(
@@ -177,7 +221,7 @@ def _validate_component_value(
             )
         )
     if expected_type == "positive_integer_string" and (
-        not value.isdecimal() or int(value) < 1
+        not value.isascii() or not value.isdecimal() or int(value) < 1
     ):
         issues.append(
             TagValidationIssue(
@@ -352,4 +396,4 @@ def _is_integer_string(value: object) -> bool:
     if not isinstance(value, str):
         return False
     text = value.removeprefix("-")
-    return bool(text) and text.isdecimal()
+    return bool(text) and text.isascii() and text.isdecimal()

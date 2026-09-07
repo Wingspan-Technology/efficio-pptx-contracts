@@ -140,7 +140,7 @@ describe("validateAllContracts — structured report over an injected contracts 
       operations[0].type = "unknown";
     });
     report = await validateAllContracts({ contractsDir: dir });
-    expect(report.issues.some((issue) => /must be rename_tag or set_tag_if_missing/.test(issue.message)))
+    expect(report.issues.some((issue) => /must be migrate_text_capacity, rename_tag, or set_tag_if_missing/.test(issue.message)))
       .toBe(true);
   });
 

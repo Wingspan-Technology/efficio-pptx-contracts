@@ -28,6 +28,15 @@ const RENAME_FIELDS = new Set([
   "target_tag",
   "value_map",
 ]);
+const MIGRATE_TEXT_CAPACITY_FIELDS = new Set(["type", "scope"]);
+const TEXT_CAPACITY_TARGET_TAGS = [
+  "efficio_max_lines",
+  "efficio_estimated_chars_per_line",
+  "efficio_min_items",
+  "efficio_max_items",
+  "efficio_target_items",
+  "efficio_table_config",
+];
 
 export const TEMPLATE_MIGRATION_FORMAT_VERSION = 1;
 export const UNVERSIONED_TEMPLATE_CONTRACT_REVISION = 0;
@@ -108,6 +117,14 @@ export function validateMigrationTargetTags(
   for (const migration of catalog.migrations) {
     const operations = migration.operations as JsonObject[];
     for (const operation of operations) {
+      if (operation.type === "migrate_text_capacity") {
+        for (const tag of TEXT_CAPACITY_TARGET_TAGS) {
+          if (tagDefinitionsByScope.shape?.[tag] === undefined) {
+            throw new Error(`migration target tag ${tag} is not defined by the current contracts`);
+          }
+        }
+        continue;
+      }
       const targetTag = operation.type === "rename_tag" ? operation.target_tag : operation.tag;
       if (typeof targetTag !== "string") continue;
       const scope = operation.scope as string;
@@ -181,8 +198,18 @@ function validateOperation(operation: JsonObject, label: string, touched: Set<st
     markTouched(touched, operation.scope as string, operation.tag as string, label);
     return;
   }
+  if (operation.type === "migrate_text_capacity") {
+    assertExactFields(operation, MIGRATE_TEXT_CAPACITY_FIELDS, label);
+    if (operation.scope !== "shape") {
+      throw new Error(`${label}.scope must be shape for migrate_text_capacity`);
+    }
+    markTouched(touched, "shape", "text_capacity", label);
+    return;
+  }
   if (operation.type !== "rename_tag") {
-    throw new Error(`${label}.type must be rename_tag or set_tag_if_missing`);
+    throw new Error(
+      `${label}.type must be migrate_text_capacity, rename_tag, or set_tag_if_missing`,
+    );
   }
   const allowed = new Set(RENAME_FIELDS);
   if (operation.value_map === undefined) allowed.delete("value_map");

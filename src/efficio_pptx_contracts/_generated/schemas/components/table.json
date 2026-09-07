@@ -2,6 +2,7 @@
   "generated_from": [
     "contracts/shared/content-mode-tags.contract.json",
     "contracts/shared/component-base-tags.contract.json",
+    "contracts/shared/text-capacity-tags.contract.json",
     "contracts/components/table/tags.contract.json"
   ],
   "component_type": "table",
@@ -154,45 +155,31 @@
                 "default": "",
                 "description": "Optional guidance for generating this cell's content."
               },
-              "max_chars": {
+              "max_lines": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "Maximum total characters for this cell's generated content across all items — a strict budget. Optional. Not encoded as an aggregate schema rule (JSON Schema cannot sum item lengths); keep the combined item length within it while generating."
+                "description": "Estimated maximum number of rendered text lines available for all items combined."
               },
-              "target_chars": {
+              "estimated_chars_per_line": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "Preferred (target) total characters for this cell; optional sizing guidance, not a maximum. When present it must not exceed max_chars."
+                "description": "Estimated number of characters that fit on one rendered line."
               },
               "min_items": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "Minimum number of items (strings in the cell's items array) — a strict lower bound. Optional. Not applicable to plain cells, which are always a single item."
-              },
-              "target_items": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Preferred (target) number of items for this cell; optional sizing guidance, not a bound. When present it must be within min_items and max_items. Not applicable to plain cells, which are always a single item."
+                "description": "Minimum number of semantic items in the generated items array.",
+                "default": 1
               },
               "max_items": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "Maximum number of items (strings in the cell's items array) — a strict limit that must never be exceeded; shorten or compact content (use fewer items) until it fits. Optional. Not applicable to plain cells, which are always a single item."
+                "description": "Maximum number of semantic items in the generated items array; it must not exceed max_lines."
               },
-              "min_chars_per_item": {
+              "target_items": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "Minimum characters for each generated item in this cell — a strict lower bound. Optional."
-              },
-              "max_chars_per_item": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Maximum characters for each generated item in this cell — a strict limit that must never be exceeded; shorten or compact each item until it fits. Optional."
-              },
-              "target_chars_per_item": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Preferred (target) characters per item for this cell; optional sizing guidance, not a maximum. When present it must be within min_chars_per_item and max_chars_per_item."
+                "description": "Preferred number of semantic items; guidance only, within min_items and max_items."
               }
             }
           }
@@ -205,7 +192,7 @@
     "efficio_component_id": "comparison_table",
     "efficio_component_type": "table",
     "efficio_content_role": "comparison_table",
-    "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"preserve\"},{\"row\":1,\"col\":0,\"render_action\":\"render\",\"text_format\":\"bullets\",\"min_items\":1,\"max_items\":3,\"max_chars_per_item\":40}]}",
+    "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"preserve\"},{\"row\":1,\"col\":0,\"render_action\":\"render\",\"text_format\":\"bullets\",\"max_lines\":4,\"estimated_chars_per_line\":20,\"min_items\":1,\"max_items\":4,\"target_items\":2}]}",
     "efficio_prompt_instruction": "Generate table content that respects each cell's render action."
   }
 }

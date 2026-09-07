@@ -21,11 +21,10 @@ def _text_tags(**overrides: str) -> dict[str, str]:
         "efficio_component_type": "text",
         "efficio_text_format": "plain",
         "efficio_sizing_mode": "auto",
-        "efficio_max_chars": "120",
+        "efficio_max_lines": "4",
+        "efficio_estimated_chars_per_line": "30",
         "efficio_min_items": "1",
         "efficio_max_items": "1",
-        "efficio_min_chars_per_item": "1",
-        "efficio_max_chars_per_item": "60",
     }
     tags.update(overrides)
     return tags
@@ -70,26 +69,30 @@ def test_text_list_formats_bound_items_by_min_and_max_items() -> None:
         assert not _is_valid(schema, {"items": ["a", "b", "c", "d"]})
 
 
-def test_text_per_item_length_bounds_from_min_max_chars_per_item() -> None:
-    schema = build_validation_content_schema(
-        "text", _text_tags(efficio_min_chars_per_item="5", efficio_max_chars_per_item="40")
-    )
+def test_text_items_require_non_empty_strings_without_character_ceiling() -> None:
+    schema = build_validation_content_schema("text", _text_tags())
     item = schema["properties"]["items"]["items"]
-    assert item["minLength"] == 5
-    assert item["maxLength"] == 40
-    # Every item is bounded: over max or under min fails.
-    assert not _is_valid(schema, {"items": ["x" * 41]})
-    assert _is_valid(schema, {"items": ["x" * 40]})
-    assert not _is_valid(schema, {"items": ["x" * 4]})
-    assert _is_valid(schema, {"items": ["x" * 5]})
+    assert item == {"type": "string", "minLength": 1}
+    assert not _is_valid(schema, {"items": [""]})
+    assert _is_valid(schema, {"items": ["x" * 1_000]})
 
 
 def test_text_schema_ignores_target_tags() -> None:
-    # target_chars / target_chars_per_item are AI sizing guidance, never content
-    # bounds: they must not appear in or change the validation.json schema.
-    base = build_validation_content_schema("text", _text_tags())
+    # target_items is AI sizing guidance, never a content bound.
+    base = build_validation_content_schema(
+        "text",
+        _text_tags(
+            efficio_text_format="bullets",
+            efficio_max_items="3",
+        ),
+    )
     with_targets = build_validation_content_schema(
-        "text", _text_tags(efficio_target_chars="45", efficio_target_chars_per_item="20")
+        "text",
+        _text_tags(
+            efficio_text_format="bullets",
+            efficio_max_items="3",
+            efficio_target_items="2",
+        ),
     )
     assert with_targets == base
     assert "target" not in json.dumps(with_targets)
@@ -103,8 +106,6 @@ def test_text_schema_matches_documented_contract_shape() -> None:
             efficio_text_format="paragraph",
             efficio_min_items="1",
             efficio_max_items="3",
-            efficio_min_chars_per_item="5",
-            efficio_max_chars_per_item="30",
         ),
     )
     assert schema == {
@@ -116,7 +117,7 @@ def test_text_schema_matches_documented_contract_shape() -> None:
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 3,
-                "items": {"type": "string", "minLength": 5, "maxLength": 30},
+                "items": {"type": "string", "minLength": 1},
             }
         },
     }
@@ -126,10 +127,10 @@ def test_text_schema_matches_documented_contract_shape() -> None:
     "missing",
     [
         "efficio_text_format",
+        "efficio_max_lines",
+        "efficio_estimated_chars_per_line",
         "efficio_min_items",
         "efficio_max_items",
-        "efficio_min_chars_per_item",
-        "efficio_max_chars_per_item",
     ],
 )
 def test_text_missing_limit_tag_fails_clearly(missing: str) -> None:
@@ -233,7 +234,13 @@ def test_table_cell_item_limits() -> None:
         "cells": [
             _render_cell(0, 0, text_format="plain"),
             _render_cell(0, 1, text_format="bullets", min_items=2, max_items=4),
-            _render_cell(0, 2, text_format="bullets", min_chars_per_item=10, max_chars_per_item=30),
+            _render_cell(
+                0,
+                2,
+                text_format="bullets",
+                max_lines=4,
+                estimated_chars_per_line=30,
+            ),
             _render_cell(0, 3, text_format="bullets"),
         ]
     }
@@ -241,25 +248,26 @@ def test_table_cell_item_limits() -> None:
     props = schema["properties"]["cells"]["properties"]
     plain = props["0,0"]["properties"]["items"]
     counted = props["0,1"]["properties"]["items"]
-    per_item = props["0,2"]["properties"]["items"]
+    capacity_limited = props["0,2"]["properties"]["items"]
     unlimited = props["0,3"]["properties"]["items"]
     assert plain["minItems"] == 1 and plain["maxItems"] == 1  # plain pins to exactly one item
     assert counted["minItems"] == 2 and counted["maxItems"] == 4
-    assert per_item["items"]["minLength"] == 10
-    assert per_item["items"]["maxLength"] == 30
-    # A render cell always holds at least one item; no upper/length bound when absent.
+    assert capacity_limited["maxItems"] == 4
+    assert capacity_limited["items"] == {"type": "string", "minLength": 1}
+    # A render cell always holds at least one item; no upper bound when absent.
     assert unlimited["minItems"] == 1
     assert "maxItems" not in unlimited
-    assert "minLength" not in unlimited["items"]
+    assert unlimited["items"]["minLength"] == 1
     assert "maxLength" not in unlimited["items"]
 
 
-def test_table_schema_ignores_target_and_aggregate_fields() -> None:
-    # target_chars / target_items / target_chars_per_item and the aggregate max_chars
-    # are AI sizing guidance, never content bounds: they must not appear in or change
-    # the validation.json schema (matching text).
+def test_table_schema_ignores_target_items() -> None:
     strict = dict(
-        text_format="bullets", min_items=1, max_items=3, min_chars_per_item=5, max_chars_per_item=40
+        text_format="bullets",
+        max_lines=3,
+        estimated_chars_per_line=40,
+        min_items=1,
+        max_items=3,
     )
     base = build_validation_content_schema("table", _table_tags({"cells": [_render_cell(0, 0, **strict)]}))
     with_guidance = build_validation_content_schema(
@@ -271,10 +279,7 @@ def test_table_schema_ignores_target_and_aggregate_fields() -> None:
                         0,
                         0,
                         **strict,
-                        max_chars=120,
-                        target_chars=90,
                         target_items=2,
-                        target_chars_per_item=20,
                     )
                 ]
             }
@@ -284,21 +289,19 @@ def test_table_schema_ignores_target_and_aggregate_fields() -> None:
     assert "target" not in json.dumps(with_guidance)
 
 
-def test_table_cell_violation_reports_exact_cell_and_item_path() -> None:
-    # A too-long item in a render cell fails at its own precise path — the point of
-    # the keyed shape (vs the old oneOf collapsing to a misleading row/col const error).
+def test_table_empty_item_violation_reports_exact_cell_and_item_path() -> None:
     schema = build_validation_content_schema(
         "table",
-        _table_tags({"cells": [_render_cell(3, 1, text_format="bullets", max_chars_per_item=4)]}),
+        _table_tags({"cells": [_render_cell(3, 1, text_format="bullets")]}),
     )
     errors = sorted(
-        Draft202012Validator(schema).iter_errors({"cells": {"3,1": {"items": ["xxxxx"]}}}),
+        Draft202012Validator(schema).iter_errors({"cells": {"3,1": {"items": [""]}}}),
         key=lambda e: list(e.absolute_path),
     )
     assert errors, "expected a validation error"
     first = errors[0]
     assert list(first.absolute_path) == ["cells", "3,1", "items", 0]
-    assert first.validator == "maxLength"
+    assert first.validator == "minLength"
 
 
 def test_table_duplicate_config_coordinates_fail_clearly() -> None:
@@ -335,10 +338,8 @@ def test_table_semantic_invalid_render_config_fails_fast() -> None:
         )
 
 
-def test_table_obsolete_line_sizing_fields_fail_fast() -> None:
-    # The removed max_lines / max_chars_per_line keys are additionalProperties on a cell,
-    # so the structural schema layer rejects the config through the same fail-fast gate.
-    for obsolete in ({"max_lines": 5}, {"max_chars_per_line": 30}):
+def test_table_obsolete_character_sizing_fields_fail_fast() -> None:
+    for obsolete in ({"max_chars": 100}, {"max_chars_per_item": 30}):
         with pytest.raises(ValueError, match="efficio_table_config"):
             build_validation_content_schema(
                 "table",
@@ -655,10 +656,46 @@ def test_category_chart_schemas_are_valid_json_schema() -> None:
 def test_every_registered_type_gets_a_schema() -> None:
     # Strict: build returns a schema (never None) for every registered type — no
     # registered-but-unsupported branch remains.
-    assert set(list_component_types()) == {"category_chart", "table", "text"}
+    assert set(list_component_types()) == {
+        "categorical_fill",
+        "category_chart",
+        "table",
+        "text",
+    }
     assert build_validation_content_schema("text", _text_tags()) is not None
     assert build_validation_content_schema("table", _table_tags({"cells": []})) is not None
     assert _chart_schema() is not None
+    schemes = json.dumps(
+        [
+            {
+                "scheme_id": "selection_state",
+                "instruction": "Classify the target.",
+                "palette_mode": "rgb",
+                "cases": [
+                    {
+                        "case_id": "selected",
+                        "label": "Selected",
+                        "description": "Highlight the target.",
+                        "fill": {"value": "17365D"},
+                    },
+                    {
+                        "case_id": "unselected",
+                        "label": "Unselected",
+                        "description": "Leave the target inactive.",
+                        "fill": {"value": "BFBFBF"},
+                    },
+                ],
+            }
+        ]
+    )
+    assert build_validation_content_schema(
+        "categorical_fill",
+        {
+            "efficio_component_type": "categorical_fill",
+            "efficio_classification_scheme_id": "selection_state",
+        },
+        deck_tags={"efficio_classification_schemes": schemes},
+    ) is not None
 
 
 def test_unknown_component_type_raises() -> None:
@@ -670,23 +707,21 @@ def test_unknown_component_type_raises() -> None:
 # ── documented limitations & schema validity ─────────────────────────────────
 
 
-def test_multi_item_text_does_not_enforce_aggregate_max_chars() -> None:
-    # Documented limitation: for list formats the schema caps per-item length and
-    # item count, but NOT the total characters across items[]. Three 10-char items
-    # (sum 30) pass despite max_chars=10 — DMS enforces the aggregate later.
+def test_multi_item_text_schema_does_not_enforce_estimated_line_capacity() -> None:
+    # Canonical JSON Schema owns structure; estimated rendered-line capacity is a
+    # V2 semantic rule because wrapping cannot be expressed by JSON Schema.
     schema = build_validation_content_schema(
         "text",
         _text_tags(
             efficio_text_format="bullets",
-            efficio_max_chars="10",
+            efficio_max_lines="3",
+            efficio_estimated_chars_per_line="10",
             efficio_min_items="1",
             efficio_max_items="3",
-            efficio_min_chars_per_item="1",
-            efficio_max_chars_per_item="10",
         ),
     )
-    assert schema["properties"]["items"]["items"]["maxLength"] == 10
-    assert _is_valid(schema, {"items": ["x" * 10, "y" * 10, "z" * 10]})
+    assert "maxLength" not in schema["properties"]["items"]["items"]
+    assert _is_valid(schema, {"items": ["x" * 20, "y" * 20, "z" * 20]})
 
 
 def test_emitted_schemas_are_valid_json_schema() -> None:
@@ -700,7 +735,15 @@ def test_emitted_schemas_are_valid_json_schema() -> None:
         "rows": [{"row": 0, "content_policy": "optional"}],
         "cells": [
             _render_cell(0, 0),
-            _render_cell(1, 1, text_format="bullets", min_items=1, max_items=3, min_chars_per_item=2, max_chars_per_item=20),
+            _render_cell(
+                1,
+                1,
+                text_format="bullets",
+                max_lines=3,
+                estimated_chars_per_line=20,
+                min_items=1,
+                max_items=3,
+            ),
             {"row": 2, "col": 2, "render_action": "preserve"},
         ],
     }

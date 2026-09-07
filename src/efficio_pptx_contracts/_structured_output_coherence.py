@@ -9,6 +9,8 @@ import re
 from collections.abc import Mapping
 from typing import Any
 
+from ._categorical_fill import validate_categorical_fill_schema_coherence
+
 _COORDINATE = re.compile(r"^(0|[1-9][0-9]*),(0|[1-9][0-9]*)$")
 
 
@@ -22,8 +24,12 @@ def validate_v2_component_shape_coherence(
         _validate_text_shape(output_schema)
     elif component_type == "table":
         _validate_table_shape(output_schema, normalization)
-    else:
+    elif component_type == "category_chart":
         _validate_chart_shape(output_schema, normalization)
+    else:
+        validate_categorical_fill_schema_coherence(
+            output_schema, normalization, require_descriptions=True
+        )
 
 
 def _validate_text_shape(schema: Mapping[str, Any]) -> None:
@@ -33,9 +39,7 @@ def _validate_text_shape(schema: Mapping[str, Any]) -> None:
     _require_nonempty_array(properties["items"], "string", "text items")
 
 
-def _validate_table_shape(
-    schema: Mapping[str, Any], normalization: Mapping[str, Any]
-) -> None:
+def _validate_table_shape(schema: Mapping[str, Any], normalization: Mapping[str, Any]) -> None:
     properties = _object_properties(schema, "table")
     if set(properties) != {"cells"}:
         raise ValueError("table V2 schema must contain exactly the cells property")
@@ -52,12 +56,8 @@ def _validate_table_shape(
         content_schema, nullable = _table_cell_content_schema(cell_schema)
         content_properties = _object_properties(content_schema, "table cell")
         if set(content_properties) != {"items"}:
-            raise ValueError(
-                "table cell V2 schema must contain exactly the items property"
-            )
-        _require_nonempty_array(
-            content_properties["items"], "string", "table cell items"
-        )
+            raise ValueError("table cell V2 schema must contain exactly the items property")
+        _require_nonempty_array(content_properties["items"], "string", "table cell items")
         if nullable:
             nullable_cells.add(coordinate)
 
@@ -66,15 +66,11 @@ def _validate_table_shape(
         raise ValueError(
             "table V2 nullable cell schemas must exactly match optional_cells metadata"
         )
-    if not set(normalization["max_chars"]) <= schema_cells:
-        raise ValueError(
-            "table V2 max_chars metadata must reference declared cell schemas"
-        )
+    if not set(normalization["text_capacity"]) <= schema_cells:
+        raise ValueError("table V2 text_capacity metadata must reference declared cell schemas")
 
 
-def _validate_chart_shape(
-    schema: Mapping[str, Any], normalization: Mapping[str, Any]
-) -> None:
+def _validate_chart_shape(schema: Mapping[str, Any], normalization: Mapping[str, Any]) -> None:
     properties = _object_properties(schema, "category-chart")
     category_mode = normalization["category_mode"]
     series_mode = normalization["series_mode"]
@@ -82,9 +78,7 @@ def _validate_chart_shape(
     if set(properties) != expected:
         raise ValueError("category-chart V2 schema properties do not match category mode")
     if category_mode != "fixed":
-        _require_nonempty_array(
-            properties["categories"], "string", "generated chart categories"
-        )
+        _require_nonempty_array(properties["categories"], "string", "generated chart categories")
     _validate_chart_series(properties["series"], series_mode=series_mode)
 
 
@@ -98,9 +92,7 @@ def _validate_chart_series(schema: object, *, series_mode: str) -> None:
         name = properties["name"]
         if not isinstance(name, Mapping) or name.get("type") != "string":
             raise ValueError("generated category-chart series name must be a string")
-    _require_nonempty_array(
-        properties["values"], {"integer", "number"}, "category-chart values"
-    )
+    _require_nonempty_array(properties["values"], {"integer", "number"}, "category-chart values")
 
 
 def _object_properties(schema: object, subject: str) -> Mapping[str, Any]:
@@ -119,20 +111,12 @@ def _require_nonempty_array(
         raise ValueError(f"{subject} V2 schema must be an array")
     minimum = schema.get("minItems")
     maximum = schema.get("maxItems")
-    if (
-        not isinstance(minimum, int)
-        or isinstance(minimum, bool)
-        or minimum < 1
-    ):
+    if not isinstance(minimum, int) or isinstance(minimum, bool) or minimum < 1:
         raise ValueError(f"{subject} V2 schema must have a positive minItems")
     if maximum is not None and (
-        not isinstance(maximum, int)
-        or isinstance(maximum, bool)
-        or maximum < minimum
+        not isinstance(maximum, int) or isinstance(maximum, bool) or maximum < minimum
     ):
-        raise ValueError(
-            f"{subject} V2 schema maxItems must be at least minItems"
-        )
+        raise ValueError(f"{subject} V2 schema maxItems must be at least minItems")
     item = schema.get("items")
     if not isinstance(item, Mapping):
         raise ValueError(f"{subject} V2 schema must declare an item schema")
@@ -157,9 +141,7 @@ def _table_cell_content_schema(
     if branches is None:
         return schema, False
     if not isinstance(branches, list) or len(branches) != 2:
-        raise ValueError(
-            "nullable table V2 cell schema must have one object and one null branch"
-        )
+        raise ValueError("nullable table V2 cell schema must have one object and one null branch")
     nulls = [branch for branch in branches if branch == {"type": "null"}]
     objects = [
         branch
@@ -167,9 +149,7 @@ def _table_cell_content_schema(
         if isinstance(branch, Mapping) and branch.get("type") == "object"
     ]
     if len(nulls) != 1 or len(objects) != 1:
-        raise ValueError(
-            "nullable table V2 cell schema must have one object and one null branch"
-        )
+        raise ValueError("nullable table V2 cell schema must have one object and one null branch")
     return objects[0], True
 
 

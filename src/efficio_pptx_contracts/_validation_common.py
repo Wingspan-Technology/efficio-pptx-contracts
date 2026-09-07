@@ -45,6 +45,6 @@ def _required_tag(tags: Mapping[str, str], tag_name: str, component_type: str) -
 
 def _positive_int_tag(tags: Mapping[str, str], tag_name: str, component_type: str) -> int:
     value = _required_tag(tags, tag_name, component_type)
-    if not value.isdecimal() or int(value) < 1:
+    if not value.isascii() or not value.isdecimal() or int(value) < 1:
         raise ValueError(f"tag {tag_name!r} must be a positive integer string")
     return int(value)

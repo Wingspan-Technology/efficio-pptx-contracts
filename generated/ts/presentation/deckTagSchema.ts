@@ -43,6 +43,96 @@ export const deckTagSchema = {
       },
       "description": "Optional deck-wide AI guidance for the whole generated presentation. Absent or blank means no template instruction."
     },
+    "efficio_classification_schemes": {
+      "type": "array",
+      "required": false,
+      "description": "Optional reusable semantic classification schemes for categorical-fill components. Colors are trusted presentation styling and are never AI-generated.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "maxItems": 50,
+        "items": {
+          "type": "object",
+          "required": [
+            "scheme_id",
+            "instruction",
+            "palette_mode",
+            "cases"
+          ],
+          "properties": {
+            "scheme_id": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+              "description": "Stable lower-snake-case identifier for this reusable scheme."
+            },
+            "instruction": {
+              "type": "string",
+              "maxLength": 2000,
+              "pattern": "\\S",
+              "description": "AI-facing guidance explaining what this scheme classifies."
+            },
+            "palette_mode": {
+              "type": "string",
+              "enum": [
+                "rgb"
+              ],
+              "description": "Trusted fill representation. The first version supports six-digit RGB values only."
+            },
+            "cases": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 32,
+              "items": {
+                "type": "object",
+                "required": [
+                  "case_id",
+                  "label",
+                  "description",
+                  "fill"
+                ],
+                "properties": {
+                  "case_id": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+                    "description": "Stable semantic case identifier returned in generated content."
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "pattern": "\\S",
+                    "description": "Short human-readable case label."
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "pattern": "\\S",
+                    "description": "AI-facing explanation of when this case applies."
+                  },
+                  "fill": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "string",
+                        "pattern": "^[0-9A-F]{6}$",
+                        "description": "Trusted solid RGB fill encoded as six uppercase hexadecimal digits without a prefix."
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
     "efficio_slide_selection_groups": {
       "type": "array",
       "required": false,
@@ -121,6 +211,7 @@ export const deckTagKeys = [
   "efficio_initialized",
   "efficio_template_contract_revision",
   "efficio_template_instruction",
+  "efficio_classification_schemes",
   "efficio_slide_selection_groups"
 ] as const;
 
@@ -128,4 +219,5 @@ export const DECK_TEMPLATE_ID_TAG = "efficio_template_id";
 export const DECK_INITIALIZED_TAG = "efficio_initialized";
 export const DECK_TEMPLATE_CONTRACT_REVISION_TAG = "efficio_template_contract_revision";
 export const DECK_TEMPLATE_INSTRUCTION_TAG = "efficio_template_instruction";
+export const DECK_CLASSIFICATION_SCHEMES_TAG = "efficio_classification_schemes";
 export const DECK_SLIDE_SELECTION_GROUPS_TAG = "efficio_slide_selection_groups";

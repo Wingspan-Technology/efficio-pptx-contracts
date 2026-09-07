@@ -1,5 +1,6 @@
 {
   "efficio_component_type": "text",
   "efficio_text_format": "plain",
-  "efficio_sizing_mode": "auto"
+  "efficio_sizing_mode": "auto",
+  "efficio_min_items": "1"
 }

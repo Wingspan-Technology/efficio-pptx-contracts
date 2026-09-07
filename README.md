@@ -43,6 +43,13 @@ The Python distribution is `efficio-pptx-contracts`. Its import name is:
 from efficio_pptx_contracts import list_component_types
 ```
 
+Categorical-fill components reference reusable RGB classification schemes stored
+in the optional presentation-level `efficio_classification_schemes` tag. The
+generated or data-bound content is only `{"case_id":"..."}`; trusted colors stay
+in private normalization/rendering metadata. Python consumers pass `deck_tags`
+to the context-aware component builders. Editor consumers use the typed
+`parseClassificationSchemes()` and `resolveCategoricalFillScheme()` exports.
+
 Deck-level slide-selection groups are authored in the optional
 `efficio_slide_selection_groups` tag as a direct JSON array. Python consumers
 use `parse_slide_selection_groups()` and `normalize_slide_selection_groups()`
@@ -87,6 +94,14 @@ and formatting limits from submitted content validation. The current component
 configuration tags remain required; removing or hiding AI-only authoring fields
 for data-bound components belongs to the later Template Editor integration.
 
+Text components and rendered table cells share one estimated capacity model.
+`max_lines` and `estimated_chars_per_line` describe the available visual space;
+`min_items` and `max_items` bound semantic paragraphs or list entries, while
+`target_items` is guidance only. Each item consumes at least one estimated line,
+wrapping consumes additional lines, and explicit line breaks consume lines. The
+calculation is deterministic content validation, not exact PowerPoint layout
+measurement. Data-bound submission schemas remain intentionally limit-free.
+
 Template file compatibility is tracked independently from the package version by
 the required deck tag `efficio_template_contract_revision`. Append-only adjacent
 migrations are authored under `contracts/presentation/template/migrations/`.
@@ -95,6 +110,14 @@ and a pure planner that returns explicit tag set/remove patches over opaque
 deck, slide, and shape target references. Consumers apply patches to a copy,
 then run normal contract validation and template import. A current-revision
 template that still contains a retired source tag is rejected.
+Revision 2 replaces independent aggregate and per-item character limits with
+the shared estimated line-capacity fields, including capacity settings nested in
+`efficio_table_config`.
+
+Detailed, timestamped consumer handoffs are recorded under
+[`docs/releases/`](docs/releases/README.md). These notes explain what changed and
+what downstream applications must implement; authored files under `contracts/`
+remain the source of truth.
 
 ## Development
 

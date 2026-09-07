@@ -81,7 +81,7 @@ def category_chart_issues(
         if raw is None or not raw.strip() or tag in skip:
             return None
         raw = raw.strip()
-        return int(raw) if raw.isdecimal() else None
+        return int(raw) if raw.isascii() and raw.isdecimal() else None
 
     def as_labels(tag: str) -> list[object] | None:
         raw = tags.get(tag)

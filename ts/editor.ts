@@ -8,8 +8,10 @@
 // Explicit .js specifiers preserve native ESM behavior after TypeScript compilation.
 
 export * from "./editor/component-metadata.js";
+export * from "./editor/text-capacity.js";
 export * from "./editor/text-sizing-semantics.js";
 export * from "./editor/table-config-semantics.js";
 export * from "./editor/slide-deck-contracts.js";
 export * from "./editor/content-mode.js";
+export * from "./editor/classification-schemes.js";
 export * from "./editor/template-contract-migrations.js";

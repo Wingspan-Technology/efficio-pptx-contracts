@@ -9,6 +9,7 @@ from types import MappingProxyType
 
 from ._template_contract_migration_catalog import (
     CURRENT_TEMPLATE_CONTRACT_REVISION,
+    MigrateTextCapacityOperation,
     TEMPLATE_CONTRACT_REVISION_TAG,
     UNVERSIONED_TEMPLATE_CONTRACT_REVISION,
     RenameTagOperation,
@@ -20,6 +21,11 @@ from ._template_contract_migration_catalog import (
     TemplateTagScope,
     get_template_contract_migration_path,
     load_template_contract_migration_catalog,
+)
+from ._template_contract_text_capacity_migration import (
+    contains_retired_table_capacity_fields,
+    migrate_text_capacity,
+    retired_text_capacity_tags,
 )
 from .errors import TemplateContractMigrationError
 
@@ -92,8 +98,20 @@ def _validate_no_retired_tags(
         for operation in migration.operations
         if isinstance(operation, RenameTagOperation)
     }
+    retired.update(
+        (TemplateTagScope.SHAPE, tag)
+        for migration in load_template_contract_migration_catalog().migrations
+        if any(
+            isinstance(operation, MigrateTextCapacityOperation)
+            for operation in migration.operations
+        )
+        for tag in retired_text_capacity_tags()
+    )
     for target, tags in targets:
-        if any(scope is target.scope and tag in tags for scope, tag in retired):
+        has_retired_tag = any(
+            scope is target.scope and tag in tags for scope, tag in retired
+        )
+        if has_retired_tag or contains_retired_table_capacity_fields(tags):
             raise TemplateContractMigrationError(
                 "current template contract contains a retired tag"
             )
@@ -152,6 +170,9 @@ def _apply_operation(
             if operation.tag not in tags:
                 tags[operation.tag] = operation.value
             continue
+        if isinstance(operation, MigrateTextCapacityOperation):
+            migrate_text_capacity(tags)
+            continue
         source = tags.get(operation.source_tag)
         if source is None:
             continue
@@ -195,7 +216,7 @@ def _build_patch(
 
 __all__ = [
     "CURRENT_TEMPLATE_CONTRACT_REVISION", "TEMPLATE_CONTRACT_REVISION_TAG",
-    "UNVERSIONED_TEMPLATE_CONTRACT_REVISION", "RenameTagOperation",
+    "UNVERSIONED_TEMPLATE_CONTRACT_REVISION", "MigrateTextCapacityOperation", "RenameTagOperation",
     "SetTagIfMissingOperation", "TemplateContractMigration",
     "TemplateContractMigrationCatalog", "TemplateContractMigrationOperation",
     "TemplateContractMigrationPlan", "TemplateContractMigrationError",

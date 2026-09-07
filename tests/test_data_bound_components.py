@@ -24,11 +24,10 @@ def _text_tags() -> dict[str, str]:
         "efficio_component_type": "text",
         "efficio_text_format": "plain",
         "efficio_sizing_mode": "manual",
-        "efficio_max_chars": "10",
+        "efficio_max_lines": "2",
+        "efficio_estimated_chars_per_line": "5",
         "efficio_min_items": "1",
         "efficio_max_items": "1",
-        "efficio_min_chars_per_item": "2",
-        "efficio_max_chars_per_item": "5",
     }
 
 
@@ -41,7 +40,9 @@ def _table_tags() -> dict[str, str]:
                 "col": 0,
                 "render_action": "render",
                 "text_format": "plain",
-                "max_chars": 5,
+                "max_lines": 1,
+                "estimated_chars_per_line": 5,
+                "min_items": 1,
                 "max_items": 1,
             },
             {
@@ -49,9 +50,10 @@ def _table_tags() -> dict[str, str]:
                 "col": 0,
                 "render_action": "render",
                 "text_format": "bullets",
+                "max_lines": 2,
+                "estimated_chars_per_line": 3,
                 "min_items": 2,
                 "max_items": 2,
-                "max_chars_per_item": 3,
             },
             {"row": 2, "col": 0, "render_action": "preserve"},
         ],

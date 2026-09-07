@@ -18,11 +18,14 @@ import {
   hasComponentType,
   listComponentCompatibilityTagSchemas,
   listComponentTypes,
+  estimateTextLineUse,
+  validateTextCapacity,
   validateTableConfigSemantics,
   validateTextSizingSemantics,
   DECK_TEMPLATE_ID_TAG,
   DECK_INITIALIZED_TAG,
   DECK_TEMPLATE_CONTRACT_REVISION_TAG,
+  DECK_CLASSIFICATION_SCHEMES_TAG,
   DECK_SLIDE_SELECTION_GROUPS_TAG,
   SLIDE_ID_TAG,
   SLIDE_ROLE_TAG,
@@ -32,7 +35,7 @@ import {
   type SlideRole,
 } from "../ts/editor";
 
-const EXPECTED_TYPES = ["category_chart", "table", "text"];
+const EXPECTED_TYPES = ["categorical_fill", "category_chart", "table", "text"];
 
 describe("editor SDK component metadata", () => {
   it("lists the same component types as the generated metadata", () => {
@@ -56,8 +59,8 @@ describe("editor SDK component metadata", () => {
     expect(tags.efficio_component_type.enum).toEqual(["text"]);
     const defaults = getComponentTagDefaults("text");
     expect(defaults.efficio_sizing_mode).toBe("auto");
-    // Sizing tags carry no static default; they are filled by auto sizing or manually.
-    expect(defaults.efficio_max_chars).toBeUndefined();
+    // Shape-specific capacity is filled by auto sizing or manually.
+    expect(defaults.efficio_max_lines).toBeUndefined();
   });
 
   it("returns a defensive copy of defaults", () => {
@@ -187,6 +190,9 @@ describe("editor SDK deck surface", () => {
     expect(DECK_TEMPLATE_CONTRACT_REVISION_TAG).toBe(
       "efficio_template_contract_revision",
     );
+    expect(DECK_CLASSIFICATION_SCHEMES_TAG).toBe(
+      "efficio_classification_schemes",
+    );
     expect(DECK_SLIDE_SELECTION_GROUPS_TAG).toBe("efficio_slide_selection_groups");
   });
 
@@ -213,13 +219,23 @@ describe("editor SDK deck surface", () => {
     expect(entity.schema.type).toBe("array");
   });
 
+  it("exposes reusable RGB classification schemes", () => {
+    const entity = getDeckTagContract().tags.efficio_classification_schemes;
+    expect(entity.type).toBe("array");
+    expect(entity.required).toBe(false);
+    expect(entity.schema.type).toBe("array");
+    expect(entity.schema.maxItems).toBe(50);
+    expect(entity.schema.items.properties.palette_mode.enum).toEqual(["rgb"]);
+    expect(entity.schema.items.properties.cases.maxItems).toBe(32);
+  });
+
   it("exposes the hidden current template contract revision", () => {
     const entity = getDeckTagContract().tags.efficio_template_contract_revision;
     expect(entity.type).toBe("integer");
     expect(entity.required).toBe(true);
     expect(entity.minimum).toBe(1);
     expect(entity.ui.hidden).toBe(true);
-    expect(getDeckTagDefaults().efficio_template_contract_revision).toBe("1");
+    expect(getDeckTagDefaults().efficio_template_contract_revision).toBe("2");
   });
 
   it("exposes the deck tag contract as a defensive copy", () => {
@@ -256,34 +272,122 @@ describe("validateTableConfigSemantics (SDK table cross-field rule)", () => {
     expect(
       validateTableConfigSemantics(
         cfg([
-          { row: 0, col: 0, text_format: "bullets", min_items: 1, max_items: 3, target_items: 2 },
+          {
+            row: 0,
+            col: 0,
+            render_action: "render",
+            text_format: "bullets",
+            max_lines: 4,
+            estimated_chars_per_line: 20,
+            min_items: 1,
+            max_items: 3,
+            target_items: 2,
+          },
         ])
       )
     ).toEqual([]);
   });
 
-  it("flags min>max, target out of bounds, and plain single-item violations", () => {
+  it("flags item bounds, line capacity, and plain single-item violations", () => {
     expect(
       validateTableConfigSemantics(
-        cfg([{ row: 0, col: 0, text_format: "bullets", min_items: 4, max_items: 2 }])
+        cfg([
+          {
+            row: 0,
+            col: 0,
+            render_action: "render",
+            text_format: "bullets",
+            max_lines: 4,
+            estimated_chars_per_line: 20,
+            min_items: 4,
+            max_items: 2,
+          },
+        ])
       ).some((i) => i.code === "min_exceeds_max")
     ).toBe(true);
     expect(
       validateTableConfigSemantics(
-        cfg([{ row: 0, col: 0, text_format: "bullets", max_items: 2, target_items: 5 }])
+        cfg([
+          {
+            row: 0,
+            col: 0,
+            render_action: "render",
+            text_format: "bullets",
+            max_lines: 4,
+            estimated_chars_per_line: 20,
+            min_items: 1,
+            max_items: 5,
+          },
+        ])
+      ).some((i) => i.code === "items_exceed_line_capacity")
+    ).toBe(true);
+    expect(
+      validateTableConfigSemantics(
+        cfg([
+          {
+            row: 0,
+            col: 0,
+            render_action: "render",
+            text_format: "bullets",
+            max_lines: 4,
+            estimated_chars_per_line: 20,
+            min_items: 1,
+            max_items: 2,
+            target_items: 5,
+          },
+        ])
       ).some((i) => i.code === "target_exceeds_max")
     ).toBe(true);
     expect(
       validateTableConfigSemantics(
-        cfg([{ row: 0, col: 0, text_format: "plain", max_items: 3 }])
+        cfg([
+          {
+            row: 0,
+            col: 0,
+            render_action: "render",
+            text_format: "plain",
+            max_lines: 3,
+            estimated_chars_per_line: 20,
+            min_items: 1,
+            max_items: 3,
+          },
+        ])
       ).some((i) => i.code === "plain_requires_single_item")
     ).toBe(true);
-    // A cell with no text_format defaults to plain, so target_items is invalid.
     expect(
-      validateTableConfigSemantics(cfg([{ row: 0, col: 0, target_items: 2 }])).some(
-        (i) => i.code === "plain_forbids_target_items"
-      )
+      validateTableConfigSemantics(
+        cfg([
+          {
+            row: 0,
+            col: 0,
+            render_action: "render",
+            max_lines: 3,
+            estimated_chars_per_line: 20,
+            min_items: 1,
+            max_items: 1,
+            target_items: 1,
+          },
+        ])
+      ).some((i) => i.code === "plain_forbids_target_items")
     ).toBe(true);
+  });
+
+  it("does not apply text-capacity semantics to preserved cells", () => {
+    const invalidCapacity = {
+      row: 0,
+      col: 0,
+      max_lines: 2,
+      estimated_chars_per_line: 20,
+      min_items: 3,
+      max_items: 4,
+    };
+
+    expect(validateTableConfigSemantics(cfg([invalidCapacity]))).toEqual([]);
+    expect(
+      validateTableConfigSemantics(
+        cfg([{ ...invalidCapacity, render_action: "preserve" }])
+      )
+    ).toEqual([]);
   });
 
   it("flags duplicate cell / row / column coordinates once each", () => {
@@ -313,123 +417,100 @@ describe("validateTableConfigSemantics (SDK table cross-field rule)", () => {
   });
 });
 
-describe("validateTextSizingSemantics (SDK cross-field text rule)", () => {
-  const base = { efficio_component_type: "text", efficio_max_chars: "30" };
+describe("text capacity SDK", () => {
+  const capacity = {
+    max_lines: 4,
+    estimated_chars_per_line: 20,
+    min_items: 1,
+    max_items: 4,
+  };
 
-  it("passes when the optional target_chars is absent", () => {
+  it("validates positive item bounds within the available lines", () => {
+    expect(validateTextCapacity(capacity, "multi_item")).toEqual([]);
+    expect(
+      validateTextCapacity({ ...capacity, max_items: 5 }, "multi_item")
+    ).toContainEqual(expect.objectContaining({ code: "items_exceed_line_capacity" }));
+    expect(
+      validateTextCapacity({ ...capacity, min_items: 3, max_items: 2 }, "multi_item")
+    ).toContainEqual(expect.objectContaining({ code: "min_exceeds_max" }));
+    expect(
+      validateTextCapacity({ ...capacity, estimated_chars_per_line: 0 }, "multi_item")
+    ).toContainEqual(
+      expect.objectContaining({
+        code: "invalid_positive_integer",
+        field: "estimated_chars_per_line",
+      })
+    );
+  });
+
+  it("validates target guidance and plain-text item rules", () => {
+    expect(
+      validateTextCapacity({ ...capacity, max_items: 3, target_items: 4 }, "multi_item")
+    ).toContainEqual(expect.objectContaining({ code: "target_exceeds_max" }));
+    expect(
+      validateTextCapacity({ ...capacity, min_items: 2, target_items: 1 }, "multi_item")
+    ).toContainEqual(expect.objectContaining({ code: "target_below_min" }));
+    expect(
+      validateTextCapacity({ ...capacity, min_items: 1, max_items: 1 }, "plain")
+    ).toEqual([]);
+    expect(
+      validateTextCapacity(
+        { ...capacity, min_items: 1, max_items: 1, target_items: 1 },
+        "plain"
+      )
+    ).toContainEqual(expect.objectContaining({ code: "plain_forbids_target_items" }));
+  });
+
+  it("estimates wrapping by Unicode code points and counts explicit line breaks", () => {
+    expect(estimateTextLineUse(["123456", "ab"], 5)).toBe(3);
+    expect(estimateTextLineUse(["ab\r\nc\rd"], 5)).toBe(3);
+    expect(estimateTextLineUse(["😀😀", ""], 1)).toBe(3);
+    expect(() => estimateTextLineUse(["text"], 0)).toThrow(RangeError);
+  });
+});
+
+describe("validateTextSizingSemantics (SDK text capacity adapter)", () => {
+  const base = {
+    efficio_component_type: "text",
+    efficio_text_format: "bullets",
+    efficio_max_lines: "4",
+    efficio_estimated_chars_per_line: "20",
+    efficio_min_items: "1",
+    efficio_max_items: "4",
+  };
+
+  it("passes a valid capacity and maps shared findings to component tags", () => {
     expect(validateTextSizingSemantics(base)).toEqual([]);
-  });
-
-  it("passes when target_chars <= max_chars", () => {
-    expect(validateTextSizingSemantics({ ...base, efficio_target_chars: "20" })).toEqual([]);
-    expect(validateTextSizingSemantics({ ...base, efficio_target_chars: "30" })).toEqual([]);
-  });
-
-  it("flags target_chars > max_chars on efficio_target_chars", () => {
-    const issues = validateTextSizingSemantics({ ...base, efficio_target_chars: "45" });
-    expect(issues).toHaveLength(1);
-    expect(issues[0].code).toBe("target_exceeds_max");
-    expect(issues[0].tag).toBe("efficio_target_chars");
-  });
-
-  it("skips the comparison when either value is not a positive integer", () => {
-    expect(
-      validateTextSizingSemantics({ efficio_max_chars: "oops", efficio_target_chars: "45" })
-    ).toEqual([]);
-    expect(
-      validateTextSizingSemantics({ efficio_max_chars: "30", efficio_target_chars: "0" })
-    ).toEqual([]);
-  });
-
-  it("flags min_items > max_items and min_chars_per_item > max_chars_per_item", () => {
-    const items = validateTextSizingSemantics({ efficio_min_items: "4", efficio_max_items: "2" });
-    expect(items).toEqual([
-      expect.objectContaining({ code: "min_exceeds_max", tag: "efficio_min_items" }),
-    ]);
-    const perItem = validateTextSizingSemantics({
-      efficio_min_chars_per_item: "40",
-      efficio_max_chars_per_item: "20",
-    });
-    expect(perItem).toEqual([
-      expect.objectContaining({ code: "min_exceeds_max", tag: "efficio_min_chars_per_item" }),
-    ]);
-  });
-
-  it("bounds target_chars_per_item within [min, max] per item", () => {
-    expect(
-      validateTextSizingSemantics({
-        efficio_max_chars_per_item: "20",
-        efficio_target_chars_per_item: "45",
-      })
-    ).toEqual([
-      expect.objectContaining({ code: "target_exceeds_max", tag: "efficio_target_chars_per_item" }),
+    expect(validateTextSizingSemantics({ ...base, efficio_max_items: "5" })).toEqual([
+      expect.objectContaining({
+        code: "items_exceed_line_capacity",
+        tag: "efficio_max_items",
+      }),
     ]);
     expect(
-      validateTextSizingSemantics({
-        efficio_min_chars_per_item: "10",
-        efficio_target_chars_per_item: "5",
-      })
-    ).toEqual([
-      expect.objectContaining({ code: "target_below_min", tag: "efficio_target_chars_per_item" }),
-    ]);
-  });
-
-  it("requires plain text to be exactly one item", () => {
-    const issues = validateTextSizingSemantics({
-      efficio_text_format: "plain",
-      efficio_min_items: "1",
-      efficio_max_items: "3",
-    });
-    expect(issues).toEqual([
-      expect.objectContaining({ code: "plain_requires_single_item", tag: "efficio_max_items" }),
-    ]);
-  });
-
-  it("accepts a preferred item count within [min_items, max_items] for a list format", () => {
-    expect(
-      validateTextSizingSemantics({
-        efficio_text_format: "bullets",
-        efficio_min_items: "1",
-        efficio_target_items: "3",
-        efficio_max_items: "5",
-      })
-    ).toEqual([]);
-  });
-
-  it("flags target_items outside its [min_items, max_items] bounds", () => {
-    expect(
-      validateTextSizingSemantics({
-        efficio_min_items: "1",
-        efficio_max_items: "2",
-        efficio_target_items: "5",
-      })
+      validateTextSizingSemantics({ ...base, efficio_max_items: "3", efficio_target_items: "4" })
     ).toEqual([
       expect.objectContaining({ code: "target_exceeds_max", tag: "efficio_target_items" }),
     ]);
-    expect(
-      validateTextSizingSemantics({
-        efficio_min_items: "3",
-        efficio_max_items: "5",
-        efficio_target_items: "1",
-      })
-    ).toEqual([
-      expect.objectContaining({ code: "target_below_min", tag: "efficio_target_items" }),
+  });
+
+  it("requires plain text to use one item without target guidance", () => {
+    const issues = validateTextSizingSemantics({
+      ...base,
+      efficio_text_format: "plain",
+      efficio_max_items: "3",
+      efficio_target_items: "1",
+    });
+    expect(issues).toEqual([
+      expect.objectContaining({ code: "plain_requires_single_item", tag: "efficio_max_items" }),
+      expect.objectContaining({ code: "plain_forbids_target_items", tag: "efficio_target_items" }),
     ]);
   });
 
-  it("rejects a preferred item count for plain text (always one item)", () => {
+  it("leaves malformed or incomplete tag values to structural validation", () => {
     expect(
-      validateTextSizingSemantics({
-        efficio_text_format: "plain",
-        efficio_min_items: "1",
-        efficio_max_items: "1",
-        efficio_target_items: "1",
-      })
-    ).toEqual([
-      expect.objectContaining({
-        code: "plain_forbids_target_items",
-        tag: "efficio_target_items",
-      }),
-    ]);
+      validateTextSizingSemantics({ ...base, efficio_estimated_chars_per_line: "invalid" })
+    ).toEqual([]);
+    expect(validateTextSizingSemantics({ efficio_max_lines: "4" })).toEqual([]);
   });
 });

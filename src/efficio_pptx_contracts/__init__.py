@@ -23,6 +23,16 @@ from .content_mode import (
     is_renderable,
     resolve_content_mode,
 )
+from .classification_schemes import (
+    CLASSIFICATION_SCHEMES_TAG,
+    CLASSIFICATION_SCHEME_ID_TAG,
+    ClassificationCase,
+    ClassificationFill,
+    ClassificationPaletteMode,
+    ClassificationScheme,
+    parse_classification_schemes,
+    resolve_categorical_fill_scheme,
+)
 from .data_bound_components import (
     build_data_bound_component_contract,
     normalize_data_bound_component_content,
@@ -47,6 +57,7 @@ from .registry import (
     list_component_types,
     load_component_registry,
 )
+from .render_metadata import build_component_render_metadata
 from .slide_selection_groups import (
     SLIDE_SELECTION_GROUPS_TAG,
     SlideSelectionGroup,
@@ -70,6 +81,7 @@ from .tag_validation import (
 )
 from .template_contract_migrations import (
     CURRENT_TEMPLATE_CONTRACT_REVISION,
+    MigrateTextCapacityOperation,
     TEMPLATE_CONTRACT_REVISION_TAG,
     UNVERSIONED_TEMPLATE_CONTRACT_REVISION,
     RenameTagOperation,
@@ -113,6 +125,14 @@ __all__ = [
     "MissingResourceError",
     "TemplateContractMigrationError",
     "UnknownComponentTypeError",
+    "CLASSIFICATION_SCHEMES_TAG",
+    "CLASSIFICATION_SCHEME_ID_TAG",
+    "ClassificationCase",
+    "ClassificationFill",
+    "ClassificationPaletteMode",
+    "ClassificationScheme",
+    "parse_classification_schemes",
+    "resolve_categorical_fill_scheme",
     "load_component_registry",
     "list_component_types",
     "has_component_type",
@@ -151,6 +171,7 @@ __all__ = [
     "validate_slide_tags",
     "validate_deck_tags",
     "build_validation_content_schema",
+    "build_component_render_metadata",
     "V2ComponentRepairReason",
     "V2ComponentSemanticFinding",
     "V2SemanticRule",
@@ -170,6 +191,7 @@ __all__ = [
     "normalize_data_bound_component_content",
     "validate_data_bound_component_contract_coherence",
     "CURRENT_TEMPLATE_CONTRACT_REVISION",
+    "MigrateTextCapacityOperation",
     "TEMPLATE_CONTRACT_REVISION_TAG",
     "UNVERSIONED_TEMPLATE_CONTRACT_REVISION",
     "RenameTagOperation",

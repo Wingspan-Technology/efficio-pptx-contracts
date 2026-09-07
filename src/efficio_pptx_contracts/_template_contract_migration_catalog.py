@@ -28,6 +28,7 @@ class TemplateTagScope(StrEnum):
 class TemplateMigrationOperationType(StrEnum):
     SET_TAG_IF_MISSING = "set_tag_if_missing"
     RENAME_TAG = "rename_tag"
+    MIGRATE_TEXT_CAPACITY = "migrate_text_capacity"
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,8 +52,16 @@ class RenameTagOperation:
     )
 
 
+@dataclass(frozen=True, slots=True)
+class MigrateTextCapacityOperation:
+    scope: TemplateTagScope
+    operation_type: TemplateMigrationOperationType = (
+        TemplateMigrationOperationType.MIGRATE_TEXT_CAPACITY
+    )
+
+
 TemplateContractMigrationOperation: TypeAlias = (
-    SetTagIfMissingOperation | RenameTagOperation
+    SetTagIfMissingOperation | RenameTagOperation | MigrateTextCapacityOperation
 )
 
 
@@ -188,6 +197,12 @@ def _parse_operation(raw: object) -> TemplateContractMigrationOperation:
         if not _is_tag_name(tag) or not isinstance(value, str):
             raise TemplateContractMigrationError("set_tag_if_missing values are invalid")
         return SetTagIfMissingOperation(scope=scope, tag=tag, value=value)
+    if raw.get("type") == TemplateMigrationOperationType.MIGRATE_TEXT_CAPACITY:
+        if set(raw) != {"type", "scope"} or scope is not TemplateTagScope.SHAPE:
+            raise TemplateContractMigrationError(
+                "migrate_text_capacity must contain only type and shape scope"
+            )
+        return MigrateTextCapacityOperation(scope=scope)
     if raw.get("type") != TemplateMigrationOperationType.RENAME_TAG:
         raise TemplateContractMigrationError("template migration operation type is invalid")
     allowed = {"type", "scope", "source_tag", "target_tag", "value_map"}
@@ -239,11 +254,13 @@ def _validate_operation_conflicts(
 ) -> None:
     touched: set[tuple[TemplateTagScope, str]] = set()
     for operation in operations:
-        tags = (
-            (operation.tag,)
-            if isinstance(operation, SetTagIfMissingOperation)
-            else (operation.source_tag, operation.target_tag)
-        )
+        tags: tuple[str, ...]
+        if isinstance(operation, SetTagIfMissingOperation):
+            tags = (operation.tag,)
+        elif isinstance(operation, RenameTagOperation):
+            tags = (operation.source_tag, operation.target_tag)
+        else:
+            tags = ("<text_capacity>",)
         for tag in tags:
             identity = operation.scope, tag
             if identity in touched:

@@ -1,5 +1,10 @@
 import { templateContractMigrationCatalog } from "../../generated/ts/presentation/templateContractMigrations.js";
 import { copyContractValue } from "./contract-copy.js";
+import {
+  containsRetiredTableCapacityFields,
+  migrateTextCapacity,
+  retiredTextCapacityTags,
+} from "./template-contract-text-capacity-migration.js";
 
 export const TEMPLATE_CONTRACT_REVISION_TAG = "efficio_template_contract_revision";
 export const UNVERSIONED_TEMPLATE_CONTRACT_REVISION = 0;
@@ -19,7 +24,14 @@ export type RenameTagOperation = Readonly<{
   target_tag: string;
   value_map?: Readonly<Record<string, string>>;
 }>;
-export type TemplateContractMigrationOperation = SetTagIfMissingOperation | RenameTagOperation;
+export type MigrateTextCapacityOperation = Readonly<{
+  type: "migrate_text_capacity";
+  scope: "shape";
+}>;
+export type TemplateContractMigrationOperation =
+  | SetTagIfMissingOperation
+  | RenameTagOperation
+  | MigrateTextCapacityOperation;
 export type TemplateContractMigration = Readonly<{
   format_version: 1;
   contract_type: "template_contract_migration";
@@ -121,6 +133,22 @@ function validateNoRetiredTags(targets: PreparedTarget[]): void {
       }
     }
   }
+  if (catalog.migrations.some(({ operations }) =>
+    operations.some(({ type }) => type === "migrate_text_capacity")
+  )) {
+    for (const tag of retiredTextCapacityTags()) {
+      if (targets.some(({ target, tags }) => target.scope === "shape" && tag in tags)) {
+        throw new TemplateContractMigrationError(
+          "Current template contract contains a retired tag.",
+        );
+      }
+    }
+  }
+  if (targets.some(({ tags }) => containsRetiredTableCapacityFields(tags))) {
+    throw new TemplateContractMigrationError(
+      "Current template contract contains a retired tag.",
+    );
+  }
 }
 
 type PreparedTarget = { target: TemplateTagTarget; tags: Record<string, string> };
@@ -184,6 +212,16 @@ function applyOperation(targets: PreparedTarget[], operation: TemplateContractMi
     if (target.scope !== operation.scope) continue;
     if (operation.type === "set_tag_if_missing") {
       if (!(operation.tag in tags)) tags[operation.tag] = operation.value;
+      continue;
+    }
+    if (operation.type === "migrate_text_capacity") {
+      try {
+        migrateTextCapacity(tags);
+      } catch (error) {
+        throw new TemplateContractMigrationError(
+          error instanceof Error ? error.message : "Text capacity migration failed.",
+        );
+      }
       continue;
     }
     const source = tags[operation.source_tag];

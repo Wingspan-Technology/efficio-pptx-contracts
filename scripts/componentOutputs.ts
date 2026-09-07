@@ -52,8 +52,13 @@ export async function buildTagSchemas(
   const builtSchemasByType: Record<string, JsonObject> = {};
 
   await mkdir(generatedComponentSchemasDir, { recursive: true });
-  for (const { componentType, label, schema } of componentSources) {
-    const builtSchema = mergeTagSchema(sharedTags.schema, schema, label, sharedTags.labels);
+  for (const { componentType, label, schema, additionalSourceLabels } of componentSources) {
+    const builtSchema = mergeTagSchema(
+      sharedTags.schema,
+      schema,
+      label,
+      [...sharedTags.labels, ...additionalSourceLabels],
+    );
     builtSchemasByType[componentType] = builtSchema;
     await writeJson(
       path.join(generatedComponentSchemasDir, `${componentType.replace(/_/g, "-")}.json`),

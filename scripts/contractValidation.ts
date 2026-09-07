@@ -34,6 +34,11 @@ import {
   validateTemplateContractRevisionTag,
   type TemplateContractMigrationCatalog,
 } from "./templateMigrationContract.js";
+import {
+  composeTextCapacityContract,
+  loadTextCapacityTagContract,
+  textCapacityContractLabel,
+} from "./textCapacityContract.js";
 
 export type ContractIssue = { contract: string; message: string };
 export type ValidationReport = { ok: boolean; checked: number; issues: ContractIssue[] };
@@ -98,6 +103,11 @@ export async function validateAllContracts(
   }
   const sharedOk = sharedLabels.length === sharedTagFragmentNames.length;
 
+  let textCapacityContract: JsonObject | undefined;
+  await check(textCapacityContractLabel, async () => {
+    textCapacityContract = await loadTextCapacityTagContract(layout.sharedDir);
+  });
+
   // 2. Components: tag contract, content contract, merge, and defaults.
   let componentNames: string[] = [];
   try {
@@ -122,9 +132,12 @@ export async function validateAllContracts(
     let componentSchema: JsonObject | undefined;
 
     await check(tagsLabel, async () => {
-      const schema = await readJson(path.join(layout.componentsDir, name, "tags.contract.json"));
-      assertObject(schema, tagsLabel);
-      assertNoDefaults(schema, tagsLabel);
+      const authoredSchema = await readJson(path.join(layout.componentsDir, name, "tags.contract.json"));
+      assertObject(authoredSchema, tagsLabel);
+      assertNoDefaults(authoredSchema, tagsLabel);
+      const schema = textCapacityContract === undefined
+        ? authoredSchema
+        : composeTextCapacityContract(name, authoredSchema, textCapacityContract, tagsLabel);
       validateTagEntityContract(schema, tagsLabel, { componentType: name });
       assertEfficioTagNames(schema, tagsLabel);
       componentSchema = schema;

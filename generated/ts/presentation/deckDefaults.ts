@@ -2,5 +2,5 @@
 
 export const deckDefaults = {
   "efficio_template_id": "default_template",
-  "efficio_template_contract_revision": "1"
+  "efficio_template_contract_revision": "2"
 } as const;

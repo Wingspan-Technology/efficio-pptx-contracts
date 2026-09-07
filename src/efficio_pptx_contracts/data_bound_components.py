@@ -5,6 +5,11 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from ._categorical_fill import (
+    build_data_bound_categorical_fill_contract,
+    normalize_categorical_fill_content,
+    validate_categorical_fill_schema_coherence,
+)
 from ._data_bound_category_chart import (
     build_data_bound_category_chart_contract,
     normalize_data_bound_category_chart,
@@ -38,9 +43,22 @@ _NORMALIZERS: dict[str, _Normalizer] = {
 
 
 def build_data_bound_component_contract(
-    component_type: str, tags: Mapping[str, str]
+    component_type: str,
+    tags: Mapping[str, str],
+    *,
+    deck_tags: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build a renderer-safe schema without authored AI content limits."""
+    if component_type == "categorical_fill":
+        if deck_tags is None:
+            raise ValueError("categorical-fill data-bound contract requires deck_tags")
+        contract = build_data_bound_categorical_fill_contract(tags, deck_tags)
+        validate_data_bound_component_contract_coherence(
+            component_type,
+            contract["submission_schema"],
+            contract["normalization"],
+        )
+        return contract
     builder = _builder(component_type)
     contract = builder(tags)
     validate_data_bound_component_contract_coherence(
@@ -57,9 +75,11 @@ def normalize_data_bound_component_content(
     normalization: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Normalize validated data-bound content into the renderer's canonical shape."""
-    _builder(component_type)
+    _assert_supported(component_type)
     if not isinstance(content, Mapping) or not isinstance(normalization, Mapping):
         raise ValueError("data-bound content and normalization must be objects")
+    if component_type == "categorical_fill":
+        return normalize_categorical_fill_content(content, normalization)
     return _NORMALIZERS[component_type](content, normalization)
 
 
@@ -69,10 +89,15 @@ def validate_data_bound_component_contract_coherence(
     normalization: Mapping[str, Any],
 ) -> None:
     """Validate one persisted data-bound schema and its private metadata together."""
-    _builder(component_type)
+    _assert_supported(component_type)
     if not isinstance(submission_schema, Mapping) or not isinstance(normalization, Mapping):
         raise ValueError("data-bound schema and normalization must be objects")
     validate_v2_executable_component_schema(submission_schema, require_prompt_profile=False)
+    if component_type == "categorical_fill":
+        validate_categorical_fill_schema_coherence(
+            submission_schema, normalization, require_descriptions=False
+        )
+        return
     if component_type == "text":
         if normalization:
             raise ValueError("data-bound text normalization must be empty")
@@ -87,6 +112,13 @@ def _builder(component_type: str) -> _Builder:
     builder = _BUILDERS.get(component_type)
     if builder is not None:
         return builder
+    assert_component_type(component_type)
+    raise ValueError(f"component type {component_type!r} has no data-bound contract")
+
+
+def _assert_supported(component_type: str) -> None:
+    if component_type in _BUILDERS or component_type == "categorical_fill":
+        return
     assert_component_type(component_type)
     raise ValueError(f"component type {component_type!r} has no data-bound contract")
 

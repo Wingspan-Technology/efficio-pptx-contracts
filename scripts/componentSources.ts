@@ -12,12 +12,18 @@ import {
 } from "./contractLib.js";
 import { readJson } from "./generatorIo.js";
 import { componentsDir, sharedDir, sharedTagFragmentNames } from "./generatorPaths.js";
+import {
+  composeTextCapacityContract,
+  loadTextCapacityTagContract,
+  textCapacityContractLabel,
+} from "./textCapacityContract.js";
 
 export type ComponentSource = {
   componentType: string;
   label: string;
   schema: JsonObject;
   contentContract: JsonObject;
+  additionalSourceLabels: string[];
 };
 
 export type SharedTagContract = {
@@ -27,6 +33,7 @@ export type SharedTagContract = {
 
 export async function loadComponentSources(): Promise<ComponentSource[]> {
   const entries = await readdir(componentsDir, { withFileTypes: true });
+  const capacityContract = await loadTextCapacityTagContract();
   const sources: ComponentSource[] = [];
 
   for (const entry of entries) {
@@ -34,18 +41,33 @@ export async function loadComponentSources(): Promise<ComponentSource[]> {
 
     const sourcePath = path.join(componentsDir, entry.name, "tags.contract.json");
     const label = `contracts/components/${entry.name}/tags.contract.json`;
-    const schema = await readJson(sourcePath).catch((error: unknown) => {
+    const authoredSchema = await readJson(sourcePath).catch((error: unknown) => {
       throw new Error(`Could not read ${label}. Every component folder must include tags.contract.json.`, {
         cause: error,
       });
     });
 
-    assertObject(schema, label);
-    assertNoDefaults(schema, label);
+    assertObject(authoredSchema, label);
+    assertNoDefaults(authoredSchema, label);
+    const schema = composeTextCapacityContract(
+      entry.name,
+      authoredSchema,
+      capacityContract,
+      label,
+    );
     validateTagEntityContract(schema, label, { componentType: entry.name });
     const contentContract = await loadAndValidateContentContract(entry.name);
 
-    sources.push({ componentType: schema.component_type as string, label, schema, contentContract });
+    sources.push({
+      componentType: schema.component_type as string,
+      label,
+      schema,
+      contentContract,
+      additionalSourceLabels:
+        entry.name === "text" || entry.name === "table"
+          ? [textCapacityContractLabel]
+          : [],
+    });
   }
 
   return sources.sort((left, right) => left.componentType.localeCompare(right.componentType));

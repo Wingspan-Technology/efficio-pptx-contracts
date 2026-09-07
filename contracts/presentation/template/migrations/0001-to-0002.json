@@ -1,0 +1,13 @@
+{
+  "format_version": 1,
+  "contract_type": "template_contract_migration",
+  "from_revision": 1,
+  "to_revision": 2,
+  "description": "Replace independent text character limits with the shared estimated line-capacity contract.",
+  "operations": [
+    {
+      "type": "migrate_text_capacity",
+      "scope": "shape"
+    }
+  ]
+}

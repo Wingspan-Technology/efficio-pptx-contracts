@@ -15,6 +15,11 @@ import copy
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from ._categorical_fill import (
+    build_categorical_fill_v2_contract,
+    normalize_categorical_fill_content,
+    validate_categorical_fill_normalization,
+)
 from ._structured_output_category_chart import (
     build_category_chart_v2_contract,
     normalize_category_chart_v2_content,
@@ -53,7 +58,10 @@ _BUILDERS: dict[str, _Builder] = {
 
 
 def build_v2_component_contract(
-    component_type: str, tags: Mapping[str, str]
+    component_type: str,
+    tags: Mapping[str, str],
+    *,
+    deck_tags: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build one component's V2 output schema and private metadata.
 
@@ -62,6 +70,17 @@ def build_v2_component_contract(
     ``normalization`` is trusted import/runtime metadata and must not be accepted
     from or returned to an external caller.
     """
+    if component_type == "categorical_fill":
+        if deck_tags is None:
+            raise ValueError("categorical-fill V2 contract requires deck_tags")
+        contract = build_categorical_fill_v2_contract(tags, deck_tags)
+        validate_v2_component_contract_coherence(
+            component_type,
+            contract["output_schema"],
+            contract["normalization"],
+        )
+        return contract
+
     builder = _BUILDERS.get(component_type)
     if builder is None:
         assert_component_type(component_type)
@@ -114,6 +133,8 @@ def normalize_v2_component_content(
         return normalize_table_v2_content(content, normalization)
     if component_type == "category_chart":
         return normalize_category_chart_v2_content(content, normalization)
+    if component_type == "categorical_fill":
+        return normalize_categorical_fill_content(content, normalization)
     validate_text_v2_normalization(normalization)
     return copy.deepcopy(dict(content))
 
@@ -123,7 +144,7 @@ def validate_v2_component_semantics(
     content: Mapping[str, Any],
     normalization: Mapping[str, Any],
 ) -> None:
-    """Validate hard aggregate limits JSON Schema cannot express."""
+    """Validate estimated text-capacity rules JSON Schema cannot express."""
     _assert_supported(component_type)
     if not isinstance(content, Mapping):
         raise ValueError(f"{component_type} V2 content must be an object")
@@ -133,6 +154,8 @@ def validate_v2_component_semantics(
         validate_text_v2_semantics(content, normalization)
     elif component_type == "table":
         validate_table_v2_semantics(content, normalization)
+    elif component_type == "categorical_fill":
+        normalize_categorical_fill_content(content, normalization)
 
 
 def validate_v2_component_normalization(
@@ -146,12 +169,14 @@ def validate_v2_component_normalization(
         validate_text_v2_normalization(normalization)
     elif component_type == "table":
         validate_table_v2_normalization(normalization)
-    else:
+    elif component_type == "category_chart":
         validate_category_chart_v2_normalization(normalization)
+    else:
+        validate_categorical_fill_normalization(normalization)
 
 
 def _assert_supported(component_type: str) -> None:
-    if component_type in _BUILDERS:
+    if component_type in _BUILDERS or component_type == "categorical_fill":
         return
     assert_component_type(component_type)
     raise UnknownComponentTypeError(

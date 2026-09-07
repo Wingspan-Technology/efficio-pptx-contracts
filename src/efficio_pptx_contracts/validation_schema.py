@@ -15,7 +15,8 @@ its own focused module (:mod:`_validation_text`, :mod:`_validation_table`,
 :mod:`_validation_common`. The emitted schemas carry validation keywords only —
 no component identity, AI prose, raw tags, shape paths, or PowerPoint internals.
 
-Every registered component type (``text``, ``table``, ``category_chart``) is
+Every registered component type (``text``, ``table``, ``category_chart``, and
+``categorical_fill``) is
 supported, so a schema is always returned; an unregistered/unknown component
 type raises ``UnknownComponentTypeError`` (fail-fast on typos and not-yet-wired
 types). Missing or invalid limit/config tags raise ``ValueError`` — a permissive
@@ -27,6 +28,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from ._categorical_fill import build_categorical_fill_validation_schema
 from ._validation_category_chart import _category_chart_validation_schema
 from ._validation_table import _table_validation_schema
 from ._validation_text import _text_validation_schema
@@ -35,7 +37,10 @@ from .registry import assert_component_type
 
 
 def build_validation_content_schema(
-    component_type: str, tags: Mapping[str, str]
+    component_type: str,
+    tags: Mapping[str, str],
+    *,
+    deck_tags: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """The JSON Schema validating one component instance's ``content``.
 
@@ -44,6 +49,11 @@ def build_validation_content_schema(
     supported types, missing or invalid limit/config tags raise ``ValueError``
     rather than degrading to a permissive schema.
     """
+    if component_type == "categorical_fill":
+        if deck_tags is None:
+            raise ValueError("categorical-fill validation schema requires deck_tags")
+        return build_categorical_fill_validation_schema(tags, deck_tags)
+
     builder = _BUILDERS.get(component_type)
     if builder is None:
         # Unknown types fail fast. A registered type with no builder is contract/
