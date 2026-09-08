@@ -26,8 +26,12 @@ def _text_tags() -> dict[str, str]:
         "efficio_sizing_mode": "manual",
         "efficio_max_lines": "2",
         "efficio_estimated_chars_per_line": "5",
+        "efficio_min_chars": "1",
+        "efficio_max_chars": "10",
         "efficio_min_items": "1",
         "efficio_max_items": "1",
+        "efficio_min_chars_per_item": "1",
+        "efficio_max_chars_per_item": "10",
     }
 
 

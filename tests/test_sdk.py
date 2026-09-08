@@ -101,6 +101,7 @@ def test_import_exposes_only_stable_public_names() -> None:
             "normalize_data_bound_component_content",
             "validate_data_bound_component_contract_coherence",
             "CURRENT_TEMPLATE_CONTRACT_REVISION",
+            "DeriveTextCharacterLimitsOperation",
             "TEMPLATE_CONTRACT_REVISION_TAG",
             "UNVERSIONED_TEMPLATE_CONTRACT_REVISION",
             "MigrateTextCapacityOperation",
@@ -190,8 +191,12 @@ def test_project_component_context_is_ai_safe() -> None:
         "efficio_sizing_mode": "auto",
         "efficio_max_lines": "2",
         "efficio_estimated_chars_per_line": "30",
+        "efficio_min_chars": "1",
+        "efficio_max_chars": "60",
         "efficio_min_items": "1",
         "efficio_max_items": "1",
+        "efficio_min_chars_per_item": "1",
+        "efficio_max_chars_per_item": "60",
     }
     context = sdk.project_component_context("text", tags)
     assert context["component_type"] == "text"
@@ -202,8 +207,12 @@ def test_project_component_context_is_ai_safe() -> None:
         "text_format": "plain",
         "max_lines": 2,
         "estimated_chars_per_line": 30,
+        "min_chars": 1,
+        "max_chars": 60,
         "min_items": 1,
         "max_items": 1,
+        "min_chars_per_item": 1,
+        "max_chars_per_item": 60,
     }
     # content-mode (filtering) and prompt-instruction (surfaced) never duplicated;
     # identity/runtime tags never leak — under neither raw nor aliased names.
@@ -417,8 +426,12 @@ def valid_text_tags(**overrides: str) -> dict[str, str]:
         "efficio_sizing_mode": "auto",
         "efficio_max_lines": "2",
         "efficio_estimated_chars_per_line": "30",
+        "efficio_min_chars": "1",
+        "efficio_max_chars": "60",
         "efficio_min_items": "1",
         "efficio_max_items": "1",
+        "efficio_min_chars_per_item": "1",
+        "efficio_max_chars_per_item": "60",
     }
     tags.update(overrides)
     return tags
@@ -479,6 +492,36 @@ def test_validate_text_rejects_max_items_exceeding_max_lines() -> None:
     )
     assert [(i.code, i.tag_name) for i in issues] == [
         ("items_exceed_line_capacity", "efficio_max_items")
+    ]
+
+
+def test_validate_text_rejects_minimums_that_exceed_line_capacity() -> None:
+    aggregate = sdk.validate_component_tags(
+        "text",
+        valid_text_tags(
+            efficio_text_format="bullets",
+            efficio_max_lines="2",
+            efficio_estimated_chars_per_line="10",
+            efficio_min_chars="21",
+        ),
+    )
+    per_item = sdk.validate_component_tags(
+        "text",
+        valid_text_tags(
+            efficio_text_format="bullets",
+            efficio_max_lines="3",
+            efficio_estimated_chars_per_line="10",
+            efficio_min_items="2",
+            efficio_max_items="2",
+            efficio_min_chars_per_item="15",
+        ),
+    )
+
+    assert ("minimum_chars_exceeds_line_capacity", "efficio_min_chars") in [
+        (issue.code, issue.tag_name) for issue in aggregate
+    ]
+    assert ("minimum_items_exceed_line_capacity", "efficio_min_items") in [
+        (issue.code, issue.tag_name) for issue in per_item
     ]
 
 
@@ -652,6 +695,48 @@ def test_validate_table_rejects_max_items_exceeding_max_lines() -> None:
     )
     assert ("items_exceed_line_capacity", "efficio_table_config") in [
         (i.code, i.tag_name) for i in issues
+    ]
+
+
+def test_validate_table_rejects_minimums_that_exceed_line_capacity() -> None:
+    aggregate = sdk.validate_component_tags(
+        "table",
+        valid_table_tags(
+            efficio_table_config=_table_cfg(
+                text_format="bullets",
+                max_lines=2,
+                estimated_chars_per_line=10,
+                min_chars=21,
+                max_chars=30,
+                min_items=1,
+                max_items=2,
+                min_chars_per_item=1,
+                max_chars_per_item=30,
+            )
+        ),
+    )
+    per_item = sdk.validate_component_tags(
+        "table",
+        valid_table_tags(
+            efficio_table_config=_table_cfg(
+                text_format="bullets",
+                max_lines=3,
+                estimated_chars_per_line=10,
+                min_chars=1,
+                max_chars=100,
+                min_items=2,
+                max_items=2,
+                min_chars_per_item=15,
+                max_chars_per_item=40,
+            )
+        ),
+    )
+
+    assert ("minimum_chars_exceeds_line_capacity", "efficio_table_config") in [
+        (issue.code, issue.tag_name) for issue in aggregate
+    ]
+    assert ("minimum_items_exceed_line_capacity", "efficio_table_config") in [
+        (issue.code, issue.tag_name) for issue in per_item
     ]
 
 

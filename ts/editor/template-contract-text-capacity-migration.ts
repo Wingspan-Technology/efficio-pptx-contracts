@@ -7,7 +7,7 @@ const MIN_ITEMS = "efficio_min_items";
 const MAX_ITEMS = "efficio_max_items";
 const TARGET_ITEMS = "efficio_target_items";
 
-const RETIRED_TEXT_FIELDS = [
+const REVISION_ONE_TEXT_FIELDS = [
   "efficio_max_chars",
   "efficio_target_chars",
   "efficio_min_chars_per_item",
@@ -15,6 +15,14 @@ const RETIRED_TEXT_FIELDS = [
   "efficio_target_chars_per_item",
   "efficio_max_chars_per_line",
 ] as const;
+const RETIRED_TEXT_FIELDS = [
+  "efficio_target_chars",
+  "efficio_target_chars_per_item",
+  "efficio_max_chars_per_line",
+] as const;
+const TABLE_REVISION_ONE_FIELDS = REVISION_ONE_TEXT_FIELDS.map((field) =>
+  field.replace("efficio_", "")
+);
 const TABLE_RETIRED_FIELDS = RETIRED_TEXT_FIELDS.map((field) => field.replace("efficio_", ""));
 const TABLE_CAPACITY_FIELDS = new Set([
   "max_lines",
@@ -22,7 +30,7 @@ const TABLE_CAPACITY_FIELDS = new Set([
   "min_items",
   "max_items",
   "target_items",
-  ...TABLE_RETIRED_FIELDS,
+  ...TABLE_REVISION_ONE_FIELDS,
 ]);
 const TABLE_CELL_FIELDS = new Set([
   "row", "col", "render_action", "text_format", "instruction", ...TABLE_CAPACITY_FIELDS,
@@ -84,7 +92,7 @@ function migrateTextTags(tags: Record<string, string>): void {
   tags[MAX_ITEMS] = String(maxItems);
   if (targetItems === undefined) delete tags[TARGET_ITEMS];
   else tags[TARGET_ITEMS] = String(targetItems);
-  for (const field of RETIRED_TEXT_FIELDS) delete tags[field];
+  for (const field of REVISION_ONE_TEXT_FIELDS) delete tags[field];
 }
 
 function migrateTableConfig(tags: Record<string, string>): void {
@@ -186,7 +194,7 @@ function resolveTableLineCapacity(
 }
 
 function removeRetiredTableFields(cell: JsonObject): void {
-  for (const field of TABLE_RETIRED_FIELDS) delete cell[field];
+  for (const field of TABLE_REVISION_ONE_FIELDS) delete cell[field];
 }
 
 function resolveCharsPerLine(input: {
@@ -222,7 +230,14 @@ function validateItemLimits(
 }
 
 function textCapacityInputs(): string[] {
-  return [MAX_LINES, CHARS_PER_LINE, MIN_ITEMS, MAX_ITEMS, TARGET_ITEMS, ...RETIRED_TEXT_FIELDS];
+  return [
+    MAX_LINES,
+    CHARS_PER_LINE,
+    MIN_ITEMS,
+    MAX_ITEMS,
+    TARGET_ITEMS,
+    ...REVISION_ONE_TEXT_FIELDS,
+  ];
 }
 
 function optionalTagInteger(tags: Record<string, string>, name: string): number | undefined {

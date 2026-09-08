@@ -18,7 +18,7 @@ _MIN_ITEMS = "efficio_min_items"
 _MAX_ITEMS = "efficio_max_items"
 _TARGET_ITEMS = "efficio_target_items"
 
-_RETIRED_TEXT_FIELDS = (
+_REVISION_ONE_TEXT_FIELDS = (
     "efficio_max_chars",
     "efficio_target_chars",
     "efficio_min_chars_per_item",
@@ -26,7 +26,17 @@ _RETIRED_TEXT_FIELDS = (
     "efficio_target_chars_per_item",
     "efficio_max_chars_per_line",
 )
-_TABLE_RETIRED_FIELDS = tuple(field.removeprefix("efficio_") for field in _RETIRED_TEXT_FIELDS)
+_RETIRED_TEXT_FIELDS = (
+    "efficio_target_chars",
+    "efficio_target_chars_per_item",
+    "efficio_max_chars_per_line",
+)
+_TABLE_REVISION_ONE_FIELDS = tuple(
+    field.removeprefix("efficio_") for field in _REVISION_ONE_TEXT_FIELDS
+)
+_TABLE_RETIRED_FIELDS = tuple(
+    field.removeprefix("efficio_") for field in _RETIRED_TEXT_FIELDS
+)
 _TABLE_CAPACITY_FIELDS = frozenset(
     {
         "max_lines",
@@ -34,7 +44,7 @@ _TABLE_CAPACITY_FIELDS = frozenset(
         "min_items",
         "max_items",
         "target_items",
-        *_TABLE_RETIRED_FIELDS,
+        *_TABLE_REVISION_ONE_FIELDS,
     }
 )
 _TABLE_CELL_FIELDS = frozenset(
@@ -113,7 +123,7 @@ def _migrate_text_tags(tags: dict[str, str]) -> None:
         tags.pop(_TARGET_ITEMS, None)
     else:
         tags[_TARGET_ITEMS] = str(target_items)
-    for field in _RETIRED_TEXT_FIELDS:
+    for field in _REVISION_ONE_TEXT_FIELDS:
         tags.pop(field, None)
 
 
@@ -223,7 +233,7 @@ def _resolve_table_line_capacity(
 
 
 def _remove_retired_table_fields(cell: dict[str, object]) -> None:
-    for field in _TABLE_RETIRED_FIELDS:
+    for field in _TABLE_REVISION_ONE_FIELDS:
         cell.pop(field, None)
 
 
@@ -276,7 +286,7 @@ def _text_capacity_inputs() -> tuple[str, ...]:
         _MIN_ITEMS,
         _MAX_ITEMS,
         _TARGET_ITEMS,
-        *_RETIRED_TEXT_FIELDS,
+        *_REVISION_ONE_TEXT_FIELDS,
     )
 
 

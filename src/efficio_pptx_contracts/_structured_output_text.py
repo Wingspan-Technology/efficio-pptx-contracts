@@ -8,9 +8,9 @@ from typing import Any
 from ._structured_output_common import join_sentences
 from ._text_capacity import (
     estimated_line_usage,
-    line_capacity_metadata,
+    text_capacity_metadata,
     text_capacity_description,
-    validate_line_capacity_metadata,
+    validate_text_capacity_metadata,
 )
 from ._text_sizing_validation import text_capacity_from_tags
 from ._validation_text import _text_validation_schema
@@ -47,7 +47,7 @@ def build_text_v2_contract(tags: Mapping[str, str]) -> dict[str, Any]:
         "required": ["items"],
         "additionalProperties": False,
     }
-    metadata = line_capacity_metadata(capacity)
+    metadata = text_capacity_metadata(capacity)
     if metadata is None:
         raise ValueError("text components require estimated line capacity")
     return {
@@ -60,12 +60,20 @@ def build_text_v2_contract(tags: Mapping[str, str]) -> dict[str, Any]:
 def validate_text_v2_semantics(
     content: Mapping[str, Any], normalization: Mapping[str, Any]
 ) -> None:
-    """Enforce the estimated shared line capacity."""
-    actual, maximum = text_v2_estimated_line_usage(content, normalization)
-    if actual > maximum:
+    """Enforce aggregate character bounds and estimated line capacity."""
+    actual_chars, minimum_chars, maximum_chars = text_v2_character_usage(
+        content, normalization
+    )
+    if actual_chars < minimum_chars or actual_chars > maximum_chars:
         raise ValueError(
-            f"text V2 content at /items uses an estimated {actual} lines; "
-            f"maximum is {maximum}"
+            f"text V2 content at /items uses {actual_chars} characters; "
+            f"required range is {minimum_chars}–{maximum_chars}"
+        )
+    actual_lines, maximum_lines = text_v2_estimated_line_usage(content, normalization)
+    if actual_lines > maximum_lines:
+        raise ValueError(
+            f"text V2 content at /items uses an estimated {actual_lines} lines; "
+            f"maximum is {maximum_lines}"
         )
 
 
@@ -73,20 +81,35 @@ def text_v2_estimated_line_usage(
     content: Mapping[str, Any], normalization: Mapping[str, Any]
 ) -> tuple[int, int]:
     """Return estimated used and allowed lines for validated text content."""
-    maximum, chars_per_line = validate_text_v2_normalization(normalization)
+    maximum, chars_per_line, _, _ = validate_text_v2_normalization(normalization)
+    if maximum is None or chars_per_line is None:
+        raise ValueError("text V2 normalization requires estimated line capacity")
     items = content.get("items")
     if not isinstance(items, list) or any(not isinstance(item, str) for item in items):
         raise ValueError("text V2 content at /items must be an array of strings")
     return estimated_line_usage(items, chars_per_line=chars_per_line), maximum
 
 
+def text_v2_character_usage(
+    content: Mapping[str, Any], normalization: Mapping[str, Any]
+) -> tuple[int, int, int]:
+    """Return aggregate used, minimum, and maximum characters."""
+    _, _, minimum, maximum = validate_text_v2_normalization(normalization)
+    if minimum is None or maximum is None:
+        raise ValueError("text V2 normalization requires character capacity")
+    items = content.get("items")
+    if not isinstance(items, list) or any(not isinstance(item, str) for item in items):
+        raise ValueError("text V2 content at /items must be an array of strings")
+    return sum(len(item) for item in items), minimum, maximum
+
+
 def validate_text_v2_normalization(
     normalization: Mapping[str, Any],
-) -> tuple[int, int]:
+) -> tuple[int | None, int | None, int | None, int | None]:
     """Validate private text-capacity metadata."""
     if set(normalization) != {"text_capacity"}:
         raise ValueError("text V2 normalization must contain exactly text_capacity")
     raw = normalization["text_capacity"]
     if not isinstance(raw, Mapping):
         raise ValueError("text V2 normalization text_capacity must be an object")
-    return validate_line_capacity_metadata(raw)
+    return validate_text_capacity_metadata(raw)

@@ -16,11 +16,23 @@
     "estimated_chars_per_line": {
       "purpose": "Estimated number of characters that fit on one rendered line. Use it together with max_lines to keep generated content within the available space."
     },
+    "min_chars": {
+      "purpose": "Strict minimum number of characters across all generated items. Generated content must contain at least this many characters in total."
+    },
+    "max_chars": {
+      "purpose": "Strict maximum number of characters across all generated items. Generated content must never exceed this total."
+    },
     "min_items": {
       "purpose": "Minimum number of semantic items the generated items array must contain."
     },
     "max_items": {
       "purpose": "Strict maximum number of semantic items the generated items array may contain. Generated content must never exceed it; shorten or compact the item list until it fits. Items may wrap across estimated lines."
+    },
+    "min_chars_per_item": {
+      "purpose": "Strict minimum number of characters in every generated item."
+    },
+    "max_chars_per_item": {
+      "purpose": "Strict maximum number of characters in every generated item. Generated content must shorten each item until it fits."
     },
     "target_items": {
       "purpose": "Preferred number of semantic items. Treat this as guidance while always respecting min_items, max_items, and the shared line capacity."

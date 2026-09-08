@@ -1,5 +1,5 @@
 {
-  "description": "Shared estimated text-capacity fields used by text components and rendered table cells.",
+  "description": "Shared strict character, item, and estimated line-capacity fields used by text components and rendered table cells.",
   "tags": {
     "efficio_max_lines": {
       "type": "integer",
@@ -19,6 +19,26 @@
       "ui": { "order": 72 },
       "ai": {
         "purpose": "Estimated number of characters that fit on one rendered line. Use it together with max_lines to keep generated content within the available space."
+      }
+    },
+    "efficio_min_chars": {
+      "type": "integer",
+      "required": true,
+      "minimum": 1,
+      "description": "Minimum total characters across all generated items.",
+      "ui": { "order": 74 },
+      "ai": {
+        "purpose": "Strict minimum number of characters across all generated items. Generated content must contain at least this many characters in total."
+      }
+    },
+    "efficio_max_chars": {
+      "type": "integer",
+      "required": true,
+      "minimum": 1,
+      "description": "Maximum total characters across all generated items.",
+      "ui": { "order": 76 },
+      "ai": {
+        "purpose": "Strict maximum number of characters across all generated items. Generated content must never exceed this total."
       }
     },
     "efficio_min_items": {
@@ -41,12 +61,32 @@
         "purpose": "Strict maximum number of semantic items the generated items array may contain. Generated content must never exceed it; shorten or compact the item list until it fits. Items may wrap across estimated lines."
       }
     },
+    "efficio_min_chars_per_item": {
+      "type": "integer",
+      "required": true,
+      "minimum": 1,
+      "description": "Minimum characters required in each generated item.",
+      "ui": { "order": 84 },
+      "ai": {
+        "purpose": "Strict minimum number of characters in every generated item."
+      }
+    },
+    "efficio_max_chars_per_item": {
+      "type": "integer",
+      "required": true,
+      "minimum": 1,
+      "description": "Maximum characters allowed in each generated item.",
+      "ui": { "order": 86 },
+      "ai": {
+        "purpose": "Strict maximum number of characters in every generated item. Generated content must shorten each item until it fits."
+      }
+    },
     "efficio_target_items": {
       "type": "integer",
       "required": false,
       "minimum": 1,
       "description": "Preferred number of semantic items; guidance only, within min_items and max_items.",
-      "ui": { "order": 84 },
+      "ui": { "order": 88 },
       "ai": {
         "purpose": "Preferred number of semantic items. Treat this as guidance while always respecting min_items, max_items, and the shared line capacity."
       }

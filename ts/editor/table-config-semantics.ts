@@ -60,8 +60,12 @@ function readCapacity(entry: Record<string, unknown>): TextCapacity | undefined 
   const fields: readonly TextCapacityField[] = [
     "max_lines",
     "estimated_chars_per_line",
+    "min_chars",
+    "max_chars",
     "min_items",
     "max_items",
+    "min_chars_per_item",
+    "max_chars_per_item",
     "target_items",
   ];
   for (const field of fields) {
@@ -76,7 +80,15 @@ function readCapacity(entry: Record<string, unknown>): TextCapacity | undefined 
     ...(entry.estimated_chars_per_line === undefined
       ? {}
       : { estimated_chars_per_line: entry.estimated_chars_per_line as number }),
+    ...(entry.min_chars === undefined ? {} : { min_chars: entry.min_chars as number }),
+    ...(entry.max_chars === undefined ? {} : { max_chars: entry.max_chars as number }),
     ...(entry.max_items === undefined ? {} : { max_items: entry.max_items as number }),
+    ...(entry.min_chars_per_item === undefined
+      ? {}
+      : { min_chars_per_item: entry.min_chars_per_item as number }),
+    ...(entry.max_chars_per_item === undefined
+      ? {}
+      : { max_chars_per_item: entry.max_chars_per_item as number }),
     ...(entry.target_items === undefined ? {} : { target_items: entry.target_items as number }),
   };
 }

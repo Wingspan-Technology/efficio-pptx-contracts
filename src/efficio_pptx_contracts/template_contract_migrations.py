@@ -9,6 +9,7 @@ from types import MappingProxyType
 
 from ._template_contract_migration_catalog import (
     CURRENT_TEMPLATE_CONTRACT_REVISION,
+    DeriveTextCharacterLimitsOperation,
     MigrateTextCapacityOperation,
     TEMPLATE_CONTRACT_REVISION_TAG,
     UNVERSIONED_TEMPLATE_CONTRACT_REVISION,
@@ -21,6 +22,9 @@ from ._template_contract_migration_catalog import (
     TemplateTagScope,
     get_template_contract_migration_path,
     load_template_contract_migration_catalog,
+)
+from ._template_contract_character_limits_migration import (
+    derive_text_character_limits,
 )
 from ._template_contract_text_capacity_migration import (
     contains_retired_table_capacity_fields,
@@ -173,6 +177,9 @@ def _apply_operation(
         if isinstance(operation, MigrateTextCapacityOperation):
             migrate_text_capacity(tags)
             continue
+        if isinstance(operation, DeriveTextCharacterLimitsOperation):
+            derive_text_character_limits(tags)
+            continue
         source = tags.get(operation.source_tag)
         if source is None:
             continue
@@ -216,7 +223,8 @@ def _build_patch(
 
 __all__ = [
     "CURRENT_TEMPLATE_CONTRACT_REVISION", "TEMPLATE_CONTRACT_REVISION_TAG",
-    "UNVERSIONED_TEMPLATE_CONTRACT_REVISION", "MigrateTextCapacityOperation", "RenameTagOperation",
+    "UNVERSIONED_TEMPLATE_CONTRACT_REVISION", "DeriveTextCharacterLimitsOperation",
+    "MigrateTextCapacityOperation", "RenameTagOperation",
     "SetTagIfMissingOperation", "TemplateContractMigration",
     "TemplateContractMigrationCatalog", "TemplateContractMigrationOperation",
     "TemplateContractMigrationPlan", "TemplateContractMigrationError",

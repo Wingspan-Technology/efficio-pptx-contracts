@@ -23,8 +23,12 @@ def _text_tags(**overrides: str) -> dict[str, str]:
         "efficio_sizing_mode": "auto",
         "efficio_max_lines": "4",
         "efficio_estimated_chars_per_line": "30",
+        "efficio_min_chars": "1",
+        "efficio_max_chars": "120",
         "efficio_min_items": "1",
         "efficio_max_items": "1",
+        "efficio_min_chars_per_item": "1",
+        "efficio_max_chars_per_item": "120",
     }
     tags.update(overrides)
     return tags
@@ -69,12 +73,13 @@ def test_text_list_formats_bound_items_by_min_and_max_items() -> None:
         assert not _is_valid(schema, {"items": ["a", "b", "c", "d"]})
 
 
-def test_text_items_require_non_empty_strings_without_character_ceiling() -> None:
+def test_text_items_enforce_per_item_character_bounds() -> None:
     schema = build_validation_content_schema("text", _text_tags())
     item = schema["properties"]["items"]["items"]
-    assert item == {"type": "string", "minLength": 1}
+    assert item == {"type": "string", "minLength": 1, "maxLength": 120}
     assert not _is_valid(schema, {"items": [""]})
-    assert _is_valid(schema, {"items": ["x" * 1_000]})
+    assert _is_valid(schema, {"items": ["x" * 120]})
+    assert not _is_valid(schema, {"items": ["x" * 121]})
 
 
 def test_text_schema_ignores_target_tags() -> None:
@@ -117,7 +122,7 @@ def test_text_schema_matches_documented_contract_shape() -> None:
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 3,
-                "items": {"type": "string", "minLength": 1},
+                "items": {"type": "string", "minLength": 1, "maxLength": 120},
             }
         },
     }
@@ -707,7 +712,7 @@ def test_unknown_component_type_raises() -> None:
 # ── documented limitations & schema validity ─────────────────────────────────
 
 
-def test_multi_item_text_schema_does_not_enforce_estimated_line_capacity() -> None:
+def test_multi_item_text_schema_does_not_derive_item_limit_from_line_capacity() -> None:
     # Canonical JSON Schema owns structure; estimated rendered-line capacity is a
     # V2 semantic rule because wrapping cannot be expressed by JSON Schema.
     schema = build_validation_content_schema(
@@ -720,7 +725,7 @@ def test_multi_item_text_schema_does_not_enforce_estimated_line_capacity() -> No
             efficio_max_items="3",
         ),
     )
-    assert "maxLength" not in schema["properties"]["items"]["items"]
+    assert schema["properties"]["items"]["items"]["maxLength"] == 120
     assert _is_valid(schema, {"items": ["x" * 20, "y" * 20, "z" * 20]})
 
 

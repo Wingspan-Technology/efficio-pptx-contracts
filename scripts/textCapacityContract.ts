@@ -18,8 +18,12 @@ export const textCapacityContractLabel = `contracts/shared/${textCapacityContrac
 const CAPACITY_TAGS = [
   "efficio_max_lines",
   "efficio_estimated_chars_per_line",
+  "efficio_min_chars",
+  "efficio_max_chars",
   "efficio_min_items",
   "efficio_max_items",
+  "efficio_min_chars_per_item",
+  "efficio_max_chars_per_item",
   "efficio_target_items",
 ] as const;
 

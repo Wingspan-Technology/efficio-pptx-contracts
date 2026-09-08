@@ -165,6 +165,16 @@
                 "minimum": 1,
                 "description": "Estimated number of characters that fit on one rendered line."
               },
+              "min_chars": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Minimum total characters across all generated items."
+              },
+              "max_chars": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Maximum total characters across all generated items."
+              },
               "min_items": {
                 "type": "integer",
                 "minimum": 1,
@@ -175,6 +185,16 @@
                 "type": "integer",
                 "minimum": 1,
                 "description": "Maximum number of semantic items in the generated items array; it must not exceed max_lines."
+              },
+              "min_chars_per_item": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Minimum characters required in each generated item."
+              },
+              "max_chars_per_item": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Maximum characters allowed in each generated item."
               },
               "target_items": {
                 "type": "integer",
@@ -192,7 +212,7 @@
     "efficio_component_id": "comparison_table",
     "efficio_component_type": "table",
     "efficio_content_role": "comparison_table",
-    "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"preserve\"},{\"row\":1,\"col\":0,\"render_action\":\"render\",\"text_format\":\"bullets\",\"max_lines\":4,\"estimated_chars_per_line\":20,\"min_items\":1,\"max_items\":4,\"target_items\":2}]}",
+    "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"preserve\"},{\"row\":1,\"col\":0,\"render_action\":\"render\",\"text_format\":\"bullets\",\"max_lines\":4,\"estimated_chars_per_line\":20,\"min_chars\":1,\"max_chars\":80,\"min_items\":1,\"max_items\":4,\"min_chars_per_item\":1,\"max_chars_per_item\":80,\"target_items\":2}]}",
     "efficio_prompt_instruction": "Generate table content that respects each cell's render action."
   }
 }

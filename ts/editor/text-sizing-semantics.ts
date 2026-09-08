@@ -10,8 +10,12 @@ const PLAIN_TEXT_FORMAT = "plain";
 const TEXT_CAPACITY_TAGS: Record<TextCapacityField, string> = {
   max_lines: "efficio_max_lines",
   estimated_chars_per_line: "efficio_estimated_chars_per_line",
+  min_chars: "efficio_min_chars",
+  max_chars: "efficio_max_chars",
   min_items: "efficio_min_items",
   max_items: "efficio_max_items",
+  min_chars_per_item: "efficio_min_chars_per_item",
+  max_chars_per_item: "efficio_max_chars_per_item",
   target_items: "efficio_target_items",
 };
 
@@ -47,13 +51,21 @@ function readCapacity(tags: Record<string, string>): TextCapacity | undefined {
   };
   const maxLines = value("max_lines");
   const charsPerLine = value("estimated_chars_per_line");
+  const minChars = value("min_chars");
+  const maxChars = value("max_chars");
   const minItems = value("min_items");
   const maxItems = value("max_items");
+  const minCharsPerItem = value("min_chars_per_item");
+  const maxCharsPerItem = value("max_chars_per_item");
   if (
     maxLines === undefined ||
     charsPerLine === undefined ||
+    minChars === undefined ||
+    maxChars === undefined ||
     minItems === undefined ||
-    maxItems === undefined
+    maxItems === undefined ||
+    minCharsPerItem === undefined ||
+    maxCharsPerItem === undefined
   ) {
     return undefined;
   }
@@ -62,8 +74,12 @@ function readCapacity(tags: Record<string, string>): TextCapacity | undefined {
   return {
     max_lines: maxLines,
     estimated_chars_per_line: charsPerLine,
+    min_chars: minChars,
+    max_chars: maxChars,
     min_items: minItems,
     max_items: maxItems,
+    min_chars_per_item: minCharsPerItem,
+    max_chars_per_item: maxCharsPerItem,
     ...(targetItems === undefined ? {} : { target_items: targetItems }),
   };
 }

@@ -29,8 +29,12 @@ def _text_tags(**overrides: str) -> dict[str, str]:
         "efficio_sizing_mode": "auto",
         "efficio_max_lines": "4",
         "efficio_estimated_chars_per_line": "30",
+        "efficio_min_chars": "1",
+        "efficio_max_chars": "120",
         "efficio_min_items": "2",
         "efficio_max_items": "4",
+        "efficio_min_chars_per_item": "1",
+        "efficio_max_chars_per_item": "120",
     }
     tags.update(overrides)
     return tags
@@ -116,6 +120,7 @@ def test_text_schema_contains_item_bounds_and_estimated_capacity_guidance() -> N
         "type": "string",
         "description": "One bullet content item.",
         "minLength": 1,
+        "maxLength": 120,
     }
     items = targeted["output_schema"]["properties"]["items"]
     assert items["minItems"] == 2
@@ -131,7 +136,12 @@ def test_text_schema_contains_item_bounds_and_estimated_capacity_guidance() -> N
         base["output_schema"]
     )
     assert targeted["normalization"] == {
-        "text_capacity": {"max_lines": 4, "estimated_chars_per_line": 30}
+        "text_capacity": {
+            "max_lines": 4,
+            "estimated_chars_per_line": 30,
+            "min_chars": 1,
+            "max_chars": 120,
+        }
     }
     assert "target_" not in json.dumps(targeted)
 

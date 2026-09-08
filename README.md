@@ -117,13 +117,13 @@ and formatting limits from submitted content validation. The current component
 configuration tags remain required; removing or hiding AI-only authoring fields
 for data-bound components belongs to the later Template Editor integration.
 
-Text components and rendered table cells share one estimated capacity model.
-`max_lines` and `estimated_chars_per_line` describe the available visual space;
-`min_items` and `max_items` bound semantic paragraphs or list entries, while
-`target_items` is guidance only. Each item consumes at least one estimated line,
-wrapping consumes additional lines, and explicit line breaks consume lines. The
-calculation is deterministic content validation, not exact PowerPoint layout
-measurement. Data-bound submission schemas remain intentionally limit-free.
+Text components and rendered table cells share one capacity model. `min_chars`
+and `max_chars` strictly bound the combined item length;
+`min_chars_per_item` and `max_chars_per_item` strictly bound every item;
+`min_items` and `max_items` bound semantic paragraphs or list entries.
+`max_lines` and `estimated_chars_per_line` retain the independent estimated
+visual-fit check, while `target_items` remains guidance only. Data-bound
+submission schemas remain intentionally limit-free.
 
 Template file compatibility is tracked independently from the package version by
 the required deck tag `efficio_template_contract_revision`. Append-only adjacent
@@ -137,7 +137,9 @@ Revision 2 replaces independent aggregate and per-item character limits with
 the shared estimated line-capacity fields, including capacity settings nested in
 `efficio_table_config`. Revision 3 introduces the optional slide archetype tags;
 it is a revision-only migration that advances the deck revision and writes no
-archetype tags, so a migrated legacy template keeps its unrestricted behavior.
+archetype tags. Revision 4 restores strict aggregate and per-item character
+limits alongside line capacity. Its migration derives safe character limits
+from each current `max_lines * estimated_chars_per_line` capacity.
 
 Detailed, timestamped consumer handoffs are recorded under
 [`docs/releases/`](docs/releases/README.md). These notes explain what changed and

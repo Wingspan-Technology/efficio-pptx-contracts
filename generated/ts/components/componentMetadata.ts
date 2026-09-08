@@ -383,7 +383,7 @@ export const componentMetadata = {
       "efficio_table_config": {
         "type": "object",
         "required": true,
-        "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration. Render cells may use the shared estimated text-capacity fields. An optional row is removed during rendering when none of its configured render cells receives meaningful generated text; required rows remain. If every physical row is optional and empty, the original first row remains.",
+        "description": "Table structure definition, stored as JSON text in the PowerPoint custom tag. Declares optional per-row and per-column content policies and per-cell configuration. Render cells may use the shared strict character, item, and estimated line-capacity fields. An optional row is removed during rendering when none of its configured render cells receives meaningful generated text; required rows remain. If every physical row is optional and empty, the original first row remains.",
         "ui": {
           "order": 50
         },
@@ -515,6 +515,16 @@ export const componentMetadata = {
                     "minimum": 1,
                     "description": "Estimated number of characters that fit on one rendered line."
                   },
+                  "min_chars": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Minimum total characters across all generated items."
+                  },
+                  "max_chars": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum total characters across all generated items."
+                  },
                   "min_items": {
                     "type": "integer",
                     "minimum": 1,
@@ -525,6 +535,16 @@ export const componentMetadata = {
                     "type": "integer",
                     "minimum": 1,
                     "description": "Maximum number of semantic items in the generated items array; it must not exceed max_lines."
+                  },
+                  "min_chars_per_item": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Minimum characters required in each generated item."
+                  },
+                  "max_chars_per_item": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum characters allowed in each generated item."
                   },
                   "target_items": {
                     "type": "integer",
@@ -647,6 +667,24 @@ export const componentMetadata = {
           "order": 72
         }
       },
+      "efficio_min_chars": {
+        "type": "integer",
+        "required": true,
+        "minimum": 1,
+        "description": "Minimum total characters across all generated items.",
+        "ui": {
+          "order": 74
+        }
+      },
+      "efficio_max_chars": {
+        "type": "integer",
+        "required": true,
+        "minimum": 1,
+        "description": "Maximum total characters across all generated items.",
+        "ui": {
+          "order": 76
+        }
+      },
       "efficio_min_items": {
         "type": "integer",
         "required": true,
@@ -665,13 +703,31 @@ export const componentMetadata = {
           "order": 82
         }
       },
+      "efficio_min_chars_per_item": {
+        "type": "integer",
+        "required": true,
+        "minimum": 1,
+        "description": "Minimum characters required in each generated item.",
+        "ui": {
+          "order": 84
+        }
+      },
+      "efficio_max_chars_per_item": {
+        "type": "integer",
+        "required": true,
+        "minimum": 1,
+        "description": "Maximum characters allowed in each generated item.",
+        "ui": {
+          "order": 86
+        }
+      },
       "efficio_target_items": {
         "type": "integer",
         "required": false,
         "minimum": 1,
         "description": "Preferred number of semantic items; guidance only, within min_items and max_items.",
         "ui": {
-          "order": 84
+          "order": 88
         }
       }
     },
