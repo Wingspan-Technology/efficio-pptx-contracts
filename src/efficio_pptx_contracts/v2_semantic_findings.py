@@ -18,9 +18,11 @@ from ._structured_output_category_chart import (
 )
 from ._structured_output_table import (
     _validated_table_normalization,
+    table_v2_cell_character_usage,
     table_v2_cell_estimated_line_usage,
 )
 from ._structured_output_text import (
+    text_v2_character_usage,
     text_v2_estimated_line_usage,
     validate_text_v2_normalization,
 )
@@ -32,6 +34,7 @@ class V2SemanticRule(str, Enum):
     """Component-owned semantic rules that JSON Schema cannot express."""
 
     ESTIMATED_LINE_LIMIT = "estimated_line_limit"
+    AGGREGATE_CHARACTER_LIMIT = "aggregate_character_limit"
 
 
 class V2ComponentRepairReason(str, Enum):
@@ -44,6 +47,7 @@ class V2ComponentRepairReason(str, Enum):
     ITEM_LENGTH = "item_length"
     NUMERIC_CONSTRAINT = "numeric_constraint"
     ESTIMATED_LINE_LIMIT = "estimated_line_limit"
+    AGGREGATE_CHARACTER_LIMIT = "aggregate_character_limit"
     OTHER = "other"
 
 
@@ -66,28 +70,45 @@ def collect_v2_component_semantic_findings(
     _assert_supported(component_type)
     _require_mappings(component_type, content, normalization)
     if component_type == "text":
-        actual, maximum = text_v2_estimated_line_usage(content, normalization)
-        return (_line_capacity_finding(("items",), cell=None),) if actual > maximum else ()
+        text_findings: list[V2ComponentSemanticFinding] = []
+        actual_chars, minimum_chars, maximum_chars = text_v2_character_usage(
+            content, normalization
+        )
+        if actual_chars < minimum_chars or actual_chars > maximum_chars:
+            text_findings.append(_character_capacity_finding(("items",), cell=None))
+        actual_lines, maximum_lines = text_v2_estimated_line_usage(content, normalization)
+        if actual_lines > maximum_lines:
+            text_findings.append(_line_capacity_finding(("items",), cell=None))
+        return tuple(text_findings)
     if component_type == "table":
         cells = content.get("cells")
         if not isinstance(cells, Mapping):
             raise ValueError("table V2 content at /cells must be an object")
         _, capacities = _validated_table_normalization(normalization)
-        findings: list[V2ComponentSemanticFinding] = []
-        for coordinate, (maximum, chars_per_line) in capacities.items():
+        table_findings: list[V2ComponentSemanticFinding] = []
+        for coordinate, limits in capacities.items():
             cell_content = cells.get(coordinate)
             if cell_content is None:
                 continue
-            actual = table_v2_cell_estimated_line_usage(
-                coordinate,
-                cell_content,
-                chars_per_line=chars_per_line,
+            line_limit, width, cell_minimum, cell_maximum = limits
+            if cell_minimum is not None and cell_maximum is not None:
+                actual_chars = table_v2_cell_character_usage(coordinate, cell_content)
+                if actual_chars < cell_minimum or actual_chars > cell_maximum:
+                    table_findings.append(
+                        _character_capacity_finding(
+                            ("cells", coordinate, "items"), cell=coordinate
+                        )
+                    )
+            if line_limit is None or width is None:
+                continue
+            actual_lines = table_v2_cell_estimated_line_usage(
+                coordinate, cell_content, chars_per_line=width
             )
-            if actual > maximum:
-                findings.append(
+            if actual_lines > line_limit:
+                table_findings.append(
                     _line_capacity_finding(("cells", coordinate, "items"), cell=coordinate)
                 )
-        return tuple(findings)
+        return tuple(table_findings)
     if component_type == "categorical_fill":
         normalize_categorical_fill_content(content, normalization)
         return ()
@@ -111,15 +132,23 @@ def collect_v2_table_cell_semantic_findings(
     capacity = capacities.get(cell)
     if capacity is None:
         return ()
-    maximum, chars_per_line = capacity
-    actual = table_v2_cell_estimated_line_usage(
-        cell,
-        content,
-        chars_per_line=chars_per_line,
-    )
-    if actual <= maximum:
-        return ()
-    return (_line_capacity_finding(("cells", cell, "items"), cell=cell),)
+    maximum_lines, chars_per_line, minimum_chars, maximum_chars = capacity
+    findings: list[V2ComponentSemanticFinding] = []
+    if minimum_chars is not None and maximum_chars is not None:
+        actual_chars = table_v2_cell_character_usage(cell, content)
+        if actual_chars < minimum_chars or actual_chars > maximum_chars:
+            findings.append(
+                _character_capacity_finding(("cells", cell, "items"), cell=cell)
+            )
+    if maximum_lines is not None and chars_per_line is not None:
+        actual_lines = table_v2_cell_estimated_line_usage(
+            cell, content, chars_per_line=chars_per_line
+        )
+        if actual_lines > maximum_lines:
+            findings.append(
+                _line_capacity_finding(("cells", cell, "items"), cell=cell)
+            )
+    return tuple(findings)
 
 
 def format_v2_component_repair_instruction(
@@ -145,6 +174,8 @@ def format_v2_component_repair_instruction(
         return _categorical_fill_repair_instruction(reason, target_schema)
     if reason is V2ComponentRepairReason.ESTIMATED_LINE_LIMIT:
         return _line_capacity_instruction(component_type, normalization, cell)
+    if reason is V2ComponentRepairReason.AGGREGATE_CHARACTER_LIMIT:
+        return _character_capacity_instruction(component_type, normalization, cell)
     if reason is V2ComponentRepairReason.ITEM_COUNT:
         bounds = _item_count_bounds(target_schema)
         if bounds is not None:
@@ -174,6 +205,7 @@ def format_v2_component_repair_instruction(
             f"Regenerate the {subject} so it matches the provided schema."
         ),
         V2ComponentRepairReason.ESTIMATED_LINE_LIMIT: "",
+        V2ComponentRepairReason.AGGREGATE_CHARACTER_LIMIT: "",
     }[reason]
 
 
@@ -185,6 +217,17 @@ def _line_capacity_finding(
         cell=cell,
         rule=V2SemanticRule.ESTIMATED_LINE_LIMIT,
         reason=V2ComponentRepairReason.ESTIMATED_LINE_LIMIT,
+    )
+
+
+def _character_capacity_finding(
+    path: tuple[str | int, ...], *, cell: str | None
+) -> V2ComponentSemanticFinding:
+    return V2ComponentSemanticFinding(
+        path=path,
+        cell=cell,
+        rule=V2SemanticRule.AGGREGATE_CHARACTER_LIMIT,
+        reason=V2ComponentRepairReason.AGGREGATE_CHARACTER_LIMIT,
     )
 
 
@@ -257,18 +300,43 @@ def _line_capacity_instruction(
     cell: str | None,
 ) -> str:
     if component_type == "text":
-        maximum, chars_per_line = validate_text_v2_normalization(normalization)
+        maximum, chars_per_line, _, _ = validate_text_v2_normalization(normalization)
     elif component_type == "table" and cell is not None:
         _, capacities = _validated_table_normalization(normalization)
         capacity = capacities.get(cell)
         if capacity is None:
             raise ValueError("table repair cell has no estimated text capacity")
-        maximum, chars_per_line = capacity
+        maximum, chars_per_line, _, _ = capacity
     else:
+        raise ValueError("component has no estimated line-capacity repair rule")
+    if maximum is None or chars_per_line is None:
         raise ValueError("component has no estimated line-capacity repair rule")
     return (
         f"Keep all items within an estimated {maximum} rendered lines at approximately "
         f"{chars_per_line} characters per line. Explicit line breaks consume lines."
+    )
+
+
+def _character_capacity_instruction(
+    component_type: str,
+    normalization: Mapping[str, object],
+    cell: str | None,
+) -> str:
+    if component_type == "text":
+        _, _, minimum, maximum = validate_text_v2_normalization(normalization)
+    elif component_type == "table" and cell is not None:
+        _, capacities = _validated_table_normalization(normalization)
+        capacity = capacities.get(cell)
+        if capacity is None:
+            raise ValueError("table repair cell has no character capacity")
+        _, _, minimum, maximum = capacity
+    else:
+        raise ValueError("component has no aggregate character-capacity repair rule")
+    if minimum is None or maximum is None:
+        raise ValueError("component has no aggregate character-capacity repair rule")
+    return (
+        f"Keep the combined length of all items between {minimum} and "
+        f"{maximum} characters."
     )
 
 

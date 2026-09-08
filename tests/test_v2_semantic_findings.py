@@ -28,8 +28,12 @@ def _text_tags(*, max_lines: int = 2, chars_per_line: int = 5) -> dict[str, str]
         "efficio_sizing_mode": "auto",
         "efficio_max_lines": str(max_lines),
         "efficio_estimated_chars_per_line": str(chars_per_line),
+        "efficio_min_chars": "1",
+        "efficio_max_chars": "1000",
         "efficio_min_items": "2",
         "efficio_max_items": "2",
+        "efficio_min_chars_per_item": "1",
+        "efficio_max_chars_per_item": "1000",
     }
 
 
@@ -89,7 +93,10 @@ def test_finding_contract_is_immutable_and_bounded() -> None:
     with pytest.raises(FrozenInstanceError):
         finding.cell = "0,0"  # type: ignore[misc]
 
-    assert [rule.value for rule in V2SemanticRule] == ["estimated_line_limit"]
+    assert [rule.value for rule in V2SemanticRule] == [
+        "estimated_line_limit",
+        "aggregate_character_limit",
+    ]
     assert {reason.value for reason in V2ComponentRepairReason} == {
         "type",
         "required",
@@ -98,6 +105,7 @@ def test_finding_contract_is_immutable_and_bounded() -> None:
         "item_length",
         "numeric_constraint",
         "estimated_line_limit",
+        "aggregate_character_limit",
         "other",
     }
 

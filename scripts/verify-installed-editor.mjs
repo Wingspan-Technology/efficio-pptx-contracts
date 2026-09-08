@@ -24,11 +24,11 @@ if (JSON.stringify(sdk.SLIDE_ROLES) !== JSON.stringify(["content", "separator"])
 if (sdk.getSlideTagDefaults().efficio_slide_role !== "content") {
   throw new Error("Slide role does not default to content.");
 }
-if (sdk.CURRENT_TEMPLATE_CONTRACT_REVISION !== 3) {
+if (sdk.CURRENT_TEMPLATE_CONTRACT_REVISION !== 4) {
   throw new Error("Unexpected current template contract revision.");
 }
-if (sdk.getDeckTagDefaults().efficio_template_contract_revision !== "3") {
-  throw new Error("Deck defaults do not carry template contract revision 3.");
+if (sdk.getDeckTagDefaults().efficio_template_contract_revision !== "4") {
+  throw new Error("Deck defaults do not carry template contract revision 4.");
 }
 if (sdk.DECK_SLIDE_ARCHETYPES_TAG !== "efficio_slide_archetypes") {
   throw new Error("Missing slide-archetype registry deck tag export.");

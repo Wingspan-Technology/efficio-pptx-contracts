@@ -1,5 +1,6 @@
 import { templateContractMigrationCatalog } from "../../generated/ts/presentation/templateContractMigrations.js";
 import { copyContractValue } from "./contract-copy.js";
+import { deriveTextCharacterLimits } from "./template-contract-character-limits-migration.js";
 import {
   containsRetiredTableCapacityFields,
   migrateTextCapacity,
@@ -28,10 +29,15 @@ export type MigrateTextCapacityOperation = Readonly<{
   type: "migrate_text_capacity";
   scope: "shape";
 }>;
+export type DeriveTextCharacterLimitsOperation = Readonly<{
+  type: "derive_text_character_limits";
+  scope: "shape";
+}>;
 export type TemplateContractMigrationOperation =
   | SetTagIfMissingOperation
   | RenameTagOperation
-  | MigrateTextCapacityOperation;
+  | MigrateTextCapacityOperation
+  | DeriveTextCharacterLimitsOperation;
 export type TemplateContractMigration = Readonly<{
   format_version: 1;
   contract_type: "template_contract_migration";
@@ -220,6 +226,16 @@ function applyOperation(targets: PreparedTarget[], operation: TemplateContractMi
       } catch (error) {
         throw new TemplateContractMigrationError(
           error instanceof Error ? error.message : "Text capacity migration failed.",
+        );
+      }
+      continue;
+    }
+    if (operation.type === "derive_text_character_limits") {
+      try {
+        deriveTextCharacterLimits(tags);
+      } catch (error) {
+        throw new TemplateContractMigrationError(
+          error instanceof Error ? error.message : "Character-limit migration failed.",
         );
       }
       continue;

@@ -26,9 +26,13 @@ _CELL_FIELDS = frozenset(
         "instruction",
         "max_lines",
         "estimated_chars_per_line",
+        "min_chars",
+        "max_chars",
         "min_items",
         "target_items",
         "max_items",
+        "min_chars_per_item",
+        "max_chars_per_item",
     }
 )
 _CONTENT_POLICIES = frozenset({"required", "optional"})
@@ -37,9 +41,13 @@ _TEXT_FORMATS = frozenset({"plain", "paragraph", "bullets", "numbered_list"})
 _SIZING_FIELDS = (
     "max_lines",
     "estimated_chars_per_line",
+    "min_chars",
+    "max_chars",
     "min_items",
     "target_items",
     "max_items",
+    "min_chars_per_item",
+    "max_chars_per_item",
 )
 
 
@@ -188,8 +196,12 @@ def _parse_cell(raw: object) -> TableCell:
         capacity=TextCapacity(
             max_lines=sizing["max_lines"],
             estimated_chars_per_line=sizing["estimated_chars_per_line"],
+            min_chars=sizing["min_chars"],
+            max_chars=sizing["max_chars"],
             min_items=sizing["min_items"] or 1,
             max_items=sizing["max_items"],
+            min_chars_per_item=sizing["min_chars_per_item"],
+            max_chars_per_item=sizing["max_chars_per_item"],
             target_items=sizing["target_items"],
         ),
     )

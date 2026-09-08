@@ -37,24 +37,32 @@ const fixture = JSON.parse(
 describe("template contract migration catalog", () => {
   it("derives the current revision from one contiguous adjacent migration", () => {
     const catalog = getTemplateContractMigrationCatalog();
-    expect(CURRENT_TEMPLATE_CONTRACT_REVISION).toBe(3);
+    expect(CURRENT_TEMPLATE_CONTRACT_REVISION).toBe(4);
     expect(catalog.revision_tag).toBe(TEMPLATE_CONTRACT_REVISION_TAG);
     expect(catalog.migrations.map(({ from_revision, to_revision }) => [from_revision, to_revision]))
-      .toEqual([[0, 1], [1, 2], [2, 3]]);
+      .toEqual([[0, 1], [1, 2], [2, 3], [3, 4]]);
     expect(catalog.migrations[1].operations).toEqual([
       { type: "migrate_text_capacity", scope: "shape" },
     ]);
     expect(getTemplateContractMigrationPath(0)).toEqual(catalog.migrations);
   });
 
-  it("carries a revision-only 2 to 3 migration with no operations", () => {
+  it("carries the revision-only and strict-character migrations", () => {
     const catalog = getTemplateContractMigrationCatalog();
     const revisionOnly = catalog.migrations[2];
     expect(revisionOnly.from_revision).toBe(2);
     expect(revisionOnly.to_revision).toBe(3);
     expect(revisionOnly.operations).toEqual([]);
-    expect(getTemplateContractMigrationPath(2)).toEqual([revisionOnly]);
-    expect(getTemplateContractMigrationPath(3)).toEqual([]);
+    const strictCharacters = catalog.migrations[3];
+    expect(strictCharacters.operations).toEqual([
+      { type: "derive_text_character_limits", scope: "shape" },
+    ]);
+    expect(getTemplateContractMigrationPath(2)).toEqual([
+      revisionOnly,
+      strictCharacters,
+    ]);
+    expect(getTemplateContractMigrationPath(3)).toEqual([strictCharacters]);
+    expect(getTemplateContractMigrationPath(4)).toEqual([]);
   });
 
   it("returns a defensive catalog copy", () => {
@@ -104,7 +112,7 @@ describe("template contract migration planner parity", () => {
         {
           target_ref: "deck",
           scope: "deck",
-          tags: { [TEMPLATE_CONTRACT_REVISION_TAG]: "4" },
+          tags: { [TEMPLATE_CONTRACT_REVISION_TAG]: "5" },
         },
       ]),
     ).toThrow("newer than supported");

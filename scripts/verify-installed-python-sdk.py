@@ -100,8 +100,12 @@ text_contract = build_v2_component_contract(
         "efficio_sizing_mode": "auto",
         "efficio_max_lines": "1",
         "efficio_estimated_chars_per_line": "40",
+        "efficio_min_chars": "1",
+        "efficio_max_chars": "40",
         "efficio_min_items": "1",
         "efficio_max_items": "1",
+        "efficio_min_chars_per_item": "1",
+        "efficio_max_chars_per_item": "40",
     },
 )
 content = {"items": ["Release smoke"]}
@@ -188,7 +192,7 @@ finding = V2ComponentSemanticFinding(
 )
 assert finding.reason is V2ComponentRepairReason.ESTIMATED_LINE_LIMIT
 
-assert CURRENT_TEMPLATE_CONTRACT_REVISION == 3
+assert CURRENT_TEMPLATE_CONTRACT_REVISION == 4
 assert resolve_content_mode({"efficio_content_mode": "data_bound"}) is ContentMode.DATA_BOUND
 plan = plan_template_contract_migration(
     [
@@ -200,7 +204,7 @@ plan = plan_template_contract_migration(
         ),
     ]
 )
-assert plan.from_revision == 0 and plan.to_revision == 3 and len(plan.patches) == 2
+assert plan.from_revision == 0 and plan.to_revision == 4 and len(plan.patches) == 2
 
 archetype_registry = json.dumps(
     [
@@ -250,7 +254,7 @@ assert (
     validate_deck_tags(
         {
             "efficio_template_id": "release_smoke",
-            "efficio_template_contract_revision": "3",
+            "efficio_template_contract_revision": "4",
             SLIDE_ARCHETYPES_TAG: archetype_registry,
         }
     )
@@ -279,8 +283,12 @@ data_bound = build_data_bound_component_contract(
         "efficio_sizing_mode": "manual",
         "efficio_max_lines": "1",
         "efficio_estimated_chars_per_line": "2",
+        "efficio_min_chars": "1",
+        "efficio_max_chars": "2",
         "efficio_min_items": "1",
         "efficio_max_items": "1",
+        "efficio_min_chars_per_item": "1",
+        "efficio_max_chars_per_item": "2",
     },
 )
 assert data_bound["submission_schema"]["properties"]["items"] == {

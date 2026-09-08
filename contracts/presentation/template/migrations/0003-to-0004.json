@@ -1,0 +1,13 @@
+{
+  "format_version": 1,
+  "contract_type": "template_contract_migration",
+  "from_revision": 3,
+  "to_revision": 4,
+  "description": "Add strict aggregate and per-item character limits derived from existing estimated line capacity.",
+  "operations": [
+    {
+      "type": "derive_text_character_limits",
+      "scope": "shape"
+    }
+  ]
+}

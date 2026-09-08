@@ -131,6 +131,7 @@ describe("generated presentation schemas", () => {
       "contracts/presentation/template/migrations/0000-to-0001.json",
       "contracts/presentation/template/migrations/0001-to-0002.json",
       "contracts/presentation/template/migrations/0002-to-0003.json",
+      "contracts/presentation/template/migrations/0003-to-0004.json",
     ]);
   });
 });
@@ -272,7 +273,7 @@ describe("deck template instruction tag", () => {
     );
     expect(deckDefaults).toEqual({
       efficio_template_id: "default_template",
-      efficio_template_contract_revision: "3",
+      efficio_template_contract_revision: "4",
     });
     expect(deckDefaults).not.toHaveProperty("efficio_slide_archetypes");
   });
@@ -341,21 +342,22 @@ describe("slide role tag", () => {
 });
 
 describe("text sizing tags", () => {
-  it("generates the shared item and estimated-line capacity tags", () => {
+  it("generates the shared item, character, and estimated-line capacity tags", () => {
     const schema = readJson(generatedFileFor("text"));
     expect(schema).not.toHaveProperty("conditional_required_tags");
     expect(schema.required_tags).toEqual(expect.arrayContaining([
       "efficio_max_lines",
       "efficio_estimated_chars_per_line",
+      "efficio_min_chars",
+      "efficio_max_chars",
       "efficio_min_items",
       "efficio_max_items",
+      "efficio_min_chars_per_item",
+      "efficio_max_chars_per_item",
     ]));
     expect(schema.optional_tags).toContain("efficio_target_items");
     for (const retired of [
-      "efficio_max_chars",
       "efficio_target_chars",
-      "efficio_min_chars_per_item",
-      "efficio_max_chars_per_item",
       "efficio_target_chars_per_item",
       "efficio_max_chars_per_line",
     ]) {
@@ -541,8 +543,10 @@ describe("generated AI component instructions", () => {
     expect(tags).toHaveProperty("min_items");
     expect(tags).toHaveProperty("max_items");
     expect(tags).toHaveProperty("target_items");
-    expect(tags).not.toHaveProperty("max_chars");
-    expect(tags).not.toHaveProperty("max_chars_per_item");
+    expect(tags).toHaveProperty("min_chars");
+    expect(tags).toHaveProperty("max_chars");
+    expect(tags).toHaveProperty("min_chars_per_item");
+    expect(tags).toHaveProperty("max_chars_per_item");
     // sizing mode is a required editor/runtime tag but is no longer AI-visible
     expect(tags).not.toHaveProperty("sizing_mode");
   });
@@ -575,8 +579,12 @@ describe("generated AI component instructions", () => {
     for (const tag of [
       "max_lines",
       "estimated_chars_per_line",
+      "min_chars",
+      "max_chars",
       "min_items",
       "max_items",
+      "min_chars_per_item",
+      "max_chars_per_item",
     ]) {
       expect(tags).toHaveProperty(tag);
       expect((tags[tag] as JsonObject).purpose).toBeTypeOf("string");
@@ -650,15 +658,13 @@ describe("strict sizing instruction wording", () => {
   ])("%s %s purpose demands strict, never-exceeded sizing", (component, tag) => {
     const purpose = purposeOf(component, tag).toLowerCase();
     expect(purpose).toContain("strict");
-    expect(purpose).toContain("must never exceed");
-    expect(purpose).toMatch(/shorten or compact/);
+    expect(purpose).toMatch(/never exceed/);
   });
 
   it("the general instruction calls sizing/count constraints strict requirements", () => {
     const instruction = (aggregate.instruction as string).toLowerCase();
     expect(instruction).toContain("strict requirements, not guidance");
-    expect(instruction).toContain("must never exceed");
-    expect(instruction).toMatch(/shorten or compact/);
+    expect(instruction).toContain("never exceed any maximum");
   });
 });
 
@@ -701,13 +707,14 @@ describe("table content generation instructions", () => {
 
   it("cell sizing is item-based, strict where present, with target guidance", () => {
     expect(tablePurpose).toContain("Cell capacity fields are optional");
-    expect(tablePurpose).toContain("min_items and max_items");
+    expect(tablePurpose).toContain("min_items, max_items");
+    expect(tablePurpose).toContain("min_chars, max_chars");
+    expect(tablePurpose).toContain("min_chars_per_item, max_chars_per_item");
     expect(tablePurpose).toContain("max_lines");
     expect(tablePurpose).toContain("estimated_chars_per_line");
-    expect(tablePurpose).toContain("must never exceed");
-    expect(tablePurpose).toMatch(/shorten or compact/);
+    expect(tablePurpose).toContain("never exceed any maximum");
     expect(tablePurpose).toContain("target_items is preferred guidance only, never a limit");
-    expect(tablePurpose).not.toContain("max_chars_per_item");
+    expect(tablePurpose).toContain("max_chars_per_item");
     expect(tablePurpose).not.toContain("max_chars_per_line");
   });
 
@@ -716,7 +723,7 @@ describe("table content generation instructions", () => {
       'only cells with render_action "render" can receive generated content',
     );
     expect(tablePurpose).toContain(
-      "preserve or missing render_action means keep authored content and do not return that cell",
+      "preserve or missing render_action means keep the cell's existing content unchanged",
     );
     expect(tablePurpose).toContain("content_policy does not make a preserved cell renderable");
   });
@@ -745,7 +752,7 @@ describe("table content generation instructions", () => {
     const items = ((cells.additionalProperties as JsonObject).properties as JsonObject)
       .items as JsonObject;
     expect(items.description as string).toContain(
-      "keep the estimated total within max_lines using estimated_chars_per_line",
+      "keep estimated line usage within max_lines using estimated_chars_per_line",
     );
   });
 });

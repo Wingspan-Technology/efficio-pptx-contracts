@@ -21,7 +21,7 @@
           "items": {
             "type": "array",
             "minItems": 1,
-            "description": "Text items for this cell, obeying the matching render cell's tag_context.table_config: use exactly one item for plain text cells, otherwise use between min_items and max_items items, and keep the estimated total within max_lines using estimated_chars_per_line. target_items is guidance only. Do not return schema, configuration, explanations, or preserved cell content.",
+            "description": "Text items for this cell, obeying the matching render cell's tag_context.table_config: use exactly one item for plain text cells, otherwise use between min_items and max_items items; satisfy min_chars and max_chars across all items; satisfy min_chars_per_item and max_chars_per_item for each item; and keep estimated line usage within max_lines using estimated_chars_per_line. target_items is guidance only. Do not return schema, configuration, explanations, or preserved cell content.",
             "items": {
               "type": "string"
             }

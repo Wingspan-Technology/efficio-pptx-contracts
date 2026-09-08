@@ -29,12 +29,17 @@ const RENAME_FIELDS = new Set([
   "value_map",
 ]);
 const MIGRATE_TEXT_CAPACITY_FIELDS = new Set(["type", "scope"]);
+const DERIVE_TEXT_CHARACTER_LIMITS_FIELDS = new Set(["type", "scope"]);
 const TEXT_CAPACITY_TARGET_TAGS = [
   "efficio_max_lines",
   "efficio_estimated_chars_per_line",
   "efficio_min_items",
   "efficio_max_items",
   "efficio_target_items",
+  "efficio_min_chars",
+  "efficio_max_chars",
+  "efficio_min_chars_per_item",
+  "efficio_max_chars_per_item",
   "efficio_table_config",
 ];
 
@@ -117,7 +122,10 @@ export function validateMigrationTargetTags(
   for (const migration of catalog.migrations) {
     const operations = migration.operations as JsonObject[];
     for (const operation of operations) {
-      if (operation.type === "migrate_text_capacity") {
+      if (
+        operation.type === "migrate_text_capacity" ||
+        operation.type === "derive_text_character_limits"
+      ) {
         for (const tag of TEXT_CAPACITY_TARGET_TAGS) {
           if (tagDefinitionsByScope.shape?.[tag] === undefined) {
             throw new Error(`migration target tag ${tag} is not defined by the current contracts`);
@@ -209,9 +217,17 @@ function validateOperation(operation: JsonObject, label: string, touched: Set<st
     markTouched(touched, "shape", "text_capacity", label);
     return;
   }
+  if (operation.type === "derive_text_character_limits") {
+    assertExactFields(operation, DERIVE_TEXT_CHARACTER_LIMITS_FIELDS, label);
+    if (operation.scope !== "shape") {
+      throw new Error(`${label}.scope must be shape for derive_text_character_limits`);
+    }
+    markTouched(touched, "shape", "text_character_limits", label);
+    return;
+  }
   if (operation.type !== "rename_tag") {
     throw new Error(
-      `${label}.type must be migrate_text_capacity, rename_tag, or set_tag_if_missing`,
+      `${label}.type must be derive_text_character_limits, migrate_text_capacity, rename_tag, or set_tag_if_missing`,
     );
   }
   const allowed = new Set(RENAME_FIELDS);

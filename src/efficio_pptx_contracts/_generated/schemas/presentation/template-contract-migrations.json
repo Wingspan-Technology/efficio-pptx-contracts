@@ -2,12 +2,13 @@
   "generated_from": [
     "contracts/presentation/template/migrations/0000-to-0001.json",
     "contracts/presentation/template/migrations/0001-to-0002.json",
-    "contracts/presentation/template/migrations/0002-to-0003.json"
+    "contracts/presentation/template/migrations/0002-to-0003.json",
+    "contracts/presentation/template/migrations/0003-to-0004.json"
   ],
   "contract_type": "template_contract_migrations",
   "format_version": 1,
   "unversioned_revision": 0,
-  "current_revision": 3,
+  "current_revision": 4,
   "revision_tag": "efficio_template_contract_revision",
   "migrations": [
     {
@@ -62,6 +63,19 @@
       "to_revision": 3,
       "description": "Introduce optional template-authored slide archetypes. Existing templates only advance their revision; archetype metadata is authored, never backfilled.",
       "operations": []
+    },
+    {
+      "format_version": 1,
+      "contract_type": "template_contract_migration",
+      "from_revision": 3,
+      "to_revision": 4,
+      "description": "Add strict aggregate and per-item character limits derived from existing estimated line capacity.",
+      "operations": [
+        {
+          "type": "derive_text_character_limits",
+          "scope": "shape"
+        }
+      ]
     }
   ]
 }

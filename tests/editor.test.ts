@@ -235,7 +235,7 @@ describe("editor SDK deck surface", () => {
     expect(entity.required).toBe(true);
     expect(entity.minimum).toBe(1);
     expect(entity.ui.hidden).toBe(true);
-    expect(getDeckTagDefaults().efficio_template_contract_revision).toBe("3");
+    expect(getDeckTagDefaults().efficio_template_contract_revision).toBe("4");
   });
 
   it("exposes the deck tag contract as a defensive copy", () => {
@@ -372,6 +372,48 @@ describe("validateTableConfigSemantics (SDK table cross-field rule)", () => {
     ).toBe(true);
   });
 
+  it("flags minimum table-cell content that cannot fit the available lines", () => {
+    const issues = validateTableConfigSemantics(
+      cfg([
+        {
+          row: 0,
+          col: 0,
+          render_action: "render",
+          text_format: "bullets",
+          max_lines: 2,
+          estimated_chars_per_line: 10,
+          min_chars: 21,
+          max_chars: 30,
+          min_items: 1,
+          max_items: 2,
+          min_chars_per_item: 1,
+          max_chars_per_item: 30,
+        },
+        {
+          row: 0,
+          col: 1,
+          render_action: "render",
+          text_format: "bullets",
+          max_lines: 3,
+          estimated_chars_per_line: 10,
+          min_chars: 1,
+          max_chars: 100,
+          min_items: 2,
+          max_items: 2,
+          min_chars_per_item: 15,
+          max_chars_per_item: 40,
+        },
+      ])
+    );
+
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "minimum_chars_exceeds_line_capacity" }),
+        expect.objectContaining({ code: "minimum_items_exceed_line_capacity" }),
+      ])
+    );
+  });
+
   it("does not apply text-capacity semantics to preserved cells", () => {
     const invalidCapacity = {
       row: 0,
@@ -443,6 +485,49 @@ describe("text capacity SDK", () => {
     );
   });
 
+  it("rejects strict minimums that cannot fit the available lines", () => {
+    expect(
+      validateTextCapacity(
+        {
+          max_lines: 2,
+          estimated_chars_per_line: 10,
+          min_chars: 21,
+          max_chars: 30,
+          min_items: 1,
+          max_items: 2,
+          min_chars_per_item: 1,
+          max_chars_per_item: 30,
+        },
+        "multi_item"
+      )
+    ).toContainEqual(
+      expect.objectContaining({
+        code: "minimum_chars_exceeds_line_capacity",
+        field: "min_chars",
+      })
+    );
+    expect(
+      validateTextCapacity(
+        {
+          max_lines: 3,
+          estimated_chars_per_line: 10,
+          min_chars: 1,
+          max_chars: 100,
+          min_items: 2,
+          max_items: 2,
+          min_chars_per_item: 15,
+          max_chars_per_item: 40,
+        },
+        "multi_item"
+      )
+    ).toContainEqual(
+      expect.objectContaining({
+        code: "minimum_items_exceed_line_capacity",
+        field: "min_items",
+      })
+    );
+  });
+
   it("validates target guidance and plain-text item rules", () => {
     expect(
       validateTextCapacity({ ...capacity, max_items: 3, target_items: 4 }, "multi_item")
@@ -475,8 +560,12 @@ describe("validateTextSizingSemantics (SDK text capacity adapter)", () => {
     efficio_text_format: "bullets",
     efficio_max_lines: "4",
     efficio_estimated_chars_per_line: "20",
+    efficio_min_chars: "1",
+    efficio_max_chars: "80",
     efficio_min_items: "1",
     efficio_max_items: "4",
+    efficio_min_chars_per_item: "1",
+    efficio_max_chars_per_item: "80",
   };
 
   it("passes a valid capacity and maps shared findings to component tags", () => {

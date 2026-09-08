@@ -29,6 +29,7 @@ class TemplateMigrationOperationType(StrEnum):
     SET_TAG_IF_MISSING = "set_tag_if_missing"
     RENAME_TAG = "rename_tag"
     MIGRATE_TEXT_CAPACITY = "migrate_text_capacity"
+    DERIVE_TEXT_CHARACTER_LIMITS = "derive_text_character_limits"
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,8 +61,19 @@ class MigrateTextCapacityOperation:
     )
 
 
+@dataclass(frozen=True, slots=True)
+class DeriveTextCharacterLimitsOperation:
+    scope: TemplateTagScope
+    operation_type: TemplateMigrationOperationType = (
+        TemplateMigrationOperationType.DERIVE_TEXT_CHARACTER_LIMITS
+    )
+
+
 TemplateContractMigrationOperation: TypeAlias = (
-    SetTagIfMissingOperation | RenameTagOperation | MigrateTextCapacityOperation
+    SetTagIfMissingOperation
+    | RenameTagOperation
+    | MigrateTextCapacityOperation
+    | DeriveTextCharacterLimitsOperation
 )
 
 
@@ -206,6 +218,12 @@ def _parse_operation(raw: object) -> TemplateContractMigrationOperation:
                 "migrate_text_capacity must contain only type and shape scope"
             )
         return MigrateTextCapacityOperation(scope=scope)
+    if raw.get("type") == TemplateMigrationOperationType.DERIVE_TEXT_CHARACTER_LIMITS:
+        if set(raw) != {"type", "scope"} or scope is not TemplateTagScope.SHAPE:
+            raise TemplateContractMigrationError(
+                "derive_text_character_limits must contain only type and shape scope"
+            )
+        return DeriveTextCharacterLimitsOperation(scope=scope)
     if raw.get("type") != TemplateMigrationOperationType.RENAME_TAG:
         raise TemplateContractMigrationError("template migration operation type is invalid")
     allowed = {"type", "scope", "source_tag", "target_tag", "value_map"}

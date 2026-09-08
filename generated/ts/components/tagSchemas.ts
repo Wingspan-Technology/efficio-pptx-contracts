@@ -352,6 +352,16 @@ export const tagSchemas = {
                   "minimum": 1,
                   "description": "Estimated number of characters that fit on one rendered line."
                 },
+                "min_chars": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Minimum total characters across all generated items."
+                },
+                "max_chars": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Maximum total characters across all generated items."
+                },
                 "min_items": {
                   "type": "integer",
                   "minimum": 1,
@@ -362,6 +372,16 @@ export const tagSchemas = {
                   "type": "integer",
                   "minimum": 1,
                   "description": "Maximum number of semantic items in the generated items array; it must not exceed max_lines."
+                },
+                "min_chars_per_item": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Minimum characters required in each generated item."
+                },
+                "max_chars_per_item": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Maximum characters allowed in each generated item."
                 },
                 "target_items": {
                   "type": "integer",
@@ -379,7 +399,7 @@ export const tagSchemas = {
       "efficio_component_id": "comparison_table",
       "efficio_component_type": "table",
       "efficio_content_role": "comparison_table",
-      "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"preserve\"},{\"row\":1,\"col\":0,\"render_action\":\"render\",\"text_format\":\"bullets\",\"max_lines\":4,\"estimated_chars_per_line\":20,\"min_items\":1,\"max_items\":4,\"target_items\":2}]}",
+      "efficio_table_config": "{\"cells\":[{\"row\":0,\"col\":0,\"render_action\":\"preserve\"},{\"row\":1,\"col\":0,\"render_action\":\"render\",\"text_format\":\"bullets\",\"max_lines\":4,\"estimated_chars_per_line\":20,\"min_chars\":1,\"max_chars\":80,\"min_items\":1,\"max_items\":4,\"min_chars_per_item\":1,\"max_chars_per_item\":80,\"target_items\":2}]}",
       "efficio_prompt_instruction": "Generate table content that respects each cell's render action."
     }
   },
@@ -400,8 +420,12 @@ export const tagSchemas = {
       "efficio_sizing_mode",
       "efficio_max_lines",
       "efficio_estimated_chars_per_line",
+      "efficio_min_chars",
+      "efficio_max_chars",
       "efficio_min_items",
-      "efficio_max_items"
+      "efficio_max_items",
+      "efficio_min_chars_per_item",
+      "efficio_max_chars_per_item"
     ],
     "optional_tags": [
       "efficio_content_role",
@@ -439,8 +463,12 @@ export const tagSchemas = {
       "efficio_sizing_mode": "enum",
       "efficio_max_lines": "positive_integer_string",
       "efficio_estimated_chars_per_line": "positive_integer_string",
+      "efficio_min_chars": "positive_integer_string",
+      "efficio_max_chars": "positive_integer_string",
       "efficio_min_items": "positive_integer_string",
       "efficio_max_items": "positive_integer_string",
+      "efficio_min_chars_per_item": "positive_integer_string",
+      "efficio_max_chars_per_item": "positive_integer_string",
       "efficio_target_items": "positive_integer_string"
     },
     "json_schemas": {},
@@ -453,8 +481,12 @@ export const tagSchemas = {
       "efficio_sizing_mode": "auto",
       "efficio_max_lines": "2",
       "efficio_estimated_chars_per_line": "60",
+      "efficio_min_chars": "1",
+      "efficio_max_chars": "120",
       "efficio_min_items": "1",
       "efficio_max_items": "1",
+      "efficio_min_chars_per_item": "1",
+      "efficio_max_chars_per_item": "120",
       "efficio_prompt_instruction": "Generate a concise executive slide title."
     }
   }

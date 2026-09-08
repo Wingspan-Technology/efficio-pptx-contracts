@@ -91,6 +91,7 @@ from .tag_validation import (
 )
 from .template_contract_migrations import (
     CURRENT_TEMPLATE_CONTRACT_REVISION,
+    DeriveTextCharacterLimitsOperation,
     MigrateTextCapacityOperation,
     TEMPLATE_CONTRACT_REVISION_TAG,
     UNVERSIONED_TEMPLATE_CONTRACT_REVISION,
@@ -209,6 +210,7 @@ __all__ = [
     "normalize_data_bound_component_content",
     "validate_data_bound_component_contract_coherence",
     "CURRENT_TEMPLATE_CONTRACT_REVISION",
+    "DeriveTextCharacterLimitsOperation",
     "MigrateTextCapacityOperation",
     "TEMPLATE_CONTRACT_REVISION_TAG",
     "UNVERSIONED_TEMPLATE_CONTRACT_REVISION",

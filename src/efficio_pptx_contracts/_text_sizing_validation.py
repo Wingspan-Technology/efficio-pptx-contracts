@@ -10,15 +10,23 @@ _TEXT_FORMAT_TAG = "efficio_text_format"
 _PLAIN_TEXT_FORMAT = "plain"
 _MAX_LINES_TAG = "efficio_max_lines"
 _ESTIMATED_CHARS_PER_LINE_TAG = "efficio_estimated_chars_per_line"
+_MIN_CHARS_TAG = "efficio_min_chars"
+_MAX_CHARS_TAG = "efficio_max_chars"
 _MIN_ITEMS_TAG = "efficio_min_items"
 _MAX_ITEMS_TAG = "efficio_max_items"
+_MIN_CHARS_PER_ITEM_TAG = "efficio_min_chars_per_item"
+_MAX_CHARS_PER_ITEM_TAG = "efficio_max_chars_per_item"
 _TARGET_ITEMS_TAG = "efficio_target_items"
 
 _REQUIRED_CAPACITY_TAGS = (
     _MAX_LINES_TAG,
     _ESTIMATED_CHARS_PER_LINE_TAG,
+    _MIN_CHARS_TAG,
+    _MAX_CHARS_TAG,
     _MIN_ITEMS_TAG,
     _MAX_ITEMS_TAG,
+    _MIN_CHARS_PER_ITEM_TAG,
+    _MAX_CHARS_PER_ITEM_TAG,
 )
 
 
@@ -33,8 +41,12 @@ def text_sizing_issues(
     capacity = TextCapacity(
         max_lines=values[_MAX_LINES_TAG],
         estimated_chars_per_line=values[_ESTIMATED_CHARS_PER_LINE_TAG],
+        min_chars=values[_MIN_CHARS_TAG],
+        max_chars=values[_MAX_CHARS_TAG],
         min_items=values[_MIN_ITEMS_TAG] or 1,
         max_items=values[_MAX_ITEMS_TAG],
+        min_chars_per_item=values[_MIN_CHARS_PER_ITEM_TAG],
+        max_chars_per_item=values[_MAX_CHARS_PER_ITEM_TAG],
         target_items=_value(tags, _TARGET_ITEMS_TAG, skip),
     )
     issues = capacity_issues(
@@ -58,8 +70,12 @@ def text_capacity_from_tags(tags: Mapping[str, str]) -> TextCapacity:
         estimated_chars_per_line=_required_positive(
             tags, _ESTIMATED_CHARS_PER_LINE_TAG
         ),
+        min_chars=_required_positive(tags, _MIN_CHARS_TAG),
+        max_chars=_required_positive(tags, _MAX_CHARS_TAG),
         min_items=_required_positive(tags, _MIN_ITEMS_TAG),
         max_items=_required_positive(tags, _MAX_ITEMS_TAG),
+        min_chars_per_item=_required_positive(tags, _MIN_CHARS_PER_ITEM_TAG),
+        max_chars_per_item=_required_positive(tags, _MAX_CHARS_PER_ITEM_TAG),
         target_items=_optional_positive(tags, _TARGET_ITEMS_TAG),
     )
     issues = capacity_issues(
