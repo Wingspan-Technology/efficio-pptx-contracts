@@ -23,7 +23,7 @@ _NUMERIC_KEYWORDS = frozenset(
 )
 _TYPE_KEYWORDS = {
     "object": frozenset({"properties", "required", "additionalProperties"}),
-    "array": frozenset({"items", "minItems", "maxItems"}),
+    "array": frozenset({"items", "minItems", "maxItems", "uniqueItems"}),
     "string": frozenset({"minLength", "maxLength"}),
     "number": _NUMERIC_KEYWORDS,
     "integer": _NUMERIC_KEYWORDS,
@@ -164,6 +164,8 @@ def _validate_array(schema: Mapping[str, Any], path: str) -> None:
     if not isinstance(items, Mapping):
         raise ValueError(f"structured output array at {path} must declare an item schema")
     _validate_non_negative_bounds(schema, path, "minItems", "maxItems")
+    if "uniqueItems" in schema and not isinstance(schema["uniqueItems"], bool):
+        raise ValueError(f"structured output uniqueItems at {path} must be boolean")
     _validate_schema_node(items, path=f"{path}/items")
 
 

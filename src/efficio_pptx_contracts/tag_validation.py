@@ -20,6 +20,7 @@ from .classification_schemes import (
     CLASSIFICATION_SCHEME_ID_TAG,
     resolve_categorical_fill_scheme,
 )
+from .categorical_fill_selection import FILL_SELECTION_TAG, resolve_categorical_fill_selection
 from ._presentation_tag_validation import (
     load_deck_tag_contract,
     load_slide_tag_contract,
@@ -102,15 +103,16 @@ def validate_component_tags(
         }
         if CLASSIFICATION_SCHEME_ID_TAG not in prior_tags:
             try:
-                resolve_categorical_fill_scheme(tags, deck_tags)
+                scheme = resolve_categorical_fill_scheme(tags, deck_tags)
+                resolve_categorical_fill_selection(tags, scheme)
             except ValueError:
                 issues.append(
                     TagValidationIssue(
                         code="invalid_classification_scheme_reference",
-                        tag_name=CLASSIFICATION_SCHEME_ID_TAG,
+                        tag_name=FILL_SELECTION_TAG if tags.get("efficio_fill_mode") == "selection" else CLASSIFICATION_SCHEME_ID_TAG,
                         message=(
                             "The categorical-fill component must reference one "
-                            "valid presentation classification scheme."
+                            "valid presentation classification scheme and coherent fill-mode configuration."
                         ),
                     )
                 )

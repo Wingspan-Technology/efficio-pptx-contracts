@@ -41,6 +41,7 @@ from .classification_schemes import (
 from .instructions import load_component_instruction
 from .tag_validation import load_component_tag_schema
 from .content_mode import CONTENT_MODE_TAG
+from .categorical_fill_selection import resolve_categorical_fill_selection, selection_public_context
 
 PROMPT_INSTRUCTION_TAG = "efficio_prompt_instruction"
 TEMPLATE_INSTRUCTION_TAG = "efficio_template_instruction"
@@ -129,6 +130,10 @@ def project_component_context(
         tag_context["classification_scheme"] = classification_scheme_public_context(
             scheme
         )
+        selection = resolve_categorical_fill_selection(tags, scheme)
+        if selection is not None:
+            tag_context["fill_mode"] = "selection"
+            tag_context["selection"] = selection_public_context(selection)
     context["tag_context"] = tag_context
     return context
 

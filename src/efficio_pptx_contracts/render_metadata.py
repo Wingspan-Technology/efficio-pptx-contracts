@@ -10,6 +10,7 @@ from .classification_schemes import (
     resolve_categorical_fill_scheme,
 )
 from .registry import assert_component_type
+from .categorical_fill_selection import resolve_categorical_fill_selection, selection_private_metadata
 
 
 def build_component_render_metadata(
@@ -25,6 +26,9 @@ def build_component_render_metadata(
     if deck_tags is None:
         raise ValueError("categorical-fill render metadata requires deck_tags")
     scheme = resolve_categorical_fill_scheme(component_tags, deck_tags)
+    selection = resolve_categorical_fill_selection(component_tags, scheme)
+    if selection is not None:
+        return selection_private_metadata(scheme, selection)
     return classification_scheme_private_metadata(scheme)
 
 

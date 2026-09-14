@@ -1,15 +1,26 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "component_type": "categorical_fill",
-  "description": "Expected generated content for a categorical-fill component. Return exactly one semantic case_id from the classification scheme supplied with the component context. Do not return colors, formatting, rationale, confidence, or additional fields.",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["case_id"],
-  "properties": {
-    "case_id": {
-      "type": "string",
-      "minLength": 1,
-      "description": "One allowed semantic case identifier from the component's classification scheme."
+  "description": "Classification returns one allowed case_id. Selection returns only selected_ids: unique declared item IDs to select; omitted items are unselected and an empty array selects none. Follow the component's fill_mode and never return colors, styling, rationale, or extra fields.",
+  "anyOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id"],
+      "properties": { "case_id": { "type": "string", "minLength": 1 } }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selected_ids"],
+      "properties": {
+        "selected_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 1000,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
     }
-  }
+  ]
 }

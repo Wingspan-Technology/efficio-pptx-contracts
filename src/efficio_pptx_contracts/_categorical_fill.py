@@ -14,6 +14,14 @@ from .classification_schemes import (
     classification_scheme_private_metadata,
     resolve_categorical_fill_scheme,
 )
+from .categorical_fill_selection import (
+    build_selection_schema,
+    normalize_selection_content,
+    resolve_categorical_fill_selection,
+    selection_private_metadata,
+    validate_selection_metadata,
+    validate_selection_schema_coherence,
+)
 
 _CONTENT_ROLE_TAG = "efficio_content_role"
 _ID_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
@@ -24,6 +32,9 @@ def build_categorical_fill_validation_schema(
 ) -> dict[str, Any]:
     """Build the authoritative case-id content schema for one component."""
     scheme = resolve_categorical_fill_scheme(tags, deck_tags)
+    selection = resolve_categorical_fill_selection(tags, scheme)
+    if selection is not None:
+        return build_selection_schema(scheme, selection, include_descriptions=False)
     return _case_schema(scheme, include_descriptions=False)
 
 
@@ -32,6 +43,17 @@ def build_categorical_fill_v2_contract(
 ) -> dict[str, Any]:
     """Build AI-facing schema plus trusted private fill metadata."""
     scheme = resolve_categorical_fill_scheme(tags, deck_tags)
+    selection = resolve_categorical_fill_selection(tags, scheme)
+    if selection is not None:
+        return {
+            "component_type": "categorical_fill",
+            "output_schema": build_selection_schema(
+                scheme, selection, include_descriptions=True,
+                component_instruction=tags.get(PROMPT_INSTRUCTION_TAG, "").strip(),
+                content_role=tags.get(_CONTENT_ROLE_TAG, "").strip(),
+            ),
+            "normalization": selection_private_metadata(scheme, selection),
+        }
     return {
         "component_type": "categorical_fill",
         "output_schema": _case_schema(
@@ -49,6 +71,12 @@ def build_data_bound_categorical_fill_contract(
 ) -> dict[str, Any]:
     """Build the strict renderer-safe data-bound categorical-fill contract."""
     scheme = resolve_categorical_fill_scheme(tags, deck_tags)
+    selection = resolve_categorical_fill_selection(tags, scheme)
+    if selection is not None:
+        return {
+            "submission_schema": build_selection_schema(scheme, selection, include_descriptions=False),
+            "normalization": selection_private_metadata(scheme, selection),
+        }
     return {
         "submission_schema": _case_schema(scheme, include_descriptions=False),
         "normalization": classification_scheme_private_metadata(scheme),
@@ -60,6 +88,8 @@ def normalize_categorical_fill_content(
 ) -> dict[str, Any]:
     """Validate the selected trusted case and preserve the canonical shape."""
     case_ids = validate_categorical_fill_normalization(normalization)
+    if normalization.get("fill_mode") == "selection":
+        return normalize_selection_content(content, validate_selection_metadata(normalization, case_ids))
     if set(content) != {"case_id"} or not isinstance(content.get("case_id"), str):
         raise ValueError("categorical-fill content must contain exactly one string case_id")
     if content["case_id"] not in case_ids:
@@ -71,6 +101,12 @@ def validate_categorical_fill_normalization(
     normalization: Mapping[str, Any],
 ) -> frozenset[str]:
     """Validate exact trusted categorical-fill metadata without using its values."""
+    if normalization.get("fill_mode") == "selection":
+        case_ids = validate_categorical_fill_normalization({
+            "scheme_id": normalization.get("scheme_id"), "cases": normalization.get("cases")
+        })
+        validate_selection_metadata(normalization, case_ids)
+        return case_ids
     if set(normalization) != {"scheme_id", "cases"}:
         raise ValueError("categorical-fill normalization must contain exactly scheme_id and cases")
     scheme_id = normalization.get("scheme_id")
@@ -103,6 +139,17 @@ def validate_categorical_fill_schema_coherence(
 ) -> None:
     """Require a closed case-id schema to match its trusted cases exactly."""
     case_ids = validate_categorical_fill_normalization(normalization)
+    if normalization.get("fill_mode") == "selection":
+        validate_selection_schema_coherence(
+            schema, validate_selection_metadata(normalization, case_ids),
+            require_descriptions=require_descriptions,
+        )
+        if require_descriptions and any(
+            fill.lower() in schema["description"].lower()
+            for fill in _private_fill_values(normalization)
+        ):
+            raise ValueError("selection schema must not expose private fill values")
+        return
     root_fields = {"type", "properties", "required", "additionalProperties"}
     if require_descriptions:
         root_fields.add("description")
@@ -149,6 +196,29 @@ def _private_fill_values(normalization: Mapping[str, Any]) -> tuple[str, ...]:
     cases = normalization["cases"]
     assert isinstance(cases, Mapping)
     return tuple(str(case["fill"]["value"]) for case in cases.values())
+
+
+def format_categorical_fill_repair_instruction(
+    schema: Mapping[str, object], *, additional_property: bool
+) -> str:
+    """Explain repair in the component's declared classification or selection mode."""
+    properties = schema.get("properties")
+    if isinstance(properties, Mapping) and set(properties) == {"selected_ids"}:
+        return (
+            "Return only selected_ids: an array of distinct IDs from its allowed enum. "
+            "Remove unknown IDs and duplicate entries. Omitted items are unselected; "
+            "use [] to select none. Do not return case_id or presentation styling."
+        )
+    case_schema = properties.get("case_id") if isinstance(properties, Mapping) else None
+    enum = case_schema.get("enum") if isinstance(case_schema, Mapping) else None
+    if not isinstance(enum, list) or not enum or any(not isinstance(item, str) for item in enum):
+        raise ValueError("categorical-fill repair schema has no valid case_id enum")
+    first = (
+        "Return only the case_id field for this categorical fill. "
+        if additional_property else
+        "Return exactly one string case_id for this categorical fill. "
+    )
+    return first + f"Choose one allowed case_id: {', '.join(enum)}."
 
 
 def _case_schema(
