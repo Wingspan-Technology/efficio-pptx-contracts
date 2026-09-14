@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from ._categorical_fill import (
+    format_categorical_fill_repair_instruction,
     normalize_categorical_fill_content,
     validate_categorical_fill_normalization,
 )
@@ -171,7 +172,9 @@ def format_v2_component_repair_instruction(
     target_schema = _repair_target_schema(component_type, validation_schema, cell)
     _validate_normalization(component_type, normalization)
     if component_type == "categorical_fill":
-        return _categorical_fill_repair_instruction(reason, target_schema)
+        return format_categorical_fill_repair_instruction(
+            target_schema, additional_property=reason is V2ComponentRepairReason.ADDITIONAL_PROPERTY
+        )
     if reason is V2ComponentRepairReason.ESTIMATED_LINE_LIMIT:
         return _line_capacity_instruction(component_type, normalization, cell)
     if reason is V2ComponentRepairReason.AGGREGATE_CHARACTER_LIMIT:
@@ -364,29 +367,6 @@ def _item_count_instruction(minimum: int, maximum: int | None) -> str:
         noun = "item" if minimum == 1 else "items"
         return f"Return at least {minimum} {noun}."
     return f"Return {minimum}–{maximum} items."
-
-
-def _categorical_fill_repair_instruction(
-    reason: V2ComponentRepairReason,
-    schema: Mapping[str, object],
-) -> str:
-    properties = schema.get("properties")
-    case_schema = properties.get("case_id") if isinstance(properties, Mapping) else None
-    enum = case_schema.get("enum") if isinstance(case_schema, Mapping) else None
-    if not isinstance(enum, list) or not enum or any(
-        not isinstance(case_id, str) for case_id in enum
-    ):
-        raise ValueError("categorical-fill repair schema has no valid case_id enum")
-    allowed = ", ".join(enum)
-    if reason is V2ComponentRepairReason.ADDITIONAL_PROPERTY:
-        return (
-            "Return only the case_id field for this categorical fill. "
-            f"Choose one allowed case_id: {allowed}."
-        )
-    return (
-        "Return exactly one string case_id for this categorical fill. "
-        f"Choose one allowed case_id: {allowed}."
-    )
 
 
 __all__ = [

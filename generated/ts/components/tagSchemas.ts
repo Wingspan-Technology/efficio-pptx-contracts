@@ -17,7 +17,10 @@ export const tagSchemas = {
     ],
     "optional_tags": [
       "efficio_content_role",
-      "efficio_prompt_instruction"
+      "efficio_prompt_instruction",
+      "efficio_fill_mode",
+      "efficio_fill_selection",
+      "efficio_selection_item_id"
     ],
     "enums": {
       "efficio_content_mode": [
@@ -28,6 +31,10 @@ export const tagSchemas = {
       ],
       "efficio_component_type": [
         "categorical_fill"
+      ],
+      "efficio_fill_mode": [
+        "classification",
+        "selection"
       ]
     },
     "types": {
@@ -36,9 +43,64 @@ export const tagSchemas = {
       "efficio_component_type": "enum",
       "efficio_content_role": "string",
       "efficio_prompt_instruction": "string",
-      "efficio_classification_scheme_id": "non_empty_string"
+      "efficio_classification_scheme_id": "non_empty_string",
+      "efficio_fill_mode": "enum",
+      "efficio_fill_selection": "json_object",
+      "efficio_selection_item_id": "non_empty_string"
     },
-    "json_schemas": {},
+    "json_schemas": {
+      "efficio_fill_selection": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "selected_case_id",
+          "unselected_case_id",
+          "items"
+        ],
+        "properties": {
+          "selected_case_id": {
+            "type": "string",
+            "maxLength": 120,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+          },
+          "unselected_case_id": {
+            "type": "string",
+            "maxLength": 120,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "item_id",
+                "label"
+              ],
+              "properties": {
+                "item_id": {
+                  "type": "string",
+                  "maxLength": 120,
+                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "instruction": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "example": {
       "efficio_content_mode": "ai_generated",
       "efficio_component_id": "country_germany",

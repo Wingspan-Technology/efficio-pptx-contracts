@@ -70,6 +70,85 @@ export const componentMetadata = {
         "ui": {
           "order": 50
         }
+      },
+      "efficio_fill_mode": {
+        "type": "string",
+        "required": false,
+        "enum": [
+          "classification",
+          "selection"
+        ],
+        "description": "Classification chooses one case for the complete component. Selection colors declared child items using selected and unselected cases. Missing mode means classification.",
+        "ui": {
+          "order": 51
+        }
+      },
+      "efficio_fill_selection": {
+        "type": "object",
+        "required": false,
+        "description": "Required only for selection mode. Declares two semantic cases and the item IDs mapped to child shapes in the native PowerPoint group.",
+        "ui": {
+          "order": 52
+        },
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selected_case_id",
+            "unselected_case_id",
+            "items"
+          ],
+          "properties": {
+            "selected_case_id": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+            },
+            "unselected_case_id": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+            },
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 1000,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "item_id",
+                  "label"
+                ],
+                "properties": {
+                  "item_id": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "instruction": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "efficio_selection_item_id": {
+        "type": "string",
+        "required": false,
+        "min_length": 1,
+        "max_length": 120,
+        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+        "description": "Child-shape marker for an item inside a selection group. Place it on the child target, not on the owning component group. It does not make the child a standalone component."
       }
     },
     "defaults": {

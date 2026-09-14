@@ -33,6 +33,20 @@ from .classification_schemes import (
     parse_classification_schemes,
     resolve_categorical_fill_scheme,
 )
+from .categorical_fill_selection import (
+    FILL_MODE_TAG,
+    FILL_SELECTION_TAG,
+    SELECTION_ITEM_ID_TAG,
+    CategoricalFillMode,
+    CategoricalFillSelection,
+    CategoricalSelectionItem,
+    resolve_categorical_fill_mode,
+    resolve_categorical_fill_selection,
+)
+from ._categorical_fill import (
+    normalize_categorical_fill_content,
+    validate_categorical_fill_normalization,
+)
 from .data_bound_components import (
     build_data_bound_component_contract,
     normalize_data_bound_component_content,
@@ -131,6 +145,10 @@ from .v2_structured_outputs import (
 from .validation_schema import build_validation_content_schema
 
 __all__ = [
+    "FILL_MODE_TAG", "FILL_SELECTION_TAG", "SELECTION_ITEM_ID_TAG", "CategoricalFillMode",
+    "CategoricalFillSelection", "CategoricalSelectionItem", "resolve_categorical_fill_mode",
+    "resolve_categorical_fill_selection", "normalize_categorical_fill_content",
+    "validate_categorical_fill_normalization",
     "EfficioComponentsError",
     "ContentModeError",
     "MissingResourceError",
