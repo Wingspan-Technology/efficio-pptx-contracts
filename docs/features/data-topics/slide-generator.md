@@ -6,9 +6,10 @@ This is Python-service integration, not a requirement to build AI source retriev
 ## Status And Consumer Location
 
 Import validation, normalized catalog publication, and typed catalog reading
-are prepared in the separate Slide Generator repository and verified against
-the built `0.10.0` wheel. Published-pin adoption and normal validation follow
-publication; deployment is separate. DMS and AI conversation changes are not included.
+are locally implemented in the separate Slide Generator repository. Following
+publication, exact `0.10.0` pin adoption and its normal full gate passed. Those
+consumer changes are not yet merged or deployed. DMS and AI conversation changes
+are not included.
 
 Inspected checkout on 2026-10-12:
 `/home/Ivan/dev/projects/efficio/rfp-document-generator/cdt-slide-generator`.
@@ -127,7 +128,14 @@ Tests: importer `tests/test_data_topic_artifacts.py`,
 `tests/test_data_topic_catalog.py`; orchestrator `tests/test_generation_routes.py`
 and `tests/test_template_reimports.py`.
 
-Built-wheel evidence: 340 generation, 177 importer, and 1,642 API tests passed
+Initial built-wheel evidence: 340 generation, 177 importer, and 1,642 API tests passed
 with environment-gated skips; three native migration checks passed on Python
-3.12/Aspose 26.8.0. Run normal full validation again after published adoption.
-These checks are not proof of migrated templates in live AWS.
+3.12/Aspose 26.8.0. Published adoption subsequently passed `scripts/check-all.sh`
+with the same package/API counts, plus 16 license-setup and 65 navigation tests.
+Database-gated tests and unreachable local DB drift were skipped. These checks
+are not proof of migrated templates in live AWS.
+
+The published-pin `scripts/check-generation-aspose.sh` then passed in Bookworm
+evaluation mode: 384 generation tests and three real migration tests passed on
+Python 3.12.14/Aspose 26.8.0. Licensed output fidelity and live deployment remain
+separate verification boundaries.
