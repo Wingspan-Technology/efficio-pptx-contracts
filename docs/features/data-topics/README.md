@@ -7,7 +7,9 @@
 **Status:** both SDKs and generated resources implemented and locally verified.
 Publication status is recorded in the
 [release note](../../releases/2026-10-11-2131-v0.10.0-data-topics.md).
-Slide Generator integration is prepared separately. Template Editor topic
+Slide Generator integration and published-pin adoption are locally implemented
+and its normal full gate passes; those changes remain unmerged and undeployed.
+Template Editor topic
 authoring and DMS topic-based data selection are not included in this release.
 
 ## Problem And Intent
@@ -142,6 +144,10 @@ See the separate handoffs for refresh sequencing, failures, and host acceptance.
 Local checks on 2026-10-11 passed: 534 TypeScript tests, 561 Python tests, ruff,
 mypy, SDK builds, generated resources, checksums, and installed-package smoke
 checks. These results do not prove remote publication or deployed consumers.
+
+The same contracts checks passed again on 2026-10-12. Release publication,
+remote CI, downloaded-asset checksums, and installed-SDK proof are now recorded
+in the linked release note. Consumer deployment and live migrations remain separate.
 
 - [Slide Generator: exact adoption, artifacts, migration, and acceptance](slide-generator.md).
 - [Template Editor: authoring, persistence, transfer, migration, and acceptance](template-editor.md).
