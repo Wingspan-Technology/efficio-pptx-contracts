@@ -25,12 +25,12 @@
       ],
       "expected": {
         "from_revision": 0,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           },
           {
@@ -63,12 +63,12 @@
       ],
       "expected": {
         "from_revision": 0,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           },
           {
@@ -86,7 +86,7 @@
         {
           "target_ref": "deck",
           "scope": "deck",
-          "tags": { "efficio_template_contract_revision": "4" }
+          "tags": { "efficio_template_contract_revision": "5" }
         },
         {
           "target_ref": "shape:slide_001/title",
@@ -95,9 +95,117 @@
         }
       ],
       "expected": {
-        "from_revision": 4,
-        "to_revision": 4,
+        "from_revision": 5,
+        "to_revision": 5,
         "patches": []
+      }
+    },
+    {
+      "name": "current revision with data-topic metadata is a no-op",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": {
+            "efficio_template_contract_revision": "5",
+            "efficio_data_topics": "[{\"topic_id\":\"topic_revenue\",\"name\":\"Revenue\"}]"
+          }
+        },
+        {
+          "target_ref": "slide:slide_001",
+          "scope": "slide",
+          "tags": {
+            "efficio_slide_id": "slide_001",
+            "efficio_slide_data_topic_ids": "[\"topic_revenue\"]"
+          }
+        }
+      ],
+      "expected": {
+        "from_revision": 5,
+        "to_revision": 5,
+        "patches": []
+      }
+    },
+    {
+      "name": "revision 4 advances only the deck revision",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": { "efficio_template_contract_revision": "4" }
+        },
+        {
+          "target_ref": "slide:slide_001",
+          "scope": "slide",
+          "tags": { "efficio_slide_id": "slide_001", "efficio_slide_role": "content" }
+        },
+        {
+          "target_ref": "shape:slide_001/title",
+          "scope": "shape",
+          "tags": {
+            "efficio_content_mode": "ai_generated",
+            "efficio_component_type": "text",
+            "efficio_text_format": "plain",
+            "efficio_max_lines": "1",
+            "efficio_estimated_chars_per_line": "40",
+            "efficio_min_chars": "1",
+            "efficio_max_chars": "40",
+            "efficio_min_items": "1",
+            "efficio_max_items": "1",
+            "efficio_min_chars_per_item": "1",
+            "efficio_max_chars_per_item": "40"
+          }
+        }
+      ],
+      "expected": {
+        "from_revision": 4,
+        "to_revision": 5,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "5" },
+            "remove_tags": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "existing data-topic metadata survives the revision migration",
+      "targets": [
+        {
+          "target_ref": "deck",
+          "scope": "deck",
+          "tags": {
+            "efficio_template_contract_revision": "4",
+            "efficio_data_topics": "[{\"topic_id\":\"topic_revenue\",\"name\":\"Revenue\"},{\"topic_id\":\"topic_headcount\",\"name\":\"Headcount\"}]"
+          }
+        },
+        {
+          "target_ref": "slide:slide_001",
+          "scope": "slide",
+          "tags": {
+            "efficio_slide_id": "slide_001",
+            "efficio_slide_data_topic_ids": "[\"topic_headcount\",\"topic_revenue\"]"
+          }
+        },
+        {
+          "target_ref": "slide:slide_002",
+          "scope": "slide",
+          "tags": { "efficio_slide_id": "slide_002" }
+        }
+      ],
+      "expected": {
+        "from_revision": 4,
+        "to_revision": 5,
+        "patches": [
+          {
+            "target_ref": "deck",
+            "scope": "deck",
+            "set_tags": { "efficio_template_contract_revision": "5" },
+            "remove_tags": []
+          }
+        ]
       }
     },
     {
@@ -121,12 +229,12 @@
       ],
       "expected": {
         "from_revision": 2,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           }
         ]
@@ -154,12 +262,12 @@
       ],
       "expected": {
         "from_revision": 2,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           }
         ]
@@ -192,12 +300,12 @@
       ],
       "expected": {
         "from_revision": 1,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           },
           {
@@ -241,12 +349,12 @@
       ],
       "expected": {
         "from_revision": 1,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           },
           {
@@ -288,12 +396,12 @@
       ],
       "expected": {
         "from_revision": 1,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           },
           {
@@ -335,12 +443,12 @@
       ],
       "expected": {
         "from_revision": 1,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           },
           {
@@ -379,12 +487,12 @@
       ],
       "expected": {
         "from_revision": 1,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           }
         ]
@@ -409,12 +517,12 @@
       ],
       "expected": {
         "from_revision": 1,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           },
           {
@@ -447,12 +555,12 @@
       ],
       "expected": {
         "from_revision": 1,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           },
           {
@@ -485,12 +593,12 @@
       ],
       "expected": {
         "from_revision": 1,
-        "to_revision": 4,
+        "to_revision": 5,
         "patches": [
           {
             "target_ref": "deck",
             "scope": "deck",
-            "set_tags": { "efficio_template_contract_revision": "4" },
+            "set_tags": { "efficio_template_contract_revision": "5" },
             "remove_tags": []
           },
           {
@@ -539,7 +647,7 @@
         {
           "target_ref": "deck",
           "scope": "deck",
-          "tags": { "efficio_template_contract_revision": "4" }
+          "tags": { "efficio_template_contract_revision": "5" }
         },
         {
           "target_ref": "shape:1",
@@ -555,7 +663,7 @@
         {
           "target_ref": "deck",
           "scope": "deck",
-          "tags": { "efficio_template_contract_revision": "4" }
+          "tags": { "efficio_template_contract_revision": "5" }
         },
         {
           "target_ref": "shape:1",
@@ -574,7 +682,7 @@
         {
           "target_ref": "deck",
           "scope": "deck",
-          "tags": { "efficio_template_contract_revision": "4" }
+          "tags": { "efficio_template_contract_revision": "5" }
         },
         {
           "target_ref": "shape:text",
@@ -593,7 +701,7 @@
         {
           "target_ref": "deck",
           "scope": "deck",
-          "tags": { "efficio_template_contract_revision": "4" }
+          "tags": { "efficio_template_contract_revision": "5" }
         },
         {
           "target_ref": "shape:table",

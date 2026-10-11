@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -87,13 +89,14 @@ def _plan_dict(plan: TemplateContractMigrationPlan) -> dict[str, object]:
 
 def test_catalog_is_contiguous_immutable_and_derived() -> None:
     catalog = load_template_contract_migration_catalog()
-    assert catalog.current_revision == CURRENT_TEMPLATE_CONTRACT_REVISION == 4
+    assert catalog.current_revision == CURRENT_TEMPLATE_CONTRACT_REVISION == 5
     assert catalog.revision_tag == TEMPLATE_CONTRACT_REVISION_TAG
     assert [(item.from_revision, item.to_revision) for item in catalog.migrations] == [
         (0, 1),
         (1, 2),
         (2, 3),
         (3, 4),
+        (4, 5),
     ]
     assert get_template_contract_migration_path(0) == catalog.migrations
     rename = catalog.migrations[0].operations[2]
@@ -110,11 +113,24 @@ def test_revision_only_migration_carries_no_operations() -> None:
     catalog = load_template_contract_migration_catalog()
     revision_only = catalog.migrations[2]
     character_limits = catalog.migrations[3]
+    data_topics = catalog.migrations[4]
     assert (revision_only.from_revision, revision_only.to_revision) == (2, 3)
     assert revision_only.operations == ()
-    assert get_template_contract_migration_path(2) == (revision_only, character_limits)
-    assert get_template_contract_migration_path(3) == (character_limits,)
-    assert get_template_contract_migration_path(4) == ()
+    assert get_template_contract_migration_path(2) == (
+        revision_only,
+        character_limits,
+        data_topics,
+    )
+    assert get_template_contract_migration_path(3) == (character_limits, data_topics)
+
+
+def test_data_topic_migration_is_revision_only() -> None:
+    catalog = load_template_contract_migration_catalog()
+    data_topics = catalog.migrations[4]
+    assert (data_topics.from_revision, data_topics.to_revision) == (4, 5)
+    assert data_topics.operations == ()
+    assert get_template_contract_migration_path(4) == (data_topics,)
+    assert get_template_contract_migration_path(5) == ()
 
 
 def test_python_planner_matches_shared_success_fixtures_without_mutation() -> None:
@@ -124,6 +140,34 @@ def test_python_planner_matches_shared_success_fixtures_without_mutation() -> No
         before = deepcopy(raw)
         assert _plan_dict(plan_template_contract_migration(_targets(raw))) == case["expected"]
         assert raw == before, case["name"]
+
+
+def _apply_plan(
+    raw: list[dict[str, object]], plan: TemplateContractMigrationPlan
+) -> list[dict[str, object]]:
+    """Apply set/remove patches to copies, as a consumer does before re-validating."""
+    migrated: list[dict[str, object]] = []
+    for item in raw:
+        tags: dict[str, str] = dict(cast(Mapping[str, str], item["tags"]))
+        for patch in plan.patches:
+            if str(patch.scope) == item["scope"] and patch.target_ref == item["target_ref"]:
+                tags.update(patch.set_tags)
+                for tag in patch.remove_tags:
+                    tags.pop(tag, None)
+        migrated.append({**item, "tags": tags})
+    return migrated
+
+
+def test_replanning_an_applied_plan_is_a_no_op() -> None:
+    fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    for case in fixture["successful_cases"]:
+        raw = case["targets"]
+        migrated = _apply_plan(raw, plan_template_contract_migration(_targets(raw)))
+        assert _plan_dict(plan_template_contract_migration(_targets(migrated))) == {
+            "from_revision": CURRENT_TEMPLATE_CONTRACT_REVISION,
+            "to_revision": CURRENT_TEMPLATE_CONTRACT_REVISION,
+            "patches": [],
+        }, case["name"]
 
 
 def test_python_planner_matches_shared_error_fixtures() -> None:
@@ -155,7 +199,7 @@ def test_planner_rejects_future_revision_and_duplicate_targets() -> None:
                 TemplateTagTarget(
                     "deck",
                     TemplateTagScope.DECK,
-                    {TEMPLATE_CONTRACT_REVISION_TAG: "5"},
+                    {TEMPLATE_CONTRACT_REVISION_TAG: "6"},
                 )
             ]
         )

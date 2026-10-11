@@ -1,0 +1,648 @@
+{
+  "comment": "Shared TypeScript/Python data-topic cases. `null` stands for an absent tag value; a string is stored PowerPoint tag text; an array is an already-decoded value.",
+  "registry_cases": [
+    {
+      "name": "Unicode next-line and separator characters are blank registry values",
+      "raw": "\u0085\u001c\u001d\u001e\u001f",
+      "expected": []
+    },
+    {
+      "name": "Unicode next-line and separators are trimmed from names",
+      "raw": [{"topic_id": "topic_revenue", "name": "\u0085\u001cRevenue\u001f\u0085"}],
+      "expected": [{"topic_id": "topic_revenue", "name": "Revenue"}]
+    },
+    {
+      "name": "byte-order marks in names are not silently removed",
+      "raw": [{"topic_id": "topic_revenue", "name": "\ufeffRevenue\ufeff"}],
+      "expected": [{"topic_id": "topic_revenue", "name": "\ufeffRevenue\ufeff"}]
+    },
+    {
+      "name": "missing registry declares no data topics",
+      "raw": null,
+      "expected": []
+    },
+    {
+      "name": "blank registry declares no data topics",
+      "raw": "   ",
+      "expected": []
+    },
+    {
+      "name": "empty stored array declares no data topics",
+      "raw": "[]",
+      "expected": []
+    },
+    {
+      "name": "empty decoded array declares no data topics",
+      "raw": [],
+      "expected": []
+    },
+    {
+      "name": "one data topic",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":\"Revenue\"}]",
+      "expected": [
+        {
+          "topic_id": "topic_revenue",
+          "name": "Revenue"
+        }
+      ]
+    },
+    {
+      "name": "multiple data topics keep authored order",
+      "raw": "[{\"topic_id\": \"topic_revenue\", \"name\": \"Revenue\"}, {\"topic_id\": \"topic_customer_churn\", \"name\": \"Customer churn\"}, {\"topic_id\": \"topic_headcount\", \"name\": \"Headcount\"}]",
+      "expected": [
+        {
+          "topic_id": "topic_revenue",
+          "name": "Revenue"
+        },
+        {
+          "topic_id": "topic_customer_churn",
+          "name": "Customer churn"
+        },
+        {
+          "topic_id": "topic_headcount",
+          "name": "Headcount"
+        }
+      ]
+    },
+    {
+      "name": "an already-decoded array is accepted",
+      "raw": [
+        {
+          "topic_id": "topic_revenue",
+          "name": "Revenue"
+        },
+        {
+          "topic_id": "topic_customer_churn",
+          "name": "Customer churn"
+        }
+      ],
+      "expected": [
+        {
+          "topic_id": "topic_revenue",
+          "name": "Revenue"
+        },
+        {
+          "topic_id": "topic_customer_churn",
+          "name": "Customer churn"
+        }
+      ]
+    },
+    {
+      "name": "names may repeat when topic IDs are unique",
+      "raw": "[{\"topic_id\":\"topic_revenue_eu\",\"name\":\"Revenue\"},{\"topic_id\":\"topic_revenue_us\",\"name\":\"Revenue\"}]",
+      "expected": [
+        {
+          "topic_id": "topic_revenue_eu",
+          "name": "Revenue"
+        },
+        {
+          "topic_id": "topic_revenue_us",
+          "name": "Revenue"
+        }
+      ]
+    },
+    {
+      "name": "names are trimmed while IDs stay exact",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":\"  Revenue  \"}]",
+      "expected": [
+        {
+          "topic_id": "topic_revenue",
+          "name": "Revenue"
+        }
+      ]
+    },
+    {
+      "name": "names are trimmed of non-breaking and ideographic spaces",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":\" Revenue　\"}]",
+      "expected": [
+        {
+          "topic_id": "topic_revenue",
+          "name": "Revenue"
+        }
+      ]
+    },
+    {
+      "name": "unicode names are preserved exactly",
+      "raw": "[{\"topic_id\": \"topic_umsatz\", \"name\": \"Umsatz – Région Île-de-France\"}, {\"topic_id\": \"topic_sales_jp\", \"name\": \"売上高\"}, {\"topic_id\": \"topic_kpis\", \"name\": \"📊 KPIs\"}, {\"topic_id\": \"topic_cafe\", \"name\": \"Café sales\"}]",
+      "expected": [
+        {
+          "topic_id": "topic_umsatz",
+          "name": "Umsatz – Région Île-de-France"
+        },
+        {
+          "topic_id": "topic_sales_jp",
+          "name": "売上高"
+        },
+        {
+          "topic_id": "topic_kpis",
+          "name": "📊 KPIs"
+        },
+        {
+          "topic_id": "topic_cafe",
+          "name": "Café sales"
+        }
+      ]
+    },
+    {
+      "name": "maximum-length topic ID and name are accepted",
+      "raw": "[{\"topic_id\": \"topic_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"name\": \"nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn\"}]",
+      "expected": [
+        {
+          "topic_id": "topic_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "name": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
+        }
+      ]
+    },
+    {
+      "name": "maximum-length name is counted in Unicode code points",
+      "raw": "[{\"topic_id\": \"topic_kpis\", \"name\": \"📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊\"}]",
+      "expected": [
+        {
+          "topic_id": "topic_kpis",
+          "name": "📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊"
+        }
+      ]
+    },
+    {
+      "name": "single-segment, digit, and multi-segment topic IDs are accepted",
+      "raw": "[{\"topic_id\":\"topic_a\",\"name\":\"A\"},{\"topic_id\":\"topic_2026\",\"name\":\"B\"},{\"topic_id\":\"topic_a1_b2_c3\",\"name\":\"C\"}]",
+      "expected": [
+        {
+          "topic_id": "topic_a",
+          "name": "A"
+        },
+        {
+          "topic_id": "topic_2026",
+          "name": "B"
+        },
+        {
+          "topic_id": "topic_a1_b2_c3",
+          "name": "C"
+        }
+      ]
+    }
+  ],
+  "invalid_registry_cases": [
+    {
+      "name": "Unicode next-line and separator-only names are blank",
+      "raw": [{"topic_id": "topic_revenue", "name": "\u0085\u001c\u001f"}]
+    },
+    {
+      "name": "a byte-order mark is not an absent registry",
+      "raw": "\ufeff"
+    },
+    {
+      "name": "duplicate topic IDs even when names differ",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":\"Revenue\"},{\"topic_id\":\"topic_revenue\",\"name\":\"Sales\"}]"
+    },
+    {
+      "name": "duplicate identical definitions",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":\"Revenue\"},{\"topic_id\":\"topic_revenue\",\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "upper-case topic ID",
+      "raw": "[{\"topic_id\":\"topic_Revenue\",\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "upper-case topic prefix",
+      "raw": "[{\"topic_id\":\"TOPIC_revenue\",\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "topic ID without the topic_ prefix",
+      "raw": "[{\"topic_id\":\"revenue\",\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "bare topic_ prefix",
+      "raw": "[{\"topic_id\":\"topic_\",\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "double underscore in topic ID",
+      "raw": "[{\"topic_id\":\"topic__revenue\",\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "trailing underscore in topic ID",
+      "raw": "[{\"topic_id\":\"topic_revenue_\",\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "hyphen in topic ID",
+      "raw": "[{\"topic_id\":\"topic_revenue-eu\",\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "space in topic ID",
+      "raw": "[{\"topic_id\":\"topic_revenue eu\",\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "blank topic ID",
+      "raw": "[{\"topic_id\":\"\",\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "non-string topic ID",
+      "raw": "[{\"topic_id\":7,\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "oversized topic ID",
+      "raw": "[{\"topic_id\": \"topic_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"name\": \"Revenue\"}]"
+    },
+    {
+      "name": "topic ID with a trailing line feed",
+      "raw": "[{\"topic_id\": \"topic_revenue\\n\", \"name\": \"Revenue\"}]"
+    },
+    {
+      "name": "topic ID with an embedded line feed",
+      "raw": "[{\"topic_id\": \"topic_rev\\nenue\", \"name\": \"Revenue\"}]"
+    },
+    {
+      "name": "topic ID with a trailing carriage return",
+      "raw": "[{\"topic_id\": \"topic_revenue\\r\", \"name\": \"Revenue\"}]"
+    },
+    {
+      "name": "blank name",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":\"   \"}]"
+    },
+    {
+      "name": "empty name",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":\"\"}]"
+    },
+    {
+      "name": "name of only non-breaking spaces",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":\"  \"}]"
+    },
+    {
+      "name": "oversized name",
+      "raw": "[{\"topic_id\": \"topic_revenue\", \"name\": \"nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn\"}]"
+    },
+    {
+      "name": "oversized name counted in Unicode code points",
+      "raw": "[{\"topic_id\": \"topic_kpis\", \"name\": \"📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊\"}]"
+    },
+    {
+      "name": "null name",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":null}]"
+    },
+    {
+      "name": "non-string name",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":7}]"
+    },
+    {
+      "name": "missing topic_id",
+      "raw": "[{\"name\":\"Revenue\"}]"
+    },
+    {
+      "name": "missing name",
+      "raw": "[{\"topic_id\":\"topic_revenue\"}]"
+    },
+    {
+      "name": "extra description property",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":\"Revenue\",\"description\":\"Quarterly revenue.\"}]"
+    },
+    {
+      "name": "extra data-binding property",
+      "raw": "[{\"topic_id\":\"topic_revenue\",\"name\":\"Revenue\",\"source\":\"crm\"}]"
+    },
+    {
+      "name": "malformed JSON text",
+      "raw": "[{\"topic_id\":"
+    },
+    {
+      "name": "non-array JSON object",
+      "raw": "{\"topic_id\":\"topic_revenue\",\"name\":\"Revenue\"}"
+    },
+    {
+      "name": "JSON string instead of an array",
+      "raw": "\"topic_revenue\""
+    },
+    {
+      "name": "non-object entry",
+      "raw": "[\"topic_revenue\"]"
+    },
+    {
+      "name": "null entry",
+      "raw": "[null]"
+    },
+    {
+      "name": "nested array entry",
+      "raw": "[[{\"topic_id\":\"topic_revenue\",\"name\":\"Revenue\"}]]"
+    }
+  ],
+  "assignment_cases": [
+    {
+      "name": "missing assignment has no data topics",
+      "raw": null,
+      "expected": []
+    },
+    {
+      "name": "one data topic ID",
+      "raw": "[\"topic_revenue\"]",
+      "expected": [
+        "topic_revenue"
+      ]
+    },
+    {
+      "name": "multiple data topic IDs keep authored order",
+      "raw": "[\"topic_headcount\",\"topic_revenue\",\"topic_customer_churn\"]",
+      "expected": [
+        "topic_headcount",
+        "topic_revenue",
+        "topic_customer_churn"
+      ]
+    },
+    {
+      "name": "an already-decoded array is accepted",
+      "raw": [
+        "topic_revenue",
+        "topic_headcount"
+      ],
+      "expected": [
+        "topic_revenue",
+        "topic_headcount"
+      ]
+    },
+    {
+      "name": "maximum-length topic ID is accepted",
+      "raw": "[\"topic_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]",
+      "expected": [
+        "topic_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    }
+  ],
+  "invalid_assignment_cases": [
+    {
+      "name": "Unicode next-line and separator-only assignments are blank",
+      "raw": "\u0085\u001c\u001f"
+    },
+    {
+      "name": "blank assignment",
+      "raw": "   "
+    },
+    {
+      "name": "empty stored text",
+      "raw": ""
+    },
+    {
+      "name": "malformed JSON text",
+      "raw": "[\"topic_revenue\""
+    },
+    {
+      "name": "non-array JSON object",
+      "raw": "{\"topic_id\":\"topic_revenue\"}"
+    },
+    {
+      "name": "JSON string instead of an array",
+      "raw": "\"topic_revenue\""
+    },
+    {
+      "name": "empty stored array",
+      "raw": "[]"
+    },
+    {
+      "name": "empty decoded array",
+      "raw": []
+    },
+    {
+      "name": "duplicate topic IDs",
+      "raw": "[\"topic_revenue\",\"topic_revenue\"]"
+    },
+    {
+      "name": "upper-case topic ID",
+      "raw": "[\"topic_Revenue\"]"
+    },
+    {
+      "name": "topic ID without the topic_ prefix",
+      "raw": "[\"revenue\"]"
+    },
+    {
+      "name": "blank topic ID entry",
+      "raw": "[\"\"]"
+    },
+    {
+      "name": "topic ID with a leading space",
+      "raw": "[\" topic_revenue\"]"
+    },
+    {
+      "name": "non-string entry",
+      "raw": "[1]"
+    },
+    {
+      "name": "null entry",
+      "raw": "[null]"
+    },
+    {
+      "name": "oversized topic ID",
+      "raw": "[\"topic_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]"
+    },
+    {
+      "name": "assigned topic ID with a trailing line feed",
+      "raw": "[\"topic_revenue\\n\"]"
+    },
+    {
+      "name": "assigned topic ID with an embedded line feed",
+      "raw": "[\"topic_rev\\nenue\"]"
+    }
+  ],
+  "resolution_cases": [
+    {
+      "name": "slide without an assignment against a populated registry",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\": \"topic_revenue\", \"name\": \"Revenue\"}, {\"topic_id\": \"topic_customer_churn\", \"name\": \"Customer churn\"}, {\"topic_id\": \"topic_headcount\", \"name\": \"Headcount\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "expected": []
+    },
+    {
+      "name": "slide without an assignment against a missing registry",
+      "deck_tags": {},
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "expected": []
+    },
+    {
+      "name": "slide without an assignment does not consult the deck registry",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\":\"topic_revenue\",\"name\":\"A\"},{\"topic_id\":\"topic_revenue\",\"name\":\"B\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_id": "slide_001"
+      },
+      "expected": []
+    },
+    {
+      "name": "one assigned data topic resolves to its definition",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\": \"topic_revenue\", \"name\": \"Revenue\"}, {\"topic_id\": \"topic_customer_churn\", \"name\": \"Customer churn\"}, {\"topic_id\": \"topic_headcount\", \"name\": \"Headcount\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_customer_churn\"]"
+      },
+      "expected": [
+        {
+          "topic_id": "topic_customer_churn",
+          "name": "Customer churn"
+        }
+      ]
+    },
+    {
+      "name": "assignment order wins over registry order",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\": \"topic_revenue\", \"name\": \"Revenue\"}, {\"topic_id\": \"topic_customer_churn\", \"name\": \"Customer churn\"}, {\"topic_id\": \"topic_headcount\", \"name\": \"Headcount\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_headcount\",\"topic_revenue\"]"
+      },
+      "expected": [
+        {
+          "topic_id": "topic_headcount",
+          "name": "Headcount"
+        },
+        {
+          "topic_id": "topic_revenue",
+          "name": "Revenue"
+        }
+      ]
+    },
+    {
+      "name": "topics sharing a name resolve by ID",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\":\"topic_revenue_eu\",\"name\":\"Revenue\"},{\"topic_id\":\"topic_revenue_us\",\"name\":\"Revenue\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_revenue_us\"]"
+      },
+      "expected": [
+        {
+          "topic_id": "topic_revenue_us",
+          "name": "Revenue"
+        }
+      ]
+    },
+    {
+      "name": "unicode names resolve unchanged",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\": \"topic_umsatz\", \"name\": \"Umsatz – Région Île-de-France\"}, {\"topic_id\": \"topic_sales_jp\", \"name\": \"売上高\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_sales_jp\",\"topic_umsatz\"]"
+      },
+      "expected": [
+        {
+          "topic_id": "topic_sales_jp",
+          "name": "売上高"
+        },
+        {
+          "topic_id": "topic_umsatz",
+          "name": "Umsatz – Région Île-de-France"
+        }
+      ]
+    }
+  ],
+  "resolution_error_cases": [
+    {
+      "name": "unknown data topic reference",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\": \"topic_revenue\", \"name\": \"Revenue\"}, {\"topic_id\": \"topic_customer_churn\", \"name\": \"Customer churn\"}, {\"topic_id\": \"topic_headcount\", \"name\": \"Headcount\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_margin\"]"
+      }
+    },
+    {
+      "name": "one known and one unknown reference",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\": \"topic_revenue\", \"name\": \"Revenue\"}, {\"topic_id\": \"topic_customer_churn\", \"name\": \"Customer churn\"}, {\"topic_id\": \"topic_headcount\", \"name\": \"Headcount\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_revenue\",\"topic_margin\"]"
+      }
+    },
+    {
+      "name": "assignment against a missing registry",
+      "deck_tags": {},
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_revenue\"]"
+      }
+    },
+    {
+      "name": "assignment against a blank registry",
+      "deck_tags": {
+        "efficio_data_topics": "   "
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_revenue\"]"
+      }
+    },
+    {
+      "name": "assignment against an empty registry",
+      "deck_tags": {
+        "efficio_data_topics": "[]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_revenue\"]"
+      }
+    },
+    {
+      "name": "assignment against a registry with duplicate topic IDs",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\":\"topic_revenue\",\"name\":\"A\"},{\"topic_id\":\"topic_revenue\",\"name\":\"B\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_revenue\"]"
+      }
+    },
+    {
+      "name": "assignment against a malformed registry",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\":"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_revenue\"]"
+      }
+    },
+    {
+      "name": "blank assignment",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\": \"topic_revenue\", \"name\": \"Revenue\"}, {\"topic_id\": \"topic_customer_churn\", \"name\": \"Customer churn\"}, {\"topic_id\": \"topic_headcount\", \"name\": \"Headcount\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "  "
+      }
+    },
+    {
+      "name": "empty assignment array",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\": \"topic_revenue\", \"name\": \"Revenue\"}, {\"topic_id\": \"topic_customer_churn\", \"name\": \"Customer churn\"}, {\"topic_id\": \"topic_headcount\", \"name\": \"Headcount\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[]"
+      }
+    },
+    {
+      "name": "duplicate references",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\": \"topic_revenue\", \"name\": \"Revenue\"}, {\"topic_id\": \"topic_customer_churn\", \"name\": \"Customer churn\"}, {\"topic_id\": \"topic_headcount\", \"name\": \"Headcount\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_revenue\",\"topic_revenue\"]"
+      }
+    },
+    {
+      "name": "reference with a trailing line feed",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\": \"topic_revenue\", \"name\": \"Revenue\"}, {\"topic_id\": \"topic_customer_churn\", \"name\": \"Customer churn\"}, {\"topic_id\": \"topic_headcount\", \"name\": \"Headcount\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_revenue\\n\"]"
+      }
+    },
+    {
+      "name": "reference matching a registry ID only after case folding",
+      "deck_tags": {
+        "efficio_data_topics": "[{\"topic_id\": \"topic_revenue\", \"name\": \"Revenue\"}, {\"topic_id\": \"topic_customer_churn\", \"name\": \"Customer churn\"}, {\"topic_id\": \"topic_headcount\", \"name\": \"Headcount\"}]"
+      },
+      "slide_tags": {
+        "efficio_slide_data_topic_ids": "[\"topic_Revenue\"]"
+      }
+    }
+  ]
+}
