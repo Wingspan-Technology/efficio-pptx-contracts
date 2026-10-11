@@ -16,4 +16,5 @@ export * from "./editor/content-mode.js";
 export * from "./editor/classification-schemes.js";
 export * from "./editor/categorical-fill-selection.js";
 export * from "./editor/slide-archetypes.js";
+export * from "./editor/data-topics.js";
 export * from "./editor/template-contract-migrations.js";

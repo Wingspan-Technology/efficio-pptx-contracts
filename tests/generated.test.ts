@@ -132,6 +132,7 @@ describe("generated presentation schemas", () => {
       "contracts/presentation/template/migrations/0001-to-0002.json",
       "contracts/presentation/template/migrations/0002-to-0003.json",
       "contracts/presentation/template/migrations/0003-to-0004.json",
+      "contracts/presentation/template/migrations/0004-to-0005.json",
     ]);
   });
 });
@@ -273,9 +274,37 @@ describe("deck template instruction tag", () => {
     );
     expect(deckDefaults).toEqual({
       efficio_template_id: "default_template",
-      efficio_template_contract_revision: "4",
+      efficio_template_contract_revision: "5",
     });
     expect(deckDefaults).not.toHaveProperty("efficio_slide_archetypes");
+    expect(deckDefaults).not.toHaveProperty("efficio_data_topics");
+  });
+
+  it("generates the optional name-only data-topic registry with no ai block", () => {
+    const tag = (deckSchema.tags as JsonObject).efficio_data_topics as JsonObject;
+    expect(tag.type).toBe("array");
+    expect(tag.required).toBe(false);
+    // Advisory metadata: never projected into AI instructions.
+    expect(tag).not.toHaveProperty("ai");
+    const schema = tag.schema as JsonObject;
+    expect(schema.type).toBe("array");
+    const item = schema.items as JsonObject;
+    expect(item.required).toEqual(["topic_id", "name"]);
+    expect(item.additionalProperties).toBe(false);
+    const properties = item.properties as JsonObject;
+    expect(Object.keys(properties)).toEqual(["topic_id", "name"]);
+    expect(properties.topic_id).toMatchObject({
+      type: "string",
+      maxLength: 120,
+      pattern: "^topic_[a-z0-9]+(?:_[a-z0-9]+)*$",
+    });
+    expect(properties.name).toMatchObject({
+      type: "string",
+      maxLength: 120,
+      pattern: "[^\\u0009-\\u000D\\u001C-\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]",
+    });
+    // No hardcoded business topics: the registry is authored per template.
+    expect(JSON.stringify(tag)).not.toMatch(/"enum"/);
   });
 });
 
@@ -307,6 +336,22 @@ describe("slide display name tag", () => {
     expect((schema.items as JsonObject).type).toBe("string");
     expect(schema).not.toHaveProperty("enum");
     expect(schema.items).not.toHaveProperty("enum");
+  });
+
+  it("generates the optional efficio_slide_data_topic_ids slide tag with no ai block", () => {
+    const tag = (slideSchema.tags as JsonObject).efficio_slide_data_topic_ids as JsonObject;
+    expect(tag).toBeDefined();
+    expect(tag.type).toBe("array");
+    expect(tag.required).toBe(false);
+    expect(tag).not.toHaveProperty("ai");
+    const schema = tag.schema as JsonObject;
+    expect(schema.minItems).toBe(1);
+    expect(schema.uniqueItems).toBe(true);
+    expect(schema.items).toEqual({
+      type: "string",
+      maxLength: 120,
+      pattern: "^topic_[a-z0-9]+(?:_[a-z0-9]+)*$",
+    });
   });
 
   it("leaves the slide defaults untouched by archetype metadata", () => {
@@ -804,6 +849,17 @@ describe("generated slide-selection AI instructions", () => {
     expect(tsSource).not.toContain("efficio_slide_archetype_ids");
   });
 
+  it("never mentions data topics anywhere in the prompt artifact", () => {
+    const serialized = JSON.stringify(artifact);
+    expect(serialized).not.toContain("data_topic");
+    expect(serialized).not.toContain("topic_");
+    const tsSource = readFileSync(
+      path.join(pkgRoot, "generated", "ts", "ai", "slideSelectionInstructions.ts"),
+      "utf8",
+    );
+    expect(tsSource).not.toContain("efficio_slide_data_topic_ids");
+  });
+
   it("slide_tag_instructions includes ai-bearing slide tags and excludes the rest", () => {
     const tags = artifact.slide_tag_instructions as JsonObject;
     const slideTags = readJson(path.join(slideDir, "tags.contract.json"));
@@ -818,6 +874,8 @@ describe("generated slide-selection AI instructions", () => {
     expect(tags).not.toHaveProperty("efficio_slide_name");
     // Archetypes filter the catalog before selection; they are not AI guidance.
     expect(tags).not.toHaveProperty("efficio_slide_archetype_ids");
+    // Data topics are advisory labels; they are not AI guidance either.
+    expect(tags).not.toHaveProperty("efficio_slide_data_topic_ids");
   });
 
   it("expected_slide_selection_schema equals the authored slide-selection schema", () => {

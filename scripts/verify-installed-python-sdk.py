@@ -13,9 +13,13 @@ from efficio_pptx_contracts import (
     CLASSIFICATION_SCHEMES_TAG,
     CLASSIFICATION_SCHEME_ID_TAG,
     CURRENT_TEMPLATE_CONTRACT_REVISION,
+    DATA_TOPICS_TAG,
     SLIDE_ARCHETYPES_TAG,
     SLIDE_ARCHETYPE_IDS_TAG,
+    SLIDE_DATA_TOPIC_IDS_TAG,
     ContentMode,
+    DataTopic,
+    DataTopicContractError,
     SlideArchetype,
     SlideArchetypeContractError,
     SlideSelectionGroupType,
@@ -35,13 +39,16 @@ from efficio_pptx_contracts import (
     load_slide_tag_contract,
     normalize_v2_component_content,
     normalize_slide_selection_groups,
+    parse_data_topics,
     parse_slide_archetype_ids,
     parse_slide_archetypes,
+    parse_slide_data_topic_ids,
     parse_slide_selection_groups,
     parse_classification_schemes,
     plan_template_contract_migration,
     resolve_content_mode,
     resolve_slide_archetype_assignment,
+    resolve_slide_data_topic_assignment,
     validate_deck_tags,
     validate_slide_selection_group_selection,
     validate_slide_tags,
@@ -192,7 +199,7 @@ finding = V2ComponentSemanticFinding(
 )
 assert finding.reason is V2ComponentRepairReason.ESTIMATED_LINE_LIMIT
 
-assert CURRENT_TEMPLATE_CONTRACT_REVISION == 4
+assert CURRENT_TEMPLATE_CONTRACT_REVISION == 5
 assert resolve_content_mode({"efficio_content_mode": "data_bound"}) is ContentMode.DATA_BOUND
 plan = plan_template_contract_migration(
     [
@@ -204,7 +211,7 @@ plan = plan_template_contract_migration(
         ),
     ]
 )
-assert plan.from_revision == 0 and plan.to_revision == 4 and len(plan.patches) == 2
+assert plan.from_revision == 0 and plan.to_revision == 5 and len(plan.patches) == 2
 
 archetype_registry = json.dumps(
     [
@@ -254,7 +261,7 @@ assert (
     validate_deck_tags(
         {
             "efficio_template_id": "release_smoke",
-            "efficio_template_contract_revision": "4",
+            "efficio_template_contract_revision": "5",
             SLIDE_ARCHETYPES_TAG: archetype_registry,
         }
     )
@@ -273,6 +280,90 @@ assert (
     )
     == []
 )
+
+topic_registry = json.dumps(
+    [
+        {"topic_id": "topic_revenue", "name": "Revenue"},
+        {"topic_id": "topic_headcount", "name": "Headcount"},
+        {"topic_id": "topic_revenue_eu", "name": "Revenue"},
+    ]
+)
+deck_topic_tags = {DATA_TOPICS_TAG: topic_registry}
+topics = parse_data_topics(topic_registry)
+assert topics == (
+    DataTopic("topic_revenue", "Revenue"),
+    DataTopic("topic_headcount", "Headcount"),
+    DataTopic("topic_revenue_eu", "Revenue"),
+)
+assert parse_data_topics(None) == () and parse_data_topics("[]") == ()
+topic_assignment = '["topic_headcount","topic_revenue"]'
+assert parse_slide_data_topic_ids(topic_assignment) == ("topic_headcount", "topic_revenue")
+topic_slide = {SLIDE_DATA_TOPIC_IDS_TAG: topic_assignment}
+assert resolve_slide_data_topic_assignment(topic_slide, deck_topic_tags) == (topics[1], topics[0])
+assert resolve_slide_data_topic_assignment({}, deck_topic_tags) == ()
+assert issubclass(DataTopicContractError, ValueError)
+for rejected in (
+    lambda: parse_slide_data_topic_ids("[]"),
+    lambda: parse_slide_data_topic_ids(json.dumps(["topic_revenue\n"])),
+    lambda: parse_data_topics(
+        json.dumps([{"topic_id": "topic_revenue", "name": "A", "source": "crm"}])
+    ),
+    lambda: resolve_slide_data_topic_assignment(
+        {SLIDE_DATA_TOPIC_IDS_TAG: '["topic_margin"]'}, deck_topic_tags
+    ),
+):
+    try:
+        rejected()
+        raise AssertionError("invalid data-topic metadata must be rejected")
+    except DataTopicContractError:
+        pass
+
+topic_entity = load_deck_tag_contract()["tags"][DATA_TOPICS_TAG]
+assert topic_entity["type"] == "array" and topic_entity["required"] is False
+assert "ai" not in topic_entity
+topic_assignment_entity = load_slide_tag_contract()["tags"][SLIDE_DATA_TOPIC_IDS_TAG]
+assert topic_assignment_entity["schema"]["minItems"] == 1
+assert topic_assignment_entity["schema"]["uniqueItems"] is True
+assert "ai" not in topic_assignment_entity
+topic_deck_tags = {
+    "efficio_template_id": "release_smoke",
+    "efficio_template_contract_revision": "5",
+    DATA_TOPICS_TAG: topic_registry,
+}
+assert validate_deck_tags(topic_deck_tags) == []
+duplicate_topics = json.dumps([{"topic_id": "topic_revenue", "name": name} for name in "AB"])
+deck_issues = validate_deck_tags({**topic_deck_tags, DATA_TOPICS_TAG: duplicate_topics})
+assert [issue.code for issue in deck_issues] == ["invalid_data_topics"]
+
+
+def slide_topic_issue_codes(assignment: str) -> list[str]:
+    tags = {
+        "efficio_slide_id": "slide_001",
+        "efficio_slide_role": "content",
+        "efficio_slide_placement": "body",
+        "efficio_slide_inclusion_policy": "when_relevant",
+        SLIDE_DATA_TOPIC_IDS_TAG: assignment,
+    }
+    return [issue.code for issue in validate_slide_tags(tags, deck_tags=deck_topic_tags)]
+
+
+assert slide_topic_issue_codes(topic_assignment) == []
+assert slide_topic_issue_codes("  ") == ["invalid_slide_data_topic_assignment"]
+assert slide_topic_issue_codes('["topic_margin"]') == ["unknown_data_topic_reference"]
+topic_plan = plan_template_contract_migration(
+    [
+        TemplateTagTarget(
+            "deck",
+            TemplateTagScope.DECK,
+            {"efficio_template_contract_revision": "4", DATA_TOPICS_TAG: topic_registry},
+        ),
+        TemplateTagTarget("slide:slide_001", TemplateTagScope.SLIDE, topic_slide),
+    ]
+)
+assert topic_plan.to_revision == 5 and len(topic_plan.patches) == 1
+assert dict(topic_plan.patches[0].set_tags) == {"efficio_template_contract_revision": "5"}
+assert topic_plan.patches[0].remove_tags == ()
+
 data_bound = build_data_bound_component_contract(
     "text",
     {

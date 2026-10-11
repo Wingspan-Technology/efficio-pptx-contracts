@@ -10,6 +10,7 @@ import {
   getTemplateContractMigrationCatalog,
   getTemplateContractMigrationPath,
   planTemplateContractMigration,
+  type TemplateContractMigrationPlan,
   type TemplateTagTarget,
 } from "../ts/editor";
 
@@ -37,10 +38,10 @@ const fixture = JSON.parse(
 describe("template contract migration catalog", () => {
   it("derives the current revision from one contiguous adjacent migration", () => {
     const catalog = getTemplateContractMigrationCatalog();
-    expect(CURRENT_TEMPLATE_CONTRACT_REVISION).toBe(4);
+    expect(CURRENT_TEMPLATE_CONTRACT_REVISION).toBe(5);
     expect(catalog.revision_tag).toBe(TEMPLATE_CONTRACT_REVISION_TAG);
     expect(catalog.migrations.map(({ from_revision, to_revision }) => [from_revision, to_revision]))
-      .toEqual([[0, 1], [1, 2], [2, 3], [3, 4]]);
+      .toEqual([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]);
     expect(catalog.migrations[1].operations).toEqual([
       { type: "migrate_text_capacity", scope: "shape" },
     ]);
@@ -57,12 +58,23 @@ describe("template contract migration catalog", () => {
     expect(strictCharacters.operations).toEqual([
       { type: "derive_text_character_limits", scope: "shape" },
     ]);
+    const dataTopics = catalog.migrations[4];
     expect(getTemplateContractMigrationPath(2)).toEqual([
       revisionOnly,
       strictCharacters,
+      dataTopics,
     ]);
-    expect(getTemplateContractMigrationPath(3)).toEqual([strictCharacters]);
-    expect(getTemplateContractMigrationPath(4)).toEqual([]);
+    expect(getTemplateContractMigrationPath(3)).toEqual([strictCharacters, dataTopics]);
+  });
+
+  it("carries a revision-only 4 to 5 data-topic migration with no operations", () => {
+    const catalog = getTemplateContractMigrationCatalog();
+    const dataTopics = catalog.migrations[4];
+    expect(dataTopics.from_revision).toBe(4);
+    expect(dataTopics.to_revision).toBe(5);
+    expect(dataTopics.operations).toEqual([]);
+    expect(getTemplateContractMigrationPath(4)).toEqual([dataTopics]);
+    expect(getTemplateContractMigrationPath(5)).toEqual([]);
   });
 
   it("returns a defensive catalog copy", () => {
@@ -80,6 +92,17 @@ describe("template contract migration planner parity", () => {
       const before = structuredClone(testCase.targets);
       expect(planTemplateContractMigration(testCase.targets)).toEqual(testCase.expected);
       expect(testCase.targets).toEqual(before);
+    });
+  }
+
+  for (const testCase of fixture.successful_cases) {
+    it(`re-planning after applying is a no-op: ${testCase.name}`, () => {
+      const migrated = applyPlan(testCase.targets, planTemplateContractMigration(testCase.targets));
+      expect(planTemplateContractMigration(migrated)).toEqual({
+        from_revision: CURRENT_TEMPLATE_CONTRACT_REVISION,
+        to_revision: CURRENT_TEMPLATE_CONTRACT_REVISION,
+        patches: [],
+      });
     });
   }
 
@@ -112,9 +135,26 @@ describe("template contract migration planner parity", () => {
         {
           target_ref: "deck",
           scope: "deck",
-          tags: { [TEMPLATE_CONTRACT_REVISION_TAG]: "5" },
+          tags: { [TEMPLATE_CONTRACT_REVISION_TAG]: "6" },
         },
       ]),
     ).toThrow("newer than supported");
   });
 });
+
+// Applies a plan's set/remove patches to copies of the targets, the way a
+// consumer applies them to PowerPoint tags before re-validating.
+function applyPlan(
+  targets: readonly TemplateTagTarget[],
+  plan: TemplateContractMigrationPlan,
+): TemplateTagTarget[] {
+  return targets.map((target) => {
+    const tags: Record<string, string> = { ...target.tags };
+    for (const patch of plan.patches) {
+      if (patch.scope !== target.scope || patch.target_ref !== target.target_ref) continue;
+      Object.assign(tags, patch.set_tags);
+      for (const tag of patch.remove_tags) delete tags[tag];
+    }
+    return { ...target, tags };
+  });
+}

@@ -237,6 +237,37 @@ export const deckTagSchema = {
           "additionalProperties": false
         }
       }
+    },
+    "efficio_data_topics": {
+      "type": "array",
+      "required": false,
+      "description": "Optional deck-wide registry of name-only data topics. Stored as a JSON array; absent, blank, or an empty array means the template declares no data topics. Advisory metadata only (no ai block): topics label the data a slide relates to and never bind data, filter or select slides, or constrain generated content schemas.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "topic_id",
+            "name"
+          ],
+          "properties": {
+            "topic_id": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^topic_[a-z0-9]+(?:_[a-z0-9]+)*$",
+              "description": "Stable data-topic identifier in the topic_ namespace, referenced by slide data-topic assignments."
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "[^\\u0009-\\u000D\\u001C-\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]",
+              "description": "Short human-readable data-topic name. Names need not be unique. The explicit whitespace class matches Python string trimming in both SDKs."
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     }
   }
 } as const;
@@ -250,7 +281,8 @@ export const deckTagKeys = [
   "efficio_template_instruction",
   "efficio_classification_schemes",
   "efficio_slide_selection_groups",
-  "efficio_slide_archetypes"
+  "efficio_slide_archetypes",
+  "efficio_data_topics"
 ] as const;
 
 export const DECK_TEMPLATE_ID_TAG = "efficio_template_id";
@@ -260,3 +292,4 @@ export const DECK_TEMPLATE_INSTRUCTION_TAG = "efficio_template_instruction";
 export const DECK_CLASSIFICATION_SCHEMES_TAG = "efficio_classification_schemes";
 export const DECK_SLIDE_SELECTION_GROUPS_TAG = "efficio_slide_selection_groups";
 export const DECK_SLIDE_ARCHETYPES_TAG = "efficio_slide_archetypes";
+export const DECK_DATA_TOPICS_TAG = "efficio_data_topics";

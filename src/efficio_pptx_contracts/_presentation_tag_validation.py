@@ -2,8 +2,8 @@
 
 Generic stored-value rules live in :mod:`._stored_tag_validation`; this module
 adds the presentation semantics JSON Schema cannot express on its own — unique
-classification-scheme and archetype IDs in the deck registry, and slide archetype
-assignments resolved against that registry.
+classification-scheme, archetype, and data-topic IDs in the deck registries, and
+slide archetype and data-topic assignments resolved against those registries.
 """
 
 from __future__ import annotations
@@ -20,6 +20,12 @@ from ._stored_tag_validation import (
 from .classification_schemes import (
     CLASSIFICATION_SCHEMES_TAG,
     parse_classification_schemes,
+)
+from .data_topics import (
+    DATA_TOPICS_TAG,
+    SLIDE_DATA_TOPIC_IDS_TAG,
+    parse_data_topics,
+    parse_slide_data_topic_ids,
 )
 from .slide_archetypes import (
     SLIDE_ARCHETYPES_TAG,
@@ -50,11 +56,13 @@ def validate_slide_tags(
     """Validate slide tags against the generated slide tag contract.
 
     ``deck_tags`` is optional and only needed by slides that carry an archetype
-    assignment: an assignment can only be checked against the deck registry that
-    defines the archetypes. Slides without the tag validate exactly as before.
+    or data-topic assignment: an assignment can only be checked against the deck
+    registry that defines the referenced IDs. Slides without those tags validate
+    exactly as before.
     """
     issues = _validate_presentation_tags(load_slide_tag_contract(), tags, "slide")
     issues.extend(_slide_archetype_issues(tags, deck_tags, issues))
+    issues.extend(_slide_data_topic_issues(tags, deck_tags, issues))
     return issues
 
 
@@ -92,6 +100,20 @@ def validate_deck_tags(tags: dict[str, str]) -> list[TagValidationIssue]:
                     message=(
                         "Slide archetypes must have unique archetype IDs and match "
                         "the presentation contract."
+                    ),
+                )
+            )
+    if not any(issue.tag_name == DATA_TOPICS_TAG for issue in issues):
+        try:
+            parse_data_topics(tags.get(DATA_TOPICS_TAG))
+        except ValueError:
+            issues.append(
+                TagValidationIssue(
+                    code="invalid_data_topics",
+                    tag_name=DATA_TOPICS_TAG,
+                    message=(
+                        "Data topics must have unique topic IDs and match the "
+                        "presentation contract."
                     ),
                 )
             )
@@ -168,6 +190,75 @@ def _slide_archetype_issues(
             )
         ]
     return []
+
+
+def _slide_data_topic_issues(
+    tags: Mapping[str, str],
+    deck_tags: Mapping[str, str] | None,
+    prior_issues: list[TagValidationIssue],
+) -> list[TagValidationIssue]:
+    """Resolve a present slide data-topic assignment against the deck registry.
+
+    An absent assignment needs no deck context. A tag that already failed
+    structurally is skipped, so a malformed value is reported once. A reference
+    the deck cannot resolve — an undefined ID, no deck tags, or an unusable deck
+    registry — is reported as ``unknown_data_topic_reference``.
+    """
+    raw_assignment = tags.get(SLIDE_DATA_TOPIC_IDS_TAG)
+    if raw_assignment is None:
+        return []
+    if any(issue.tag_name == SLIDE_DATA_TOPIC_IDS_TAG for issue in prior_issues):
+        return []
+
+    try:
+        assigned_ids = parse_slide_data_topic_ids(raw_assignment)
+    except ValueError:
+        return [
+            TagValidationIssue(
+                code="invalid_slide_data_topic_assignment",
+                tag_name=SLIDE_DATA_TOPIC_IDS_TAG,
+                message=(
+                    f"Tag {SLIDE_DATA_TOPIC_IDS_TAG} must be a non-empty JSON array "
+                    "of unique data topic IDs."
+                ),
+            )
+        ]
+
+    if deck_tags is None:
+        return [
+            _unknown_data_topic_issue(
+                "Resolving a slide data-topic assignment requires the deck tags "
+                f"that define {DATA_TOPICS_TAG}."
+            )
+        ]
+    try:
+        registry = parse_data_topics(deck_tags.get(DATA_TOPICS_TAG))
+    except ValueError:
+        return [
+            _unknown_data_topic_issue(
+                f"The deck {DATA_TOPICS_TAG} registry is invalid, so this slide "
+                "data-topic assignment cannot be resolved."
+            )
+        ]
+
+    known = {topic.topic_id for topic in registry}
+    unknown = [topic_id for topic_id in assigned_ids if topic_id not in known]
+    if unknown:
+        return [
+            _unknown_data_topic_issue(
+                "The slide references data topic IDs that the deck registry does "
+                f"not define: {unknown}."
+            )
+        ]
+    return []
+
+
+def _unknown_data_topic_issue(message: str) -> TagValidationIssue:
+    return TagValidationIssue(
+        code="unknown_data_topic_reference",
+        tag_name=SLIDE_DATA_TOPIC_IDS_TAG,
+        message=message,
+    )
 
 
 def _validate_presentation_tags(

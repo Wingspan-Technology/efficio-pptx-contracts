@@ -10,6 +10,7 @@ template importer, and slide generator.
 contracts/                    Authored cross-language contract sources
 generated/                    Committed generated schemas, metadata, and instructions
 scripts/                      Contract validation and generation
+docs/features/                Named features and separate consumer handoffs
 src/efficio_pptx_contracts/  Python SDK and bundled generated resources
 ts/                           Handwritten TypeScript SDK surface
 tests/                        TypeScript and Python contract tests
@@ -81,6 +82,25 @@ the legacy, unrestricted case: every slide stays applicable, and migration never
 backfills archetype metadata into an existing template. Contract-wide archetype
 enums do not exist — the vocabulary belongs to each template.
 
+Optional data topics name the data a template's slides relate to. A deck
+authors the registry in `efficio_data_topics` as a direct JSON array of exact
+`{topic_id, name}` objects: `topic_id` matches
+`^topic_[a-z0-9]+(?:_[a-z0-9]+)*$` and is unique, `name` is non-blank, both are
+at most 120 characters, and names may repeat. A slide lists its topics in
+`efficio_slide_data_topic_ids`, a non-empty JSON array of unique topic IDs the
+registry defines, in authored order; a slide without that tag has no
+assignment. Editor consumers use `parseDataTopics()`, `parseSlideDataTopicIds()`,
+and `resolveSlideDataTopicAssignment()`; Python consumers use the equivalent
+`parse_data_topics()`, `parse_slide_data_topic_ids()`, and
+`resolve_slide_data_topic_assignment()`, and pass `deck_tags` to
+`validate_slide_tags()` whenever a slide carries an assignment.
+
+Data topics are advisory metadata only. They do not bind data, filter or select
+slides, or constrain generated content schemas, and neither tag declares an `ai`
+block, so neither reaches the generated slide-selection instruction. A missing,
+blank, or empty registry declares no topics, and migration never backfills
+topic metadata into an existing template.
+
 Every slide requires `efficio_slide_role`: `content` identifies a normal
 presentation slide, while `separator` identifies a section divider. Role is
 descriptive metadata only and does not control inclusion, placement, ordering,
@@ -139,12 +159,19 @@ the shared estimated line-capacity fields, including capacity settings nested in
 it is a revision-only migration that advances the deck revision and writes no
 archetype tags. Revision 4 restores strict aggregate and per-item character
 limits alongside line capacity. Its migration derives safe character limits
-from each current `max_lines * estimated_chars_per_line` capacity.
+from each current `max_lines * estimated_chars_per_line` capacity. Revision 5
+introduces the optional data-topic tags; like revision 3 it is revision-only and
+writes no data-topic tags.
 
 Detailed, timestamped consumer handoffs are recorded under
 [`docs/releases/`](docs/releases/README.md). These notes explain what changed and
 what downstream applications must implement; authored files under `contracts/`
 remain the source of truth.
+
+Every feature also has a [named folder](docs/features/README.md) explaining its
+changes, relevant files, and separate Slide Generator and Template Editor work.
+Read the repository-local skills routed by [AGENTS.md](AGENTS.md) before
+implementation or release.
 
 ## Development
 

@@ -14,6 +14,8 @@ The timestamp is UTC. A release note must be created before its package is tagge
 or published to GitHub. Each note must state:
 
 - why the contract changed;
+- the named feature folders under `docs/features/`, each with an overview and
+  separate Slide Generator and Template Editor implementation documents;
 - the completed contract behavior;
 - compatibility and migration behavior;
 - concrete work required in each affected consumer;
@@ -34,6 +36,8 @@ authored or generated internals directly.
 
 ## Releases
 
+- [0.10.0 — name-only data topics](2026-10-11-2131-v0.10.0-data-topics.md)
+- [0.9.0 — selection fill](2026-09-14-0546-v0.9.0-selection-fill.md)
 - [0.8.0 — strict character limits](2026-09-08-0705-v0.8.0-strict-character-limits.md)
 - [0.7.0 — template-authored slide archetypes](2026-09-07-1703-v0.7.0-slide-archetypes.md)
 - [0.6.1 — plain-text capacity migration correction](2026-09-07-1053-v0.6.1-plain-text-capacity-migration.md)

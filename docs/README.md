@@ -12,6 +12,11 @@ TypeScript consumer SDKs.
 - Consume the published SDKs from downstream applications instead of reading
   repository internals.
 - Read [release notes](releases/README.md) for versioned consumer handoffs.
+- Read [named features](features/README.md) for technical overviews and separate
+  Slide Generator and Template Editor integration documents.
+
+Every feature needs its named folder and both consumer handoffs, following the
+[feature skill](../.agents/skills/efficio-contract-feature-handoff/SKILL.md).
 
 Every package release must have a timestamped document under `docs/releases/`
 before it is tagged or published to GitHub.

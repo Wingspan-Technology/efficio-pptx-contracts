@@ -1,0 +1,8 @@
+{
+  "format_version": 1,
+  "contract_type": "template_contract_migration",
+  "from_revision": 4,
+  "to_revision": 5,
+  "description": "Introduce optional name-only data topics. Existing templates only advance their revision; data-topic metadata is authored, never backfilled.",
+  "operations": []
+}

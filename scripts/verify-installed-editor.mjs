@@ -24,11 +24,11 @@ if (JSON.stringify(sdk.SLIDE_ROLES) !== JSON.stringify(["content", "separator"])
 if (sdk.getSlideTagDefaults().efficio_slide_role !== "content") {
   throw new Error("Slide role does not default to content.");
 }
-if (sdk.CURRENT_TEMPLATE_CONTRACT_REVISION !== 4) {
+if (sdk.CURRENT_TEMPLATE_CONTRACT_REVISION !== 5) {
   throw new Error("Unexpected current template contract revision.");
 }
-if (sdk.getDeckTagDefaults().efficio_template_contract_revision !== "4") {
-  throw new Error("Deck defaults do not carry template contract revision 4.");
+if (sdk.getDeckTagDefaults().efficio_template_contract_revision !== "5") {
+  throw new Error("Deck defaults do not carry template contract revision 5.");
 }
 if (sdk.DECK_SLIDE_ARCHETYPES_TAG !== "efficio_slide_archetypes") {
   throw new Error("Missing slide-archetype registry deck tag export.");
@@ -83,6 +83,96 @@ if (archetypeEntity.required !== false || archetypeEntity.type !== "array") {
 const assignmentEntity = sdk.getSlideTagContract().tags.efficio_slide_archetype_ids;
 if (assignmentEntity.schema.minItems !== 1 || assignmentEntity.schema.uniqueItems !== true) {
   throw new Error("Generated slide schema is missing the archetype assignment rules.");
+}
+if (sdk.DECK_DATA_TOPICS_TAG !== "efficio_data_topics") {
+  throw new Error("Missing data-topic registry deck tag export.");
+}
+if (sdk.SLIDE_DATA_TOPIC_IDS_TAG !== "efficio_slide_data_topic_ids") {
+  throw new Error("Missing data-topic assignment slide tag export.");
+}
+const topicRegistry = JSON.stringify([
+  { topic_id: "topic_revenue", name: "Revenue" },
+  { topic_id: "topic_headcount", name: "Headcount" },
+  { topic_id: "topic_revenue_eu", name: "Revenue" },
+]);
+const deckTopicTags = { [sdk.DECK_DATA_TOPICS_TAG]: topicRegistry };
+const topics = sdk.parseDataTopics(topicRegistry);
+if (
+  JSON.stringify(topics.map((topic) => topic.topic_id)) !==
+  JSON.stringify(["topic_revenue", "topic_headcount", "topic_revenue_eu"])
+) {
+  throw new Error("Data-topic registry parser lost authored order.");
+}
+if (sdk.parseDataTopics(undefined).length !== 0 || sdk.parseDataTopics("[]").length !== 0) {
+  throw new Error("An absent or empty data-topic registry must declare no topics.");
+}
+const topicAssignment = JSON.stringify(["topic_headcount", "topic_revenue"]);
+if (JSON.stringify(sdk.parseSlideDataTopicIds(topicAssignment)) !== topicAssignment) {
+  throw new Error("Data-topic assignment parser is unavailable.");
+}
+const topicSlide = { [sdk.SLIDE_DATA_TOPIC_IDS_TAG]: topicAssignment };
+const resolvedTopics = sdk.resolveSlideDataTopicAssignment(topicSlide, deckTopicTags);
+if (
+  JSON.stringify(resolvedTopics) !==
+  JSON.stringify([
+    { topic_id: "topic_headcount", name: "Headcount" },
+    { topic_id: "topic_revenue", name: "Revenue" },
+  ])
+) {
+  throw new Error("Data-topic resolver did not keep assignment order.");
+}
+if (sdk.resolveSlideDataTopicAssignment({}, deckTopicTags).length !== 0) {
+  throw new Error("A slide without an assignment must resolve to no data topics.");
+}
+for (const rejected of [
+  () => sdk.parseSlideDataTopicIds("[]"),
+  () => sdk.parseSlideDataTopicIds(JSON.stringify(["topic_revenue\n"])),
+  () => sdk.parseDataTopics(JSON.stringify([{ topic_id: "topic_revenue", name: "A", source: "crm" }])),
+  () => sdk.resolveSlideDataTopicAssignment(
+    { [sdk.SLIDE_DATA_TOPIC_IDS_TAG]: '["topic_margin"]' },
+    deckTopicTags,
+  ),
+]) {
+  try {
+    rejected();
+    throw new Error("Invalid data-topic metadata must be rejected.");
+  } catch (error) {
+    if (!(error instanceof sdk.DataTopicContractError)) throw error;
+  }
+}
+const topicEntity = sdk.getDeckTagContract().tags.efficio_data_topics;
+if (topicEntity.required !== false || topicEntity.type !== "array" || "ai" in topicEntity) {
+  throw new Error("Generated deck schema is missing the optional advisory data-topic registry.");
+}
+const topicAssignmentEntity = sdk.getSlideTagContract().tags.efficio_slide_data_topic_ids;
+if (
+  topicAssignmentEntity.schema.minItems !== 1 ||
+  topicAssignmentEntity.schema.uniqueItems !== true ||
+  "ai" in topicAssignmentEntity
+) {
+  throw new Error("Generated slide schema is missing the data-topic assignment rules.");
+}
+const topicMigration = sdk.planTemplateContractMigration([
+  {
+    target_ref: "deck",
+    scope: "deck",
+    tags: { efficio_template_contract_revision: "4", [sdk.DECK_DATA_TOPICS_TAG]: topicRegistry },
+  },
+  { target_ref: "slide:slide_001", scope: "slide", tags: topicSlide },
+]);
+if (
+  topicMigration.to_revision !== 5 ||
+  JSON.stringify(topicMigration.patches) !==
+    JSON.stringify([
+      {
+        target_ref: "deck",
+        scope: "deck",
+        set_tags: { efficio_template_contract_revision: "5" },
+        remove_tags: [],
+      },
+    ])
+) {
+  throw new Error("The revision 4 to 5 migration must only advance the deck revision.");
 }
 const migration = sdk.planTemplateContractMigration([
   { target_ref: "deck", scope: "deck", tags: {} },

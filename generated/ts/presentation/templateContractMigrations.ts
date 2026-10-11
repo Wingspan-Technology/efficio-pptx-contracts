@@ -5,12 +5,13 @@ export const templateContractMigrationCatalog = {
     "contracts/presentation/template/migrations/0000-to-0001.json",
     "contracts/presentation/template/migrations/0001-to-0002.json",
     "contracts/presentation/template/migrations/0002-to-0003.json",
-    "contracts/presentation/template/migrations/0003-to-0004.json"
+    "contracts/presentation/template/migrations/0003-to-0004.json",
+    "contracts/presentation/template/migrations/0004-to-0005.json"
   ],
   "contract_type": "template_contract_migrations",
   "format_version": 1,
   "unversioned_revision": 0,
-  "current_revision": 4,
+  "current_revision": 5,
   "revision_tag": "efficio_template_contract_revision",
   "migrations": [
     {
@@ -78,6 +79,14 @@ export const templateContractMigrationCatalog = {
           "scope": "shape"
         }
       ]
+    },
+    {
+      "format_version": 1,
+      "contract_type": "template_contract_migration",
+      "from_revision": 4,
+      "to_revision": 5,
+      "description": "Introduce optional name-only data topics. Existing templates only advance their revision; data-topic metadata is authored, never backfilled.",
+      "operations": []
     }
   ]
 } as const;

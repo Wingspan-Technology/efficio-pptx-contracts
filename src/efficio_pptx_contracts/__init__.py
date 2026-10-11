@@ -52,6 +52,15 @@ from .data_bound_components import (
     normalize_data_bound_component_content,
     validate_data_bound_component_contract_coherence,
 )
+from .data_topics import (
+    DATA_TOPICS_TAG,
+    SLIDE_DATA_TOPIC_IDS_TAG,
+    DataTopic,
+    DataTopicContractError,
+    parse_data_topics,
+    parse_slide_data_topic_ids,
+    resolve_slide_data_topic_assignment,
+)
 from .errors import (
     ContentModeError,
     EfficioComponentsError,
@@ -174,6 +183,13 @@ __all__ = [
     "parse_slide_archetype_ids",
     "parse_slide_archetypes",
     "resolve_slide_archetype_assignment",
+    "DATA_TOPICS_TAG",
+    "SLIDE_DATA_TOPIC_IDS_TAG",
+    "DataTopic",
+    "DataTopicContractError",
+    "parse_data_topics",
+    "parse_slide_data_topic_ids",
+    "resolve_slide_data_topic_assignment",
     "SLIDE_SELECTION_GROUPS_TAG",
     "SlideSelectionGroup",
     "SlideSelectionGroupContractError",
